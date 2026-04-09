@@ -1,0 +1,2614 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Friend Savings Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== RESET & BASE ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ===== DESIGN TOKENS — LIGHT ===== */
+:root, [data-theme="light"]{
+  --font-sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --color-background: #F0F4F8;
+  --color-background-primary: #FFFFFF;
+  --color-background-secondary: #F7F9FC;
+  --color-background-elevated: #FFFFFF;
+  --color-border-tertiary: #E2E8F0;
+  --color-border-secondary: #CBD5E1;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-success: #059669;
+  --color-text-warning: #D97706;
+  --color-text-danger: #DC2626;
+  --color-text-info: #2563EB;
+  --color-background-success: #ECFDF5;
+  --color-background-warning: #FFFBEB;
+  --color-background-danger: #FEF2F2;
+  --color-background-info: #EFF6FF;
+  --color-accent: #6366F1;
+  --color-accent-light: #EEF2FF;
+  --color-gold: #D4A017;
+  --color-gold-light: #FEF3C7;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+  --border-radius-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.08);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.12);
+  --transition-fast: 150ms cubic-bezier(0.4,0,0.2,1);
+  --transition-base: 250ms cubic-bezier(0.4,0,0.2,1);
+  --transition-slow: 350ms cubic-bezier(0.4,0,0.2,1);
+  --navbar-bg: rgba(255,255,255,0.85);
+  --navbar-border: rgba(226,232,240,0.8);
+}
+
+/* ===== DARK MODE ===== */
+[data-theme="dark"]{
+  --color-background: #0F172A;
+  --color-background-primary: #1E293B;
+  --color-background-secondary: #1E293B;
+  --color-background-elevated: #334155;
+  --color-border-tertiary: #334155;
+  --color-border-secondary: #475569;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-success: #34D399;
+  --color-text-warning: #FBBF24;
+  --color-text-danger: #F87171;
+  --color-text-info: #60A5FA;
+  --color-background-success: rgba(52,211,153,0.12);
+  --color-background-warning: rgba(251,191,36,0.12);
+  --color-background-danger: rgba(248,113,113,0.12);
+  --color-background-info: rgba(96,165,250,0.12);
+  --color-accent: #818CF8;
+  --color-accent-light: rgba(129,140,248,0.12);
+  --color-gold: #FBBF24;
+  --color-gold-light: rgba(251,191,36,0.12);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.4);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.5);
+  --navbar-bg: rgba(30,41,59,0.9);
+  --navbar-border: rgba(51,65,85,0.8);
+}
+
+/* ===== BASE ===== */
+html{scroll-behavior:smooth}
+html,body{min-height:100%;background:var(--color-background);color:var(--color-text-primary);font-family:var(--font-sans);font-size:14px;line-height:1.6;transition:background var(--transition-base),color var(--transition-base)}
+body{padding:0}
+::selection{background:var(--color-accent);color:#fff}
+:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;border-radius:4px}
+textarea{font-family:var(--font-sans);font-size:13px;padding:8px 12px;border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);resize:vertical}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--color-border-secondary);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--color-text-secondary)}
+
+/* ===== APP LAYOUT ===== */
+.app{padding:0 1rem 2rem;max-width:960px;margin:0 auto}
+
+/* ===== NAVBAR ===== */
+.navbar{position:sticky;top:0;z-index:50;background:var(--navbar-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--navbar-border);padding:10px 1.5rem;margin-bottom:0;transition:all var(--transition-base)}
+.navbar-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.navbar-brand{display:flex;align-items:center;gap:10px}
+.navbar-brand img{width:36px;height:36px;border-radius:8px}
+.navbar-brand-text{font-size:15px;font-weight:600;color:var(--color-text-primary)}
+.navbar-user{display:flex;align-items:center;gap:10px}
+.navbar-user-info{display:flex;align-items:center;gap:8px;font-size:13px}
+.navbar-actions{display:flex;gap:6px;align-items:center}
+.theme-toggle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--color-border-tertiary);background:var(--color-background-secondary);cursor:pointer;font-size:16px;transition:all var(--transition-fast);padding:0}
+.theme-toggle:hover{background:var(--color-accent-light);border-color:var(--color-accent);transform:rotate(15deg)}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:4px;margin-bottom:1.5rem;padding:4px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:1px solid var(--color-border-tertiary);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:8px 18px;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--color-text-secondary);border-radius:var(--border-radius-sm);font-family:var(--font-sans);white-space:nowrap;transition:all var(--transition-fast);font-weight:500;position:relative}
+.tab:hover{color:var(--color-text-primary);background:var(--color-background-primary)}
+.tab.active{color:var(--color-text-primary);background:var(--color-background-primary);box-shadow:var(--shadow-sm);font-weight:600}
+
+/* ===== SECTION ===== */
+.section{display:none;animation:fadeSlideIn 0.3s ease}
+.section.active{display:block}
+@keyframes fadeSlideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== CARDS ===== */
+.card{background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem 1.5rem;margin-bottom:1rem;box-shadow:var(--shadow-sm);transition:box-shadow var(--transition-fast),border-color var(--transition-fast)}
+.card:hover{box-shadow:var(--shadow-md)}
+
+/* ===== METRICS ===== */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:1.25rem}
+.metric{background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:1rem 1.1rem;transition:all var(--transition-fast);box-shadow:var(--shadow-sm)}
+.metric:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.metric-label{font-size:11.5px;color:var(--color-text-secondary);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.3px}
+.metric-value{font-size:22px;font-weight:600;letter-spacing:-0.5px}
+.green{color:var(--color-text-success)}.amber{color:var(--color-text-warning)}.red{color:var(--color-text-danger)}.blue{color:var(--color-text-info)}
+
+/* ===== TYPOGRAPHY ===== */
+h3{font-size:16px;font-weight:600;margin-bottom:12px;letter-spacing:-0.2px}
+
+/* ===== TABLE ===== */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--color-text-secondary);font-weight:500;font-size:11.5px;text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid var(--color-border-tertiary);white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--color-border-tertiary);color:var(--color-text-primary);vertical-align:middle;transition:background var(--transition-fast)}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--color-background-secondary)}
+
+/* ===== BADGES ===== */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:0.2px}
+.badge-green{background:var(--color-background-success);color:var(--color-text-success)}
+.badge-amber{background:var(--color-background-warning);color:var(--color-text-warning)}
+.badge-red{background:var(--color-background-danger);color:var(--color-text-danger)}
+.badge-gray{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.badge-accent{background:var(--color-accent-light);color:var(--color-accent)}
+
+/* ===== BUTTONS ===== */
+button{padding:8px 18px;border-radius:var(--border-radius-sm);border:1px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;cursor:pointer;font-family:var(--font-sans);font-weight:500;transition:all var(--transition-fast);display:inline-flex;align-items:center;gap:6px}
+button:hover{background:var(--color-background-secondary);border-color:var(--color-border-tertiary);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+button:active{transform:translateY(0);box-shadow:none}
+button:disabled{background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:not-allowed;opacity:0.6;transform:none;box-shadow:none}
+button.primary{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
+button.primary:hover{opacity:0.9;box-shadow:0 4px 12px rgba(99,102,241,0.3)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:var(--border-radius-sm)}
+
+/* ===== FORMS ===== */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+label{font-size:12px;color:var(--color-text-secondary);font-weight:500}
+input,select{padding:9px 12px;border:1px solid var(--color-border-secondary);border-radius:var(--border-radius-sm);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);transition:border-color var(--transition-fast),box-shadow var(--transition-fast)}
+input:focus,select:focus{border-color:var(--color-accent);box-shadow:0 0 0 3px var(--color-accent-light);outline:none}
+input::placeholder{color:var(--color-text-secondary);opacity:0.6}
+
+/* ===== MODALS ===== */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--color-background-primary);border-radius:var(--border-radius-xl);padding:1.75rem;width:460px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-xl);animation:slideUp 0.25s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h3{margin-bottom:1rem;font-size:18px}
+.modal-actions{display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end}
+
+/* ===== UTILITIES ===== */
+.divider{border:none;border-top:1px solid var(--color-border-tertiary);margin:12px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.hbox{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap;font-size:13px;margin-top:10px;border:1px solid var(--color-border-tertiary)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+/* ===== EMI COMPONENTS ===== */
+.emi-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.emi-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-sm);border:1px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;font-family:var(--font-sans);transition:all var(--transition-fast);font-weight:500}
+.emi-btn:hover{border-color:var(--color-accent);color:var(--color-accent)}
+.emi-btn.sel{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
+.emi-row{display:grid;grid-template-columns:55px 1fr 1fr 1fr 1fr 1fr 1fr auto;gap:6px;align-items:center;font-size:13px;padding:10px 14px;border-bottom:1px solid var(--color-border-tertiary);transition:background var(--transition-fast)}
+.emi-row:hover{background:var(--color-background-secondary)}
+.emi-header{font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
+.emi-header:hover{background:transparent}
+
+/* ===== PROGRESS BAR ===== */
+.prog-bar{height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden;margin-top:6px;border:1px solid var(--color-border-tertiary)}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--color-text-success),#34D399);transition:width 0.6s cubic-bezier(0.4,0,0.2,1)}
+
+/* ===== HERO ===== */
+.balance-hero{background:linear-gradient(135deg,#667EEA 0%,#764BA2 100%);border-radius:var(--border-radius-xl);padding:1.75rem;margin-bottom:1.25rem;text-align:center;color:#fff;border:none;box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.balance-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.bal-big{font-size:38px;font-weight:700;margin:6px 0;letter-spacing:-1px;text-shadow:0 2px 8px rgba(0,0,0,0.15)}
+
+/* ===== TRACKER ===== */
+.tracker-wrap{overflow-x:auto;border-radius:var(--border-radius-lg);border:1px solid var(--color-border-tertiary);box-shadow:var(--shadow-sm)}
+.tracker-table{border-collapse:collapse;min-width:100%;font-size:13px}
+.tracker-table th{padding:10px 14px;background:var(--color-background-secondary);border-bottom:1px solid var(--color-border-tertiary);border-right:1px solid var(--color-border-tertiary);white-space:nowrap;font-weight:600;font-size:11.5px;color:var(--color-text-secondary);text-align:center;text-transform:uppercase;letter-spacing:0.3px}
+.tracker-table th.member-col{text-align:left;position:sticky;left:0;z-index:2;background:var(--color-background-secondary)}
+.tracker-table td{padding:8px 14px;border-bottom:1px solid var(--color-border-tertiary);border-right:1px solid var(--color-border-tertiary);text-align:center;white-space:nowrap;transition:background var(--transition-fast)}
+.tracker-table td.member-name{text-align:left;font-weight:600;position:sticky;left:0;background:var(--color-background-primary);z-index:1}
+.tracker-table tr:last-child td{border-bottom:none}
+.tracker-table td:last-child,.tracker-table th:last-child{border-right:none}
+.pay-cell{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:12px;cursor:default;font-weight:600;transition:all var(--transition-fast)}
+.pay-cell.paid{background:var(--color-background-success);color:var(--color-text-success)}
+.pay-cell.unpaid{background:var(--color-background-danger);color:var(--color-text-danger);cursor:pointer}
+.pay-cell.unpaid:hover{transform:scale(1.15);box-shadow:0 0 0 3px var(--color-background-danger)}
+.pay-cell.future{background:var(--color-background-secondary);color:var(--color-text-secondary)}
+.pay-cell.current-month{outline:2px solid var(--color-accent);outline-offset:2px}
+th.current-month-header{background:var(--color-accent-light)!important;color:var(--color-accent)!important}
+.pay-cell.locked{opacity:0.5;cursor:not-allowed!important}
+.pay-cell.locked:hover{opacity:0.5;transform:none;box-shadow:none}
+.lock-btn{background:none;border:none;cursor:pointer;font-size:11px;padding:2px 4px;opacity:0.7;transition:opacity var(--transition-fast)}
+.lock-btn:hover{opacity:1}
+.locked-col{background:var(--color-background-secondary)!important}
+.pay-cell.partial{background:var(--color-background-warning);color:var(--color-text-warning);cursor:pointer}
+.month-total{font-size:12px;font-weight:600;color:var(--color-text-primary)}
+.summary-row td{background:var(--color-background-secondary);font-weight:600;font-size:12px}
+
+/* ===== LOAN FILTER ===== */
+.loan-filter-btn{border:1px solid var(--color-border-tertiary)!important;background:var(--color-background-primary)!important;font-size:12px!important;font-weight:500!important;transition:all var(--transition-fast)!important}
+.loan-filter-btn:hover{border-color:var(--color-accent)!important;color:var(--color-accent)!important}
+.loan-filter-btn.sel{background:var(--color-accent)!important;color:#fff!important;border-color:var(--color-accent)!important}
+
+/* ===== TIMELINE ===== */
+.timeline-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--color-border-tertiary);transition:background var(--transition-fast)}
+.timeline-item:last-child{border-bottom:none}
+.timeline-item:hover{background:var(--color-background-secondary);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:var(--border-radius-sm)}
+.tl-dot{width:10px;height:10px;border-radius:50%;margin-top:5px;flex-shrink:0;box-shadow:0 0 0 3px var(--color-background-primary)}
+.tl-body{flex:1}
+.tl-title{font-size:13px;font-weight:500}
+.tl-sub{font-size:12px;color:var(--color-text-secondary);margin-top:2px}
+.tl-amt{font-size:13px;font-weight:600;white-space:nowrap}
+
+/* ===== FILTERS ===== */
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.year-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-sm);border:1px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;font-weight:500;transition:all var(--transition-fast)}
+.year-btn:hover{border-color:var(--color-accent);color:var(--color-accent)}
+.year-btn.sel{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .app{padding:0 0.75rem 1.5rem}
+  .navbar{padding:8px 1rem}
+  .tabs{gap:2px;padding:3px}
+  .tab{padding:7px 12px;font-size:12px}
+  .card{padding:1rem;border-radius:var(--border-radius-md)}
+  .metrics{grid-template-columns:repeat(2,1fr);gap:8px}
+  .metric{padding:0.75rem}
+  .metric-value{font-size:18px}
+  .balance-hero{padding:1.25rem}
+  .bal-big{font-size:28px}
+  .form-row{grid-template-columns:1fr}
+  .emi-row{grid-template-columns:45px 1fr 1fr 1fr auto;font-size:12px;padding:8px 10px}
+  .modal{padding:1.25rem;border-radius:var(--border-radius-lg)}
+  .navbar-brand-text{display:none}
+  .hbox{gap:12px;padding:10px 12px}
+}
+
+@media(max-width:480px){
+  .tabs{flex-wrap:nowrap;overflow-x:auto}
+  .metrics{grid-template-columns:1fr 1fr}
+  .navbar-user-info span:not(.badge){display:none}
+  .navbar-actions .btn-sm-text{display:none}
+}
+
+/* ===== LOADING SKELETON ===== */
+.skeleton{background:linear-gradient(90deg,var(--color-background-secondary) 25%,var(--color-background) 50%,var(--color-background-secondary) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:var(--border-radius-sm);height:20px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ===== EMPTY STATE ===== */
+.empty-state{text-align:center;padding:2.5rem 1rem;color:var(--color-text-secondary)}
+.empty-state-icon{font-size:48px;margin-bottom:12px;opacity:0.5}
+.empty-state-text{font-size:14px}
+
+/* ===== MEMBER AVATAR ===== */
+.avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--color-border-tertiary);flex-shrink:0;background:var(--color-background-secondary)}
+.avatar-lg{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--color-border-tertiary);background:var(--color-background-secondary)}
+.avatar-placeholder{display:inline-flex;align-items:center;justify-content:center;font-weight:600;color:var(--color-text-secondary);background:var(--color-accent-light);color:var(--color-accent)}
+.avatar-upload{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:14px}
+.avatar-upload-preview{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px dashed var(--color-border-secondary);background:var(--color-background-secondary);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all var(--transition-fast);overflow:hidden}
+.avatar-upload-preview:hover{border-color:var(--color-accent);background:var(--color-accent-light)}
+.avatar-upload-preview img{width:100%;height:100%;object-fit:cover}
+.avatar-upload input[type=file]{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:1rem;background:linear-gradient(135deg,#667EEA 0%,#764BA2 50%,#6366F1 100%)">
+  <div style="background:var(--color-background-primary);border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-xl);padding:2.5rem;width:400px;max-width:95vw;box-shadow:var(--shadow-xl);animation:slideUp 0.4s ease">
+    <div style="text-align:center;margin-bottom:1.75rem">
+      <div style="width:100px;height:100px;margin:0 auto 16px;border-radius:24px;overflow:hidden;box-shadow:var(--shadow-lg)">
+        <img src="logo.png" alt="Friend Savings Bank" style="width:100%;height:100%;object-fit:cover">
+      </div>
+      <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;letter-spacing:-0.3px">Friend Savings Bank</h2>
+      <p style="font-size:13px;color:var(--color-text-secondary)">Sign in to your account</p>
+    </div>
+    <div id="login-error" style="display:none;background:var(--color-background-danger);color:var(--color-text-danger);padding:10px 14px;border-radius:var(--border-radius-sm);font-size:13px;margin-bottom:14px;font-weight:500"></div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="Enter username" autocomplete="username" autofocus style="padding:11px 14px">
+    </div>
+    <div class="form-group" style="margin-bottom:20px">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" style="padding:11px 14px">
+    </div>
+    <button class="primary" style="width:100%;padding:12px;font-size:14px;font-weight:600;border-radius:var(--border-radius-md)" onclick="doLogin()" id="login-btn">Sign in</button>
+    <p style="font-size:11px;color:var(--color-text-secondary);text-align:center;margin-top:14px">Default password for all: <strong>1234</strong></p>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until login) -->
+<div id="app-container" style="display:none">
+<h2 class="sr-only">Friend savings bank with installment tracker</h2>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="navbar-inner">
+    <div class="navbar-brand">
+      <img src="logo.png" alt="Logo">
+      <span class="navbar-brand-text">Friend Savings Bank</span>
+    </div>
+    <div class="navbar-user">
+      <div class="navbar-user-info">
+        <span style="color:var(--color-text-secondary)">Hi,</span>
+        <strong id="user-display-name"></strong>
+        <span class="badge badge-gray" id="user-role-badge" style="margin-left:2px"></span>
+      </div>
+      <div class="navbar-actions">
+        <button class="btn-sm" id="manage-roles-btn" style="display:none" onclick="openManageRoles()"><span class="btn-sm-text">Roles</span> ⚙️</button>
+        <button class="btn-sm" onclick="openChangePassword()"><span class="btn-sm-text">Password</span> 🔑</button>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark mode" id="theme-toggle-btn">🌙</button>
+        <button class="btn-sm" style="color:var(--color-text-danger)" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="server-warning" style="font-size:13px;color:var(--color-text-warning);margin:12px 0;display:none;padding:0 1rem;max-width:960px;margin-left:auto;margin-right:auto"></div>
+
+<div class="app">
+<div class="tabs">
+  <button class="tab active" onclick="showTab('dashboard')">📊 Dashboard</button>
+  <button class="tab" onclick="showTab('tracker')">📋 Installments</button>
+  <button class="tab" onclick="showTab('loans')">💰 Loans</button>
+  <button class="tab" onclick="showTab('new-loan')">➕ New loan</button>
+  <button class="tab" onclick="showTab('gold')">🥇 Gold</button>
+  <button class="tab" onclick="showTab('members')">👥 Members</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+  <div id="balance-hero"></div>
+  <div class="metrics" id="dash-metrics"></div>
+  <div class="card">
+    <h3 id="payment-summary-title">Monthly payment summary</h3>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin-top:-8px;margin-bottom:12px" id="payment-summary-subtitle"></p>
+    <div id="payment-summary"></div>
+  </div>
+  <div class="card">
+    <h3>Members overview</h3>
+    <table><thead><tr><th>Member</th><th>Total saved</th><th>Months paid</th><th>Pending months</th><th>Active loan</th><th>Status</th></tr></thead>
+    <tbody id="members-table"></tbody></table>
+  </div>
+  <div class="card">
+    <h3>Recent transactions</h3>
+    <div id="recent-tx"></div>
+  </div>
+</div>
+
+<!-- INSTALLMENT TRACKER -->
+<div id="tracker" class="section">
+  <div class="card">
+    <div class="row" style="margin-bottom:12px">
+      <div>
+        <h3 style="margin:0">Monthly installment tracker</h3>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">Click cells to toggle payment status · Green = paid · Red = unpaid · Gray = future</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-sm admin-only" onclick="openModal('setup-months-modal')">Setup months</button>
+        <button class="btn-sm primary admin-only" onclick="openModal('mark-payment-modal')">Mark payment</button>
+      </div>
+    </div>
+    <div class="filter-bar" id="year-filter"></div>
+    <div class="tracker-wrap">
+      <table class="tracker-table" id="tracker-grid"></table>
+    </div>
+    <div id="tracker-summary" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- LOANS -->
+<div id="loans" class="section">
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+      <div style="display:flex;gap:4px">
+        <button class="btn-sm loan-filter-btn sel" onclick="setLoanFilter('active')" id="lf-active">Active</button>
+        <button class="btn-sm loan-filter-btn" onclick="setLoanFilter('closed')" id="lf-closed">Closed</button>
+        <button class="btn-sm loan-filter-btn" onclick="setLoanFilter('all')" id="lf-all">All</button>
+      </div>
+      <select id="loan-member-filter" class="input" style="width:auto;min-width:140px;font-size:12px;padding:6px 8px" onchange="renderLoans()">
+        <option value="">All members</option>
+      </select>
+      <span id="loan-filter-count" style="font-size:12px;color:var(--color-text-secondary);margin-left:auto"></span>
+    </div>
+  </div>
+  <div id="loans-list"></div>
+</div>
+
+<!-- NEW LOAN -->
+<div id="new-loan" class="section">
+  <div class="card">
+    <h3>Issue new loan</h3>
+    <div id="available-balance-note" style="margin-bottom:14px"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Borrower</label><select id="nl-member"><option value="">Select member</option></select></div>
+      <div class="form-group"><label>Loan amount (KD)</label><input type="number" id="nl-amount" min="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Interest rate (% on pending per EMI)</label><input type="number" id="nl-rate" value="2" min="0" step="0.5"></div>
+      <div class="form-group"><label>Starting month</label><select id="nl-month"></select></div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px">
+      <label>Number of EMIs</label>
+      <div class="emi-btns" id="emi-quick-btns"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+        <span style="font-size:12px;color:var(--color-text-secondary)">Custom:</span>
+        <input type="number" id="nl-emis" value="1" min="1" max="36" style="width:80px">
+        <span style="font-size:12px;color:var(--color-text-secondary)">months</span>
+      </div>
+    </div>
+    <div class="card" style="background:var(--color-background-secondary)">
+      <h3>EMI schedule preview</h3>
+      <div id="emi-preview"></div>
+    </div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="primary" onclick="issueLoan()">Issue loan</button>
+      <button onclick="showTab('loans')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- GOLD RESERVE -->
+<div id="gold" class="section">
+  <div class="card">
+    <div class="row" style="margin-bottom:14px">
+      <div>
+        <h3 style="margin:0">🥇 Gold Reserve</h3>
+        <p style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">Secure pool funds by purchasing gold</p>
+      </div>
+      <div style="display:flex;gap:8px" class="admin-only">
+        <button class="btn-sm primary" onclick="openModal('buy-gold-modal')">Buy gold</button>
+        <button class="btn-sm" onclick="openModal('sell-gold-modal')">Sell gold</button>
+      </div>
+    </div>
+    <div id="gold-summary" style="margin-bottom:16px"></div>
+    <h3 style="margin-bottom:8px">Transaction history</h3>
+    <div id="gold-history"></div>
+  </div>
+</div>
+
+<!-- MEMBERS -->
+<div id="members" class="section">
+  <div class="card">
+    <div class="row"><h3 style="margin:0">Members</h3><button class="btn-sm admin-only" onclick="openAddMemberModal()">+ Add member</button></div>
+    <table><thead><tr><th></th><th>Name</th><th>Months paid</th><th>Total contributed</th><th>Loans taken</th><th></th></tr></thead>
+    <tbody id="members-manage"></tbody></table>
+  </div>
+  <div class="card">
+    <h3>Contribution rate history</h3>
+    <table><thead><tr><th>From month</th><th>Per member</th><th>Total pool/month</th><th></th></tr></thead>
+    <tbody id="rate-history"></tbody></table>
+    <div style="margin-top:10px"><button class="btn-sm admin-only" onclick="openModal('change-rate-modal')">Change rate</button></div>
+  </div>
+</div>
+</div><!-- end .app -->
+</div><!-- end app-container -->
+
+<!-- BUY GOLD MODAL -->
+<div class="modal-bg" id="buy-gold-modal">
+<div class="modal">
+  <h3>Buy gold</h3>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">Purchase gold from the pool's available balance.</p>
+  <div class="form-row">
+    <div class="form-group"><label>Weight (grams)</label><input type="number" id="gold-buy-grams" min="0.00001" step="0.00001" oninput="updateGoldBuyTotal()"></div>
+    <div class="form-group"><label>Total price (KD)</label><input type="number" id="gold-buy-total" min="0.00001" step="0.00001" oninput="updateGoldBuyTotal()"></div>
+  </div>
+  <div class="form-group" style="margin-bottom:12px"><label>Price per gram (KD) — auto-calculated</label><input type="number" id="gold-buy-price" class="input" style="background:var(--color-background-secondary)" readonly></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Date</label><input type="date" id="gold-buy-date"></div>
+  <div id="gold-buy-preview" style="margin-bottom:12px;padding:10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px"></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('buy-gold-modal')">Cancel</button>
+    <button class="primary" onclick="buyGold()">Buy gold</button>
+  </div>
+</div>
+</div>
+
+<!-- SELL GOLD MODAL -->
+<div class="modal-bg" id="sell-gold-modal">
+<div class="modal">
+  <h3>Sell gold</h3>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">Sell gold back and add funds to the pool.</p>
+  <div class="form-row">
+    <div class="form-group"><label>Weight to sell (grams)</label><input type="number" id="gold-sell-grams" min="0.00001" step="0.00001" oninput="updateGoldSellTotal()"></div>
+    <div class="form-group"><label>Total sale price (KD)</label><input type="number" id="gold-sell-total" min="0.00001" step="0.00001" oninput="updateGoldSellTotal()"></div>
+  </div>
+  <div class="form-group" style="margin-bottom:6px"><label>Price per gram (KD) — auto-calculated</label><input type="number" id="gold-sell-price" class="input" style="background:var(--color-background-secondary)" readonly></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Date</label><input type="date" id="gold-sell-date"></div>
+  <div id="gold-sell-preview" style="margin-bottom:12px;padding:10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px"></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('sell-gold-modal')">Cancel</button>
+    <button class="primary" onclick="sellGold()">Sell gold</button>
+  </div>
+</div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="setup-months-modal">
+<div class="modal">
+  <h3>Setup tracking months</h3>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">Define the months to track. New months will appear as unpaid for all members.</p>
+  <div class="form-row">
+    <div class="form-group"><label>From month</label><select id="setup-from"></select></div>
+    <div class="form-group"><label>To month</label><select id="setup-to"></select></div>
+  </div>
+  <div class="form-group" style="margin-bottom:12px">
+    <label>Amount per member (KD)</label>
+    <input type="number" id="setup-amount" value="30" min="1">
+  </div>
+  <div class="modal-actions">
+    <button onclick="closeModal('setup-months-modal')">Cancel</button>
+    <button class="primary" onclick="setupMonths()">Add months</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="mark-payment-modal">
+<div class="modal">
+  <h3>Mark payment</h3>
+  <div class="form-row">
+    <div class="form-group"><label>Member</label><select id="mp-member"><option value="">Select</option></select></div>
+    <div class="form-group"><label>Month</label><select id="mp-month"><option value="">Select</option></select></div>
+  </div>
+  <div id="mp-preview" style="margin-bottom:8px"></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('mark-payment-modal')">Cancel</button>
+    <button class="primary" onclick="markPaymentFromModal()">Toggle payment</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="change-rate-modal">
+<div class="modal">
+  <h3>Change contribution rate</h3>
+  <div class="form-row">
+    <div class="form-group"><label>New amount per member (KD)</label><input type="number" id="new-rate" min="1" placeholder="e.g. 40"></div>
+    <div class="form-group"><label>Effective from</label><select id="new-rate-month"></select></div>
+  </div>
+  <div class="modal-actions">
+    <button onclick="closeModal('change-rate-modal')">Cancel</button>
+    <button class="primary" onclick="changeRate()">Update</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="add-member-modal">
+<div class="modal">
+  <h3>Add member</h3>
+  <div class="avatar-upload">
+    <div class="avatar-upload-preview" onclick="document.getElementById('new-member-photo').click()" id="new-member-photo-preview">
+      <span style="font-size:28px;color:var(--color-text-secondary)">📷</span>
+    </div>
+    <input type="file" id="new-member-photo" accept="image/*" onchange="previewMemberPhoto(this,'new-member-photo-preview')">
+    <button class="btn-sm" type="button" onclick="document.getElementById('new-member-photo').click()" style="font-size:11px">Upload photo</button>
+  </div>
+  <div class="form-group" style="margin-bottom:12px"><label>Full name</label><input type="text" id="new-member-name" placeholder="e.g. Ahmed Al-Rashidi"></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Phone</label><input type="tel" id="new-member-phone" placeholder="e.g. +965 123 4567"></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Email</label><input type="email" id="new-member-email" placeholder="e.g. ahmed@example.com"></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Address</label><textarea id="new-member-address" placeholder="e.g. Kuwait City, Kuwait" rows="2"></textarea></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('add-member-modal')">Cancel</button>
+    <button class="primary" onclick="addMember()">Add</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="edit-member-modal">
+<div class="modal">
+  <h3>Edit member</h3>
+  <input type="hidden" id="edit-member-id">
+  <div class="avatar-upload">
+    <div class="avatar-upload-preview" onclick="document.getElementById('edit-member-photo').click()" id="edit-member-photo-preview">
+      <span style="font-size:28px;color:var(--color-text-secondary)">📷</span>
+    </div>
+    <input type="file" id="edit-member-photo" accept="image/*" onchange="previewMemberPhoto(this,'edit-member-photo-preview')">
+    <div style="display:flex;gap:6px">
+      <button class="btn-sm" type="button" onclick="document.getElementById('edit-member-photo').click()" style="font-size:11px">Change photo</button>
+      <button class="btn-sm" type="button" onclick="removeMemberPhoto('edit')" style="font-size:11px;color:var(--color-text-danger)">Remove</button>
+    </div>
+  </div>
+  <div class="form-group" style="margin-bottom:12px"><label>Full name</label><input type="text" id="edit-member-name" placeholder="e.g. Ahmed Al-Rashidi"></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Phone</label><input type="tel" id="edit-member-phone" placeholder="e.g. +965 123 4567"></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Email</label><input type="email" id="edit-member-email" placeholder="e.g. ahmed@example.com"></div>
+  <div class="form-group" style="margin-bottom:12px"><label>Address</label><textarea id="edit-member-address" placeholder="e.g. Kuwait City, Kuwait" rows="2"></textarea></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('edit-member-modal')">Cancel</button>
+    <button class="primary" onclick="updateMember()">Update</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-bg" id="pay-emi-modal">
+<div class="modal">
+  <h3>Collect EMI payment</h3>
+  <div id="pay-emi-info"></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('pay-emi-modal')">Cancel</button>
+    <button class="primary" onclick="confirmPayEmi()">Mark as paid</button>
+  </div>
+</div>
+</div>
+
+<!-- MANAGE ROLES MODAL -->
+<div class="modal-bg" id="manage-roles-modal">
+<div class="modal">
+  <h3>Manage user roles</h3>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">Assign Admin or Member roles. Admins have full access; Members can only view data.</p>
+  <table>
+    <thead><tr><th>User</th><th>Current role</th><th>Action</th></tr></thead>
+    <tbody id="roles-table"></tbody>
+  </table>
+  <div class="modal-actions">
+    <button onclick="closeModal('manage-roles-modal')">Close</button>
+  </div>
+</div>
+</div>
+
+<script>
+const MONTHS_LIST=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const QUICK_EMIS=[1,2,3,4,6,8,12];
+
+// monthKey: "April-2026"
+function monthKey(m,y){return m+'-'+y;}
+function parseKey(k){const p=k.split('-');return{month:p[0],year:parseInt(p[1])};}
+function keyToLabel(k){const p=parseKey(k);return p.month+' '+p.year;}
+function monthIndex(m){return MONTHS_LIST.indexOf(m);}
+function compareKeys(a,b){
+  const pa=parseKey(a),pb=parseKey(b);
+  if(pa.year!==pb.year)return pa.year-pb.year;
+  return monthIndex(pa.month)-monthIndex(pb.month);
+}
+
+const API_BASE = window.location.protocol === 'file:'
+  ? 'http://localhost:3000/api'
+  : `${window.location.origin}/api`;
+
+// --- Auth ---
+let currentUser = null;
+function isAdmin(){ return currentUser && currentUser.role === 'admin'; }
+
+async function checkAuth(){
+  try {
+    const res = await fetch(`${API_BASE}/me`, { credentials: 'include' });
+    const data = await res.json();
+    if(data.loggedIn){
+      currentUser = data.user;
+      showApp();
+      await fetchAppState();
+      const wm=getWorkingMonth();
+      const wmYear=parseKey(wm).year;
+      if(getYears().includes(wmYear)) state.activeYear=wmYear;
+      render();
+      return true;
+    }
+  } catch(e) { console.warn('Auth check failed:', e); }
+  showLogin();
+  return false;
+}
+
+function showLogin(){
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-container').style.display = 'none';
+}
+
+function showApp(){
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-container').style.display = 'block';
+  document.getElementById('user-display-name').textContent = currentUser.name;
+  document.getElementById('user-role-badge').textContent = currentUser.role === 'admin' ? 'Admin' : 'Member';
+  document.getElementById('user-role-badge').className = 'badge ' + (currentUser.role === 'admin' ? 'badge-amber' : 'badge-green');
+  applyRoleRestrictions();
+  // Restore theme preference
+  const saved = localStorage.getItem('fsb-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon();
+}
+
+function toggleTheme(){
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('fsb-theme', next);
+  updateThemeIcon();
+}
+function updateThemeIcon(){
+  const btn = document.getElementById('theme-toggle-btn');
+  if(btn) btn.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '☀️' : '🌙';
+}
+
+async function doLogin(){
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  if(!username || !password){ errEl.style.display='block'; errEl.textContent='Please enter username and password.'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const res = await fetch(`${API_BASE}/login`, {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if(data.success){
+      currentUser = data.user;
+      errEl.style.display = 'none';
+      showApp();
+      await fetchAppState();
+      const wm=getWorkingMonth();
+      const wmYear=parseKey(wm).year;
+      if(getYears().includes(wmYear)) state.activeYear=wmYear;
+      render();
+    } else {
+      errEl.style.display = 'block';
+      errEl.textContent = data.message || 'Login failed.';
+    }
+  } catch(e) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Server not reachable. Make sure server is running.';
+  }
+  btn.disabled = false; btn.textContent = 'Sign in';
+}
+
+async function doLogout(){
+  try { await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' }); } catch(e) {}
+  currentUser = null;
+  showLogin();
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+async function openChangePassword(){
+  const current = prompt('Enter current password:');
+  if(!current) return;
+  const newPw = prompt('Enter new password (min 4 chars):');
+  if(!newPw || newPw.length < 4){ alert('Password must be at least 4 characters.'); return; }
+  try {
+    const res = await fetch(`${API_BASE}/change-password`, {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+    });
+    const data = await res.json();
+    if(data.success) alert('Password changed successfully!');
+    else alert(data.message || 'Failed to change password.');
+  } catch(e) { alert('Server error.'); }
+}
+
+function requireAdminAction(action){
+  if(!isAdmin()){ alert('Only admins can '+action+'.'); return false; }
+  return true;
+}
+
+function applyRoleRestrictions(){
+  const admin = isAdmin();
+  // Hide/show "New loan" and "Members" tabs for members (they can still view loans read-only)
+  document.querySelectorAll('.tab').forEach(t=>{
+    const target = t.textContent.trim();
+    if(target.includes('New loan')) t.style.display = admin ? '' : 'none';
+  });
+  // Show/hide admin-only buttons in tracker
+  document.querySelectorAll('.admin-only').forEach(el=>el.style.display=admin?'':'none');
+  // Show/hide manage roles button in user bar
+  const roleBtn = document.getElementById('manage-roles-btn');
+  if(roleBtn) roleBtn.style.display = admin ? '' : 'none';
+}
+
+async function openManageRoles(){
+  if(!isAdmin()) return;
+  try {
+    const res = await fetch(`${API_BASE}/users`, { credentials: 'include' });
+    const data = await res.json();
+    if(!data.users) return;
+    document.getElementById('roles-table').innerHTML = data.users.map(u=>{
+      const isSelf = u.id === currentUser.id;
+      const roleBadge = u.role==='admin' ? '<span class="badge badge-amber">Admin</span>' : '<span class="badge badge-green">Member</span>';
+      const actionBtn = isSelf ? '<span style="font-size:12px;color:var(--color-text-secondary)">You</span>' :
+        (u.role==='admin' ? `<button class="btn-sm" onclick="changeUserRole(${u.id},'member')">Demote to Member</button>` :
+        `<button class="btn-sm" onclick="changeUserRole(${u.id},'admin')">Promote to Admin</button>`);
+      return `<tr><td>${u.name} <span style="font-size:11px;color:var(--color-text-secondary)">(${u.username})</span></td><td>${roleBadge}</td><td>${actionBtn}</td></tr>`;
+    }).join('');
+    openModal('manage-roles-modal');
+  } catch(e) { alert('Failed to load users.'); }
+}
+
+async function changeUserRole(userId, newRole){
+  if(!confirm(`Change this user's role to ${newRole}?`)) return;
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/role`, {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ role: newRole })
+    });
+    const data = await res.json();
+    if(data.success){ openManageRoles(); }
+    else { alert(data.message || 'Failed to change role.'); }
+  } catch(e) { alert('Server error.'); }
+}
+
+// Enter key on login fields
+document.getElementById('login-username').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-password').focus(); });
+document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+function showServerWarning(){
+  const msgEl = document.getElementById('server-warning');
+  if(!msgEl) return;
+  if(window.location.protocol === 'file:'){
+    msgEl.style.display = 'block';
+    msgEl.textContent = 'Warning: open this page using http://localhost:3000 to save data. File:// pages cannot persist through the API.';
+  } else {
+    msgEl.style.display = 'none';
+  }
+}
+async function fetchAppState(){
+  try {
+    const res = await fetch(`${API_BASE}/state`, { credentials: 'include' });
+    if(!res.ok) throw new Error('Failed to load app state');
+    const data = await res.json();
+    if(data.state){
+      console.log('Loaded from server. Loans:', data.state.loans?.map(l=>l.id+':'+l.month));
+      state = {...state, ...data.state};
+      if(!state.lockedMonths) state.lockedMonths=[];
+      if(!state.transactions) state.transactions=[];
+      console.log('State after merge. Loans:', state.loans?.map(l=>l.id+':'+l.month));
+    }
+  } catch (err) {
+    console.warn('Unable to load app state from API:', err);
+  }
+}
+async function saveAppState(){
+  try {
+    const res = await fetch(`${API_BASE}/state`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include',
+      body: JSON.stringify({ state })
+    });
+    if(!res.ok) throw new Error('Failed to save app state');
+    return await res.json();
+  } catch (err) {
+    console.warn('Unable to save app state to API:', err);
+    const w=document.getElementById('server-warning');
+    if(w){w.style.display='block';w.textContent='⚠ Save failed! Server may be down. Changes will be lost on refresh.';}
+  }
+}
+async function addTransaction(payload){
+  state.transactions.push(payload);
+  renderRecentTx();
+}
+
+const now=new Date();
+const CUR_KEY=monthKey(MONTHS_LIST[now.getMonth()],now.getFullYear());
+
+let state={
+  members:[
+    {id:5, name:'Mayur'},
+    {id:6, name:'Gagan'},
+    {id:7, name:'Himesh'},
+    {id:8, name:'Vicky'}
+  ],
+  nextMemberId:9,
+  mainBalance:20,
+  loanedOut:209.0925,
+  months:[
+    {key:'April-2024',amount:25,isFuture:false},
+    {key:'May-2024',amount:25,isFuture:false},
+    {key:'June-2024',amount:25,isFuture:false},
+    {key:'July-2024',amount:25,isFuture:false},
+    {key:'August-2024',amount:25,isFuture:false},
+    {key:'September-2024',amount:25,isFuture:false},
+    {key:'October-2024',amount:25,isFuture:false},
+    {key:'November-2024',amount:25,isFuture:false},
+    {key:'December-2024',amount:30,isFuture:false},
+    {key:'January-2025',amount:30,isFuture:false},
+    {key:'February-2025',amount:30,isFuture:false},
+    {key:'March-2025',amount:30,isFuture:false},
+    {key:'April-2025',amount:30,isFuture:false},
+    {key:'May-2025',amount:30,isFuture:false},
+    {key:'June-2025',amount:30,isFuture:false},
+    {key:'July-2025',amount:30,isFuture:false},
+    {key:'August-2025',amount:30,isFuture:false},
+    {key:'September-2025',amount:30,isFuture:false},
+    {key:'October-2025',amount:30,isFuture:false},
+    {key:'November-2025',amount:30,isFuture:false},
+    {key:'December-2025',amount:30,isFuture:false},
+    {key:'January-2026',amount:30,isFuture:false},
+    {key:'February-2026',amount:30,isFuture:false},
+    {key:'March-2026',amount:30,isFuture:false},
+    {key:'April-2026',amount:30,isFuture:false},
+    {key:'May-2026',amount:30,isFuture:true},
+    {key:'June-2026',amount:30,isFuture:true},
+    {key:'July-2026',amount:30,isFuture:true},
+    {key:'August-2026',amount:30,isFuture:true},
+    {key:'September-2026',amount:30,isFuture:true},
+    {key:'October-2026',amount:30,isFuture:true},
+    {key:'November-2026',amount:30,isFuture:true},
+    {key:'December-2026',amount:30,isFuture:true},
+    {key:'January-2027',amount:30,isFuture:true},
+    {key:'February-2027',amount:30,isFuture:true},
+    {key:'March-2027',amount:30,isFuture:true},
+    {key:'April-2027',amount:30,isFuture:true},
+    {key:'May-2027',amount:30,isFuture:true},
+    {key:'June-2027',amount:30,isFuture:true},
+    {key:'July-2027',amount:30,isFuture:true},
+    {key:'August-2027',amount:30,isFuture:true},
+    {key:'September-2027',amount:30,isFuture:true},
+    {key:'October-2027',amount:30,isFuture:true},
+    {key:'November-2027',amount:30,isFuture:true},
+    {key:'December-2027',amount:30,isFuture:true}
+  ],
+  payments:{
+    '5-April-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '6-April-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '7-April-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '8-April-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '5-May-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '6-May-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '7-May-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '8-May-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '5-June-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '6-June-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '7-June-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '8-June-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '5-July-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '6-July-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '7-July-2024':{paid:true,date:'08 Apr 2026',amount:25},
+    '8-July-2024':{paid:true,date:'08 Apr 2026',amount:25}
+  },
+  rateHistory:[
+    {amount:25,fromKey:monthKey('April','2024'),label:'April 2024'},
+    {amount:30,fromKey:monthKey('December','2024'),label:'December 2024'}
+  ],
+  loans:[
+    {id:2,memberId:5,amount:100,rate:2,month:'May-2024',status:'active',emis:[
+      {num:1,principal:25,interest:2,total:27,pending:100,paid:true,date:'08 Apr 2026'},
+      {num:2,principal:25,interest:1.5,total:26.5,pending:75,paid:true,date:'08 Apr 2026'},
+      {num:3,principal:25,interest:1,total:26,pending:50,paid:true,date:'08 Apr 2026'},
+      {num:4,principal:25,interest:0.5,total:25.5,pending:25,paid:false,date:null}
+    ]},
+    {id:3,memberId:6,amount:127,rate:2,month:'June-2024',status:'active',emis:[
+      {num:1,principal:31.75,interest:2.54,total:34.29,pending:127,paid:true,date:'08 Apr 2026'},
+      {num:2,principal:31.75,interest:1.905,total:33.655,pending:95.25,paid:true,date:'08 Apr 2026'},
+      {num:3,principal:31.75,interest:1.27,total:33.02,pending:63.5,paid:false,date:null},
+      {num:4,principal:31.75,interest:0.635,total:32.385,pending:31.75,paid:false,date:null}
+    ]},
+    {id:4,memberId:7,amount:160.79,rate:2,month:'July-2024',status:'active',emis:[
+      {num:1,principal:40.1975,interest:3.2158,total:43.4133,pending:160.79,paid:true,date:'08 Apr 2026'},
+      {num:2,principal:40.1975,interest:2.4118,total:42.6093,pending:120.5925,paid:false,date:null},
+      {num:3,principal:40.1975,interest:1.6079,total:41.8054,pending:80.395,paid:false,date:null},
+      {num:4,principal:40.1975,interest:0.8039,total:41.0014,pending:40.1975,paid:false,date:null}
+    ]}
+  ],
+  nextLoanId:5,
+  transactions:[],
+  lockedMonths:[],
+  activeYear: 2024
+};
+
+function fmt(n){return parseFloat(n||0).toFixed(3);}
+function isMonthFuture(mk){return compareKeys(mk,CUR_KEY)>0;}
+function getWorkingMonth(){
+  // Latest month where all members have paid their installment
+  const sorted=[...state.months].filter(m=>!isMonthFuture(m.key)).sort((a,b)=>compareKeys(b.key,a.key));
+  for(const mo of sorted){
+    const allPaid=state.members.every(m=>isPaid(m.id,mo.key));
+    if(allPaid) return mo.key;
+  }
+  return sorted.length ? sorted[sorted.length-1].key : CUR_KEY;
+}
+function isMonthLocked(mk){return (state.lockedMonths||[]).includes(mk);}
+async function toggleLockMonth(mk){
+  if(!requireAdminAction('lock/unlock months')) return;
+  if(!state.lockedMonths)state.lockedMonths=[];
+  const idx=state.lockedMonths.indexOf(mk);
+  if(idx===-1){state.lockedMonths.push(mk);}
+  else{state.lockedMonths.splice(idx,1);}
+  await saveAppState();
+  renderTracker();
+}
+function getMember(id){return state.members.find(m=>m.id===id);}
+function getActiveLoan(mid){return state.loans.find(l=>l.memberId===mid&&l.status==='active');}
+function getOutstanding(loan){return loan.emis.filter(e=>!e.paid).reduce((a,e)=>a+e.total,0);}
+function getCurrentCollectionMonth(){
+  // Find months with both installments and EMIs, sorted by highest EMI total (peak collection)
+  const monthsWithInstallments = new Set(
+    Object.keys(state.payments)
+      .filter(k => state.payments[k]?.paid)
+      .map(k => k.split('-').slice(1).join('-'))
+  );
+  
+  // Group EMIs by due month and calculate totals
+  const emisByMonth = {};
+  state.loans.flatMap(loan => loan.emis
+    .filter(emi => emi.paid)
+    .map(emi => {
+      const month = emiDueMonth(loan.month, emi.num);
+      if(!emisByMonth[month]) emisByMonth[month] = 0;
+      emisByMonth[month] += emi.total;
+    })
+  );
+  
+  // Find months with both installments and EMIs
+  const monthsWithBoth = [...monthsWithInstallments]
+    .filter(m => emisByMonth[m])
+    .sort((a, b) => {
+      // Sort by EMI total desc (pick month with peak EMI collection)
+      const emiDiff = (emisByMonth[b] || 0) - (emisByMonth[a] || 0);
+      if(emiDiff !== 0) return emiDiff;
+      // If tied, pick latest month
+      return compareKeys(a, b);
+    });
+  
+  if(monthsWithBoth.length){
+    return monthsWithBoth[0];
+  }
+  
+  // Fallback: latest month with installments
+  if(monthsWithInstallments.size){
+    return [...monthsWithInstallments].sort(compareKeys).slice(-1)[0];
+  }
+  
+  return CUR_KEY;
+}
+function addMonthsToMonthKey(key, num){
+  const parsed = parseKey(key);
+  const startIndex = monthIndex(parsed.month);
+  const total = parsed.year * 12 + startIndex + num;
+  const year = Math.floor(total / 12);
+  const month = MONTHS_LIST[total % 12];
+  return monthKey(month, year);
+}
+function emiDueMonth(loanMonth, emiNum){
+  return addMonthsToMonthKey(loanMonth, emiNum - 1);
+}
+function getCurrentMonthCollectionDetails(){
+  const currentMonth = CUR_KEY;
+
+  // Actual installments collected for the current month
+  let currentMonthCollected = 0;
+  state.members.forEach(m => {
+    const pk = payKey(m.id, currentMonth);
+    if(state.payments[pk] && state.payments[pk].paid) currentMonthCollected += state.payments[pk].amount;
+  });
+
+  // Actual EMIs collected for the current month
+  let currentMonthEMI = 0;
+  state.loans.forEach(loan => loan.emis.forEach(emi => {
+    if(emi.paid && emiDueMonth(loan.month, emi.num) === currentMonth) currentMonthEMI += emi.total;
+  }));
+
+  const totalFromMembers = currentMonthCollected + currentMonthEMI;
+  return { currentMonth, currentMonthCollected, currentMonthEMI, totalFromMembers };
+}
+function availableBalance(){
+  // Total cash in: all installments paid + all EMI payments received
+  const totalInstallments = Object.values(state.payments).filter(p=>p.paid).reduce((a,p)=>a+p.amount,0);
+  const totalEmiReceived = state.loans.flatMap(l=>l.emis.filter(e=>e.paid)).reduce((a,e)=>a+e.total,0);
+  // Total cash out: all loans issued + gold purchased
+  const totalLoansIssued = state.loans.reduce((a,l)=>a+l.amount,0);
+  const goldSpent = totalGoldCost();
+  return parseFloat((totalInstallments + totalEmiReceived - totalLoansIssued - goldSpent).toFixed(4));
+}
+function totalGoldGrams(){
+  if(!state.goldTransactions) return 0;
+  return parseFloat(state.goldTransactions.reduce((a,t)=>a+(t.type==='buy'?t.grams:-t.grams),0).toFixed(6));
+}
+function totalGoldCost(){
+  if(!state.goldTransactions) return 0;
+  return parseFloat(state.goldTransactions.reduce((a,t)=>a+(t.type==='buy'?t.totalCost:-t.totalCost),0).toFixed(4));
+}
+function avgGoldPrice(){
+  const grams = totalGoldGrams();
+  const cost = totalGoldCost();
+  return grams > 0 ? parseFloat((cost/grams).toFixed(3)) : 0;
+}
+function currentRate(){return state.rateHistory[state.rateHistory.length-1].amount;}
+function payKey(memberId,monthKey){return memberId+'-'+monthKey;}
+function isPaid(memberId,mk){return !!state.payments[payKey(memberId,mk)];}
+function getMemberPaidMonths(memberId){return Object.keys(state.payments).filter(k=>k.startsWith(memberId+'-')&&state.payments[k]?.paid).length;}
+function getMemberTotalSaved(memberId){
+  return Object.entries(state.payments).filter(([k,v])=>k.startsWith(memberId+'-')&&v.paid).reduce((a,[,v])=>a+v.amount,0);
+}
+function getYears(){
+  const ys=new Set(state.months.map(m=>parseKey(m.key).year));
+  return [...ys].sort();
+}
+
+function monthsForYear(year){
+  return state.months.filter(m=>parseKey(m.key).year===year).sort((a,b)=>compareKeys(a.key,b.key));
+}
+
+function render(){
+  try{renderHero();}catch(e){console.error('renderHero error:',e);}
+  try{renderMetrics();}catch(e){console.error('renderMetrics error:',e);}
+  try{renderPaymentSummary();}catch(e){console.error('renderPaymentSummary error:',e);}
+  try{renderMembersTable();}catch(e){console.error('renderMembersTable error:',e);}
+  try{renderRecentTx();}catch(e){console.error('renderRecentTx error:',e);}
+  try{renderTracker();}catch(e){console.error('renderTracker error:',e);}
+  try{renderLoans();}catch(e){console.error('renderLoans error:',e);}
+  try{renderMembersManage();}catch(e){console.error('renderMembersManage error:',e);}
+  try{renderRateHistory();}catch(e){console.error('renderRateHistory error:',e);}
+  try{renderGold();}catch(e){console.error('renderGold error:',e);}
+  // Always update both member tables for dashboard and Members tab
+  try{renderMembersTable();}catch(e){}
+  try{renderMembersManage();}catch(e){}
+  updateMemberSelect();updateEmiPreview();renderQuickBtns();
+  updateAvailNote();
+  applyRoleRestrictions();
+  const newLoanSection = document.getElementById('new-loan');
+  if(newLoanSection && newLoanSection.classList.contains('active')){
+    const amountInput = document.getElementById('nl-amount');
+    if(amountInput){
+      const avail = availableBalance();
+      amountInput.max = avail;
+      amountInput.value = avail;
+    }
+  }
+}
+
+function renderHero(){
+  const avail = availableBalance();
+  const goldValue = totalGoldCost();
+  const goldGrams = totalGoldGrams();
+  const totalPool = avail + state.loanedOut + goldValue;
+  const pct = totalPool ? Math.round((avail / totalPool) * 100) : 100;
+  const goldLine = goldGrams > 0 ? `<div style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.15);border-radius:20px;font-size:13px">🥇 Gold: <strong>${goldGrams.toFixed(3)}g (${fmt(goldValue)} KD)</strong></div>` : '';
+  document.getElementById('balance-hero').innerHTML=`
+    <div class="balance-hero">
+      <div style="font-size:13px;opacity:0.85;font-weight:500;letter-spacing:0.5px;text-transform:uppercase">Total Pool Balance</div>
+      <div class="bal-big">${fmt(totalPool)} KD</div>
+      <div style="display:flex;justify-content:center;gap:12px;margin-top:14px;font-size:13px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.15);border-radius:20px">💵 Available: <strong>${fmt(avail)} KD</strong></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.15);border-radius:20px">📤 Loaned: <strong>${fmt(state.loanedOut)} KD</strong></div>
+        ${goldLine}
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,0.15);border-radius:20px">👥 Members: <strong>${state.members.length}</strong></div>
+      </div>
+      <div style="margin:14px auto 0;max-width:300px">
+        <div class="prog-bar" style="height:8px;background:rgba(255,255,255,0.2);border:none">
+          <div class="prog-fill" style="width:${pct}%;background:rgba(255,255,255,0.9)"></div>
+        </div>
+        <div style="font-size:11px;opacity:0.7;margin-top:6px">${pct}% available for new loans</div>
+      </div>
+    </div>`;
+}
+
+function renderMetrics(){
+  const totalCollected=Object.values(state.payments).filter(p=>p.paid).reduce((a,p)=>a+p.amount,0);
+  const interestEarned=state.loans.flatMap(l=>l.emis.filter(e=>e.paid)).reduce((a,e)=>a+e.interest,0);
+  const activeLoans=state.loans.filter(l=>l.status==='active').length;
+  const totalUnpaid=state.members.reduce((a,m)=>{
+    return a+state.months.filter(mo=>!isMonthFuture(mo.key)&&!isPaid(m.id,mo.key)).length;
+  },0);
+  const workingMonth=getWorkingMonth();
+  const wmPaid=state.members.filter(m=>isPaid(m.id,workingMonth)).length;
+  const wmTotal=state.members.length;
+  const { currentMonth, currentMonthCollected, currentMonthEMI, totalFromMembers } = getCurrentMonthCollectionDetails();
+
+  // EMIs due this working month
+  let emisDueThisMonth=0;
+  state.loans.forEach(loan=>loan.emis.forEach(emi=>{
+    if(!emi.paid && emiDueMonth(loan.month,emi.num)===workingMonth) emisDueThisMonth++;
+  }));
+  let emisPaidThisMonth=0;
+  state.loans.forEach(loan=>loan.emis.forEach(emi=>{
+    if(emi.paid && emiDueMonth(loan.month,emi.num)===workingMonth) emisPaidThisMonth++;
+  }));
+
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">📅 Working Month</div><div class="metric-value blue">${keyToLabel(workingMonth)}</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px">Installments: ${wmPaid}/${wmTotal} paid${emisDueThisMonth+emisPaidThisMonth>0?` · EMIs: ${emisPaidThisMonth}/${emisPaidThisMonth+emisDueThisMonth} collected`:''}</div></div>
+    <div class="metric"><div class="metric-label">💰 Total Collected</div><div class="metric-value green">${fmt(totalCollected)} KD</div></div>
+    <div class="metric"><div class="metric-label">⚠️ Unpaid</div><div class="metric-value red">${totalUnpaid}</div></div>
+    <div class="metric"><div class="metric-label">📋 Active Loans</div><div class="metric-value amber">${activeLoans}</div></div>
+    <div class="metric"><div class="metric-label">📈 Interest Earned</div><div class="metric-value green">${fmt(interestEarned)} KD</div></div>`;
+}
+
+function renderPaymentSummary(){
+  const wm = getWorkingMonth();
+  const wmMonth = state.months.find(m=>m.key===wm);
+  const contribAmt = wmMonth ? wmMonth.amount : 0;
+  const el = document.getElementById('payment-summary');
+  const titleEl = document.getElementById('payment-summary-title');
+  const subEl = document.getElementById('payment-summary-subtitle');
+  if(titleEl) titleEl.textContent = `Payment summary — ${keyToLabel(wm)}`;
+  if(subEl) subEl.textContent = `What each member needs to pay this month (Contribution + EMI)`;
+
+  let grandTotal = 0;
+  let rows = state.members.map(m => {
+    const contribPaid = isPaid(m.id, wm);
+    // Find next unpaid EMI for this member from any active loan (overdue, current, or upcoming)
+    let emiInfo = null;
+    state.loans.forEach(loan => {
+      if(loan.memberId !== m.id || loan.status !== 'active') return;
+      loan.emis.forEach(emi => {
+        if(emi.paid) return;
+        const due = emiDueMonth(loan.month, emi.num);
+        if(!emiInfo || compareKeys(due, emiInfo.dueMonth) < 0) {
+          emiInfo = { principal: emi.principal, interest: emi.interest, total: emi.total, emiNum: emi.num, loanAmount: loan.amount, dueMonth: due };
+        }
+      });
+    });
+    // Check if EMI for working month was already paid
+    let emiPaidInfo = null;
+    state.loans.forEach(loan => {
+      if(loan.memberId !== m.id) return;
+      loan.emis.forEach(emi => {
+        if(emiDueMonth(loan.month, emi.num) === wm && emi.paid) {
+          emiPaidInfo = { principal: emi.principal, interest: emi.interest, total: emi.total, emiNum: emi.num, loanAmount: loan.amount, dueMonth: wm };
+        }
+      });
+    });
+
+    const memberTotal = (!contribPaid ? contribAmt : 0) + (emiInfo ? emiInfo.total : 0);
+    const fullTotal = contribAmt + (emiInfo ? emiInfo.total : (emiPaidInfo ? emiPaidInfo.total : 0));
+    grandTotal += fullTotal;
+    const allDone = contribPaid && !emiInfo;
+
+    // Contribution row
+    let contribHtml = contribPaid
+      ? `<span class="badge badge-green" style="font-size:11px">✓ Paid</span>`
+      : `<span class="red" style="font-weight:500">${fmt(contribAmt)} KD</span>`;
+
+    // EMI row
+    let emiHtml = '';
+    if(emiInfo) {
+      emiHtml = `<div style="margin-top:4px;font-size:12px;padding:6px 8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>EMI #${emiInfo.emiNum} <span style="color:var(--color-text-secondary)">(Loan ${fmt(emiInfo.loanAmount)} KD)</span></span>
+          <span class="red" style="font-weight:500">${fmt(emiInfo.total)} KD</span>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Principal: ${fmt(emiInfo.principal)} KD + Interest: ${fmt(emiInfo.interest)} KD</div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">📅 Due: ${keyToLabel(emiInfo.dueMonth)}</div>
+      </div>`;
+    } else if(emiPaidInfo) {
+      emiHtml = `<div style="margin-top:4px;font-size:12px;padding:6px 8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span>EMI #${emiPaidInfo.emiNum} <span style="color:var(--color-text-secondary)">(Loan ${fmt(emiPaidInfo.loanAmount)} KD)</span></span>
+          <span class="badge badge-green" style="font-size:11px">✓ Paid</span>
+        </div>
+        <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">Principal: ${fmt(emiPaidInfo.principal)} KD + Interest: ${fmt(emiPaidInfo.interest)} KD</div>
+      </div>`;
+    }
+
+    const statusIcon = allDone
+      ? '<span style="color:var(--color-text-success);font-size:18px" title="All paid">✅</span>'
+      : '<span style="color:var(--color-text-danger);font-size:18px" title="Payment pending">⏳</span>';
+
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:8px;${allDone?'opacity:0.7':''}">
+      <div style="flex-shrink:0;padding-top:2px">${statusIcon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <strong>${m.name}</strong>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--color-text-secondary)">Total</div>
+            <div style="font-weight:600;font-size:15px;${allDone?'color:var(--color-text-success)':'color:var(--color-text-primary)'}">${allDone?'All clear':fmt(fullTotal)+' KD'}</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+          <span>Contribution (${fmt(contribAmt)} KD)</span>
+          ${contribHtml}
+        </div>
+        ${emiHtml}
+        ${memberTotal > 0 ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--color-border-tertiary);display:flex;justify-content:space-between;font-size:13px;font-weight:600">
+          <span>Due now</span>
+          <span class="red">${fmt(memberTotal)} KD</span>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Grand total footer
+  const totalDue = state.members.reduce((a,m) => {
+    let due = isPaid(m.id,wm) ? 0 : contribAmt;
+    state.loans.forEach(loan => {
+      if(loan.memberId !== m.id || loan.status !== 'active') return;
+      loan.emis.forEach(emi => {
+        if(emiDueMonth(loan.month, emi.num) === wm && !emi.paid) due += emi.total;
+      });
+    });
+    return a + due;
+  }, 0);
+
+  rows += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);margin-top:4px">
+    <div>
+      <div style="font-weight:600">Total expected: <span style="color:var(--color-text-primary)">${fmt(grandTotal)} KD</span></div>
+      <div style="font-size:12px;color:var(--color-text-secondary)">Contribution: ${fmt(contribAmt * state.members.length)} KD + EMIs from borrowers</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:12px;color:var(--color-text-secondary)">Still pending</div>
+      <div style="font-weight:600;font-size:16px;${totalDue > 0 ? 'color:var(--color-text-danger)' : 'color:var(--color-text-success)'}">${totalDue > 0 ? fmt(totalDue)+' KD' : 'All collected ✓'}</div>
+    </div>
+  </div>`;
+
+  el.innerHTML = rows;
+}
+
+function memberAvatar(m, size){
+  size = size || 36;
+  if(m.photo){
+    return `<img src="${m.photo}" alt="${m.name}" class="avatar" style="width:${size}px;height:${size}px">`;
+  }
+  const initials = m.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  return `<div class="avatar avatar-placeholder" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.38)}px">${initials}</div>`;
+}
+
+function previewMemberPhoto(input, previewId){
+  const preview = document.getElementById(previewId);
+  if(!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  if(file.size > 500 * 1024){ alert('Image must be under 500 KB.'); input.value=''; return; }
+  if(!file.type.startsWith('image/')){ alert('Please select an image file.'); input.value=''; return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    // Resize to max 150px to keep data.json small
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      const max = 150;
+      let w = img.width, h = img.height;
+      if(w > max || h > max){
+        if(w > h){ h = Math.round(h * max / w); w = max; }
+        else { w = Math.round(w * max / h); h = max; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+      preview.innerHTML = `<img src="${dataUrl}">`;
+      preview.dataset.photoData = dataUrl;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeMemberPhoto(prefix){
+  const preview = document.getElementById(prefix + '-member-photo-preview');
+  if(preview){
+    preview.innerHTML = '<span style="font-size:28px;color:var(--color-text-secondary)">📷</span>';
+    delete preview.dataset.photoData;
+    preview.dataset.photoRemoved = 'true';
+  }
+  const input = document.getElementById(prefix + '-member-photo');
+  if(input) input.value = '';
+}
+
+function openAddMemberModal(){
+  document.getElementById('new-member-name').value='';
+  document.getElementById('new-member-phone').value='';
+  document.getElementById('new-member-email').value='';
+  document.getElementById('new-member-address').value='';
+  document.getElementById('new-member-photo').value='';
+  const preview = document.getElementById('new-member-photo-preview');
+  preview.innerHTML='<span style="font-size:28px;color:var(--color-text-secondary)">📷</span>';
+  delete preview.dataset.photoData;
+  openModal('add-member-modal');
+}
+
+function renderMembersTable(){
+  document.getElementById('members-table').innerHTML=state.members.map(m=>{
+    const paidCount=getMemberPaidMonths(m.id);
+    const totalMonths=state.months.filter(mo=>!isMonthFuture(mo.key)).length;
+    const unpaid=totalMonths-paidCount;
+    const loan=getActiveLoan(m.id);
+    return `<tr>
+      <td>${m.name}</td>
+      <td>${fmt(getMemberTotalSaved(m.id))} KD</td>
+      <td><span class="badge badge-green">${paidCount} months</span></td>
+      <td>${unpaid>0?`<span class="badge badge-red">${unpaid} pending</span>`:'<span class="badge badge-gray">All clear</span>'}</td>
+      <td>${loan?loan.amount+' KD':'—'}</td>
+      <td>${loan?'<span class="badge badge-amber">Active loan</span>':'<span class="badge badge-green">Clear</span>'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="6" style="color:var(--color-text-secondary)">No members</td></tr>';
+}
+
+function renderRecentTx(){
+  const recent=[...state.transactions].reverse().slice(0,10);
+  document.getElementById('recent-tx').innerHTML=recent.length?recent.map(tx=>{
+    const isIn=tx.type==='installment'||tx.type==='emi_return';
+    const isOut=tx.type==='loan'||tx.type==='loan_deletion'||tx.type==='emi_reversal'||tx.type==='installment_reversal';
+    const dot=isIn?'#059669':tx.type==='loan'?'#D97706':(tx.type==='loan_deletion'||tx.type==='emi_reversal'||tx.type==='installment_reversal')?'#6366F1':'#DC2626';
+    const amountClass = isIn ? 'green' : (tx.type === 'loan_deletion' || tx.type === 'emi_reversal' || tx.type === 'installment_reversal') ? 'blue' : tx.type === 'loan' ? 'amber' : 'red';
+    const sign = isIn ? '+' : '-';
+    return `<div class="timeline-item">
+      <div class="tl-dot" style="background:${dot}"></div>
+      <div class="tl-body"><div class="tl-title">${tx.desc}</div><div class="tl-sub">${tx.date}</div></div>
+      <div class="tl-amt ${amountClass}">${sign}${fmt(Math.abs(tx.amount))} KD</div>
+    </div>`;
+  }).join(''):'<div class="empty-state"><div class="empty-state-icon">📝</div><div class="empty-state-text">No transactions yet</div></div>';
+}
+
+function renderTracker(){
+  renderYearFilter();
+  const year=state.activeYear;
+  const yearMonths=monthsForYear(year);
+  if(!yearMonths.length){
+    document.getElementById('tracker-grid').innerHTML='<tr><td style="padding:2rem;color:var(--color-text-secondary)">No months set up for this year. Use "Setup months" to add them.</td></tr>';
+    renderTrackerSummary(yearMonths);
+    return;
+  }
+  // header
+  const workingMonth=getWorkingMonth();
+  let html=`<thead><tr>
+    <th class="member-col">Member</th>
+    ${yearMonths.map(m=>{
+      const p=parseKey(m.key);
+      const locked=isMonthLocked(m.key);
+      const isCurrent=m.key===workingMonth;
+      const future=isMonthFuture(m.key);
+      return `<th class="${locked?'locked-col':''} ${isCurrent?'current-month-header':''}">${p.month.slice(0,3)}<br><span style="font-weight:400;color:var(--color-text-secondary);font-size:10px">${m.amount} KD</span>${!future&&isAdmin()?`<br><button class="lock-btn" title="${locked?'Unlock':'Lock'} this month" onclick="toggleLockMonth('${m.key}')">${locked?'🔒':'🔓'}</button>`:''}</th>`;
+    }).join('')}
+    <th>Paid</th><th>Pending</th><th>Total (KD)</th>
+  </tr></thead><tbody>`;
+  // member rows
+  state.members.forEach(m=>{
+    html+=`<tr><td class="member-name">${m.name}</td>`;
+    let paidCount=0,pendingCount=0,totalPaid=0;
+    yearMonths.forEach(mo=>{
+      const paid=isPaid(m.id,mo.key);
+      const locked=isMonthLocked(mo.key);
+      const future=isMonthFuture(mo.key);
+      const isCurrent=mo.key===workingMonth;
+      const currentClass=isCurrent?' current-month':'';
+      if(future){
+        html+=`<td><span class="pay-cell future" title="Future">–</span></td>`;
+      } else if(locked && paid){
+        paidCount++;totalPaid+=state.payments[payKey(m.id,mo.key)].amount;
+        html+=`<td class="locked-col"><span class="pay-cell paid locked${currentClass}" title="Month locked">✓</span></td>`;
+      } else if(locked && !paid){
+        pendingCount++;
+        html+=`<td class="locked-col"><span class="pay-cell unpaid locked${currentClass}" title="Month locked">✗</span></td>`;
+      } else if(paid){
+        paidCount++;totalPaid+=state.payments[payKey(m.id,mo.key)].amount;
+        html+=isAdmin()?`<td><span class="pay-cell paid${currentClass}" title="Click to unmark payment" onclick="quickMarkPaid(${m.id},'${mo.key}')" style="cursor:pointer">✓</span></td>`:`<td><span class="pay-cell paid${currentClass}">✓</span></td>`;
+      } else {
+        pendingCount++;
+        html+=isAdmin()?`<td><span class="pay-cell unpaid${currentClass}" title="Click to mark paid" onclick="quickMarkPaid(${m.id},'${mo.key}')">✗</span></td>`:`<td><span class="pay-cell unpaid${currentClass}">✗</span></td>`;
+      }
+    });
+    html+=`<td><span class="badge badge-green" style="font-size:11px">${paidCount}</span></td>
+      <td>${pendingCount>0?`<span class="badge badge-red" style="font-size:11px">${pendingCount}</span>`:'<span class="badge badge-gray" style="font-size:11px">0</span>'}</td>
+      <td><strong>${fmt(totalPaid)}</strong></td></tr>`;
+  });
+  // totals row
+  html+=`<tr class="summary-row"><td class="member-name" style="background:var(--color-background-secondary)">Month total</td>`;
+  let grandTotal=0;
+  yearMonths.forEach(mo=>{
+    const monthTotal=state.members.reduce((a,m)=>{
+      const p=state.payments[payKey(m.id,mo.key)];
+      return a+(p&&p.paid?p.amount:0);
+    },0);
+    grandTotal+=monthTotal;
+    html+=`<td class="month-total">${monthTotal>0?fmt(monthTotal):'—'}</td>`;
+  });
+  html+=`<td colspan="2"></td><td style="font-weight:500">${fmt(grandTotal)}</td></tr>`;
+  html+=`</tbody>`;
+  document.getElementById('tracker-grid').innerHTML=html;
+  renderTrackerSummary(yearMonths);
+}
+
+function renderTrackerSummary(yearMonths){
+  const year=state.activeYear;
+  const totalExpected=yearMonths.filter(m=>!isMonthFuture(m.key)).reduce((a,m)=>a+m.amount*state.members.length,0);
+  const totalCollected=yearMonths.reduce((a,m)=>{
+    return a+state.members.reduce((b,mem)=>{
+      const p=state.payments[payKey(mem.id,m.key)];
+      return b+(p&&p.paid?p.amount:0);
+    },0);
+  },0);
+  const totalPending=totalExpected-totalCollected;
+  document.getElementById('tracker-summary').innerHTML=`
+    <div class="hbox">
+      <span>${year} expected: <strong>${fmt(totalExpected)} KD</strong></span>
+      <span class="green">Collected: <strong>${fmt(totalCollected)} KD</strong></span>
+      <span class="red">Pending: <strong>${fmt(totalPending)} KD</strong></span>
+      <span style="color:var(--color-text-secondary)">Collection rate: <strong>${totalExpected?Math.round((totalCollected/totalExpected)*100):0}%</strong></span>
+    </div>`;
+}
+
+function renderYearFilter(){
+  const years=getYears();
+  document.getElementById('year-filter').innerHTML=years.map(y=>
+    `<button class="year-btn${y===state.activeYear?' sel':''}" onclick="setYear(${y})">${y}</button>`
+  ).join('');
+}
+
+function setYear(y){state.activeYear=y;renderTracker();}
+
+async function quickMarkPaid(memberId,mk){
+  try {
+  if(!isAdmin()){alert('Only admins can modify payments.');return;}
+  if(isMonthLocked(mk)){alert('This month is locked. Unlock it first to make changes.');return;}
+  const mo=state.months.find(m=>m.key===mk);
+  if(!mo||isMonthFuture(mo.key))return;
+  const pk=payKey(memberId,mk);
+  const m=getMember(memberId);
+  const alreadyPaid = !!state.payments[pk];
+
+  if(alreadyPaid){
+    // Unmark payment
+    delete state.payments[pk];
+    await addTransaction({
+      type:'installment_reversal',
+      amount:-mo.amount,
+      desc:`${m.name} unpaid installment for ${keyToLabel(mk)}`,
+      date:new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
+    });
+  } else {
+    // Mark as paid
+    state.payments[pk]={paid:true,date:new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),amount:mo.amount};
+    await addTransaction({
+      type:'installment',
+      amount:mo.amount,
+      desc:`${m.name} paid installment for ${keyToLabel(mk)}`,
+      date:new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
+    });
+  }
+  await saveAppState();
+  render();
+  } catch(err) {
+    console.error('Error toggling payment:', err);
+    render();
+  }
+}
+
+async function setupMonths(){
+  if(!requireAdminAction('setup months')) return;
+  const fromSel=document.getElementById('setup-from').value;
+  const toSel=document.getElementById('setup-to').value;
+  const amount=parseFloat(document.getElementById('setup-amount').value)||30;
+  if(!fromSel||!toSel){alert('Select from and to months.');return;}
+  if(compareKeys(fromSel,toSel)>0){alert('From must be before To.');return;}
+  // generate all months between, always update amount and isFuture for the range
+  let cur=fromSel;
+  let added=0;
+  while(compareKeys(cur,toSel)<=0){
+    const isFuture=compareKeys(cur,CUR_KEY)>0;
+    const idx = state.months.findIndex(m=>m.key===cur);
+    if(idx === -1){
+      state.months.push({key:cur,amount,isFuture});
+    } else {
+      // Always update amount and isFuture for existing months in the range
+      state.months[idx].amount = amount;
+      state.months[idx].isFuture = isFuture;
+    }
+    // advance month
+    const p=parseKey(cur);
+    const d=new Date(p.year,monthIndex(p.month)+1,1);
+    cur=monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear());
+    if(++added>60)break;
+  }
+  state.months.sort((a,b)=>compareKeys(a.key,b.key));
+  closeModal('setup-months-modal');
+  const years=getYears();
+  if(years.length)state.activeYear=years[0];
+  await saveAppState();
+  render();
+}
+
+async function markPaymentFromModal(){
+  const btn = document.querySelector('#mark-payment-modal .primary');
+  if(btn) btn.disabled = true;
+  const memberId=parseInt(document.getElementById('mp-member').value);
+  const mk=document.getElementById('mp-month').value;
+  if(!memberId||!mk){alert('Select member and month.');return;}
+  await quickMarkPaid(memberId,mk);
+  closeModal('mark-payment-modal');
+}
+
+async function changeRate(){
+  if(!requireAdminAction('change contribution rate')) return;
+  const amount=parseFloat(document.getElementById('new-rate').value);
+  const fromKey=document.getElementById('new-rate-month').value;
+  if(!amount||amount<=0){alert('Enter a valid amount.');return;}
+  state.rateHistory.push({amount,fromKey,label:keyToLabel(fromKey)});
+  // update future months amount
+  state.months.forEach(m=>{if(compareKeys(m.key,fromKey)>=0)m.amount=amount;});
+  closeModal('change-rate-modal');
+  await saveAppState();
+  render();
+}
+
+function calcEMIs(principal,rate,num){
+  let emis=[],pending=principal;
+  const base=parseFloat((principal/num).toFixed(4));
+  for(let i=1;i<=num;i++){
+    const interest=parseFloat((pending*rate/100).toFixed(4));
+    const thisPrincipal=i===num?parseFloat(pending.toFixed(4)):base;
+    const total=parseFloat((thisPrincipal+interest).toFixed(4));
+    emis.push({num:i,principal:thisPrincipal,interest,total,pending:parseFloat(pending.toFixed(4)),paid:false,date:null});
+    pending=parseFloat((pending-thisPrincipal).toFixed(4));
+  }
+  return emis;
+}
+
+let loanStatusFilter='active';
+function setLoanFilter(f){
+  loanStatusFilter=f;
+  document.querySelectorAll('.loan-filter-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('lf-'+f)?.classList.add('sel');
+  renderLoans();
+}
+
+function renderLoans(){
+  const el=document.getElementById('loans-list');
+  // Update member filter dropdown
+  const mfSel=document.getElementById('loan-member-filter');
+  if(mfSel){
+    const cur=mfSel.value;
+    mfSel.innerHTML='<option value="">All members</option>'+state.members.map(m=>`<option value="${m.id}"${cur==m.id?' selected':''}>${m.name}</option>`).join('');
+  }
+  const memberFilter=mfSel?parseInt(mfSel.value)||0:0;
+  
+  // Apply filters
+  let filtered=state.loans;
+  if(loanStatusFilter==='active') filtered=filtered.filter(l=>l.status==='active');
+  else if(loanStatusFilter==='closed') filtered=filtered.filter(l=>l.status==='closed');
+  if(memberFilter) filtered=filtered.filter(l=>l.memberId===memberFilter);
+  
+  // Update count
+  const countEl=document.getElementById('loan-filter-count');
+  if(countEl) countEl.textContent=`Showing ${filtered.length} of ${state.loans.length} loans`;
+  
+  if(!filtered.length){el.innerHTML=`<div class="card" style="text-align:center;padding:2.5rem"><div class="empty-state-icon" style="font-size:48px;margin-bottom:12px;opacity:0.5">💰</div><div style="color:var(--color-text-secondary)">${state.loans.length?'No loans match the current filter.':'No loans issued yet.'}</div></div>`;return;}
+  el.innerHTML=filtered.map(loan=>{
+    const m=getMember(loan.memberId);
+    const paid=loan.emis.filter(e=>e.paid).length;
+    const total=loan.emis.length;
+    const pct=Math.round((paid/total)*100);
+    const isClosed=loan.status==='closed';
+    const sb=isClosed?'<span class="badge badge-green">Closed ✓</span>':'<span class="badge badge-amber">Active</span>';
+    const rows=loan.emis.map(e=>{
+      const dueMonth = emiDueMonth(loan.month, e.num);
+      let payBtn='—';
+      if(isAdmin()){
+        payBtn='';
+        if(!isClosed){
+          payBtn=!e.paid?`<button class="btn-sm" onclick="openPayEmi(${loan.id},${e.num})">Collect</button>`:
+            `<button class="btn-sm" style="color:var(--color-text-warning)" onclick="markEmiNotDone(${loan.id},${e.num})">Not Done</button>`;
+        }
+        payBtn+=` <button class="btn-sm" onclick="editEmi(${loan.id},${e.num})" title="Edit EMI">✏️</button>`;
+      }
+      const emiStatus = e.paid ? '<span style="color:var(--color-text-success);font-weight:500">✓ Paid</span>' : '<span style="color:var(--color-text-danger);font-weight:500">Pending</span>';
+      return `<div class="emi-row"><div>EMI ${e.num}</div><div>${fmt(e.principal)} KD</div><div class="amber">${fmt(e.interest)} KD</div><div style="font-weight:500">${fmt(e.total)} KD</div><div>${keyToLabel(dueMonth)}</div><div>${emiStatus}</div><div>${e.date||'—'}</div><div>${payBtn}</div></div>`;
+    }).join('');
+    const closedBanner=isClosed?`<div style="background:var(--color-background-success);color:var(--color-text-success);padding:8px 12px;border-radius:var(--border-radius-md);font-size:13px;margin-bottom:14px;text-align:center;font-weight:500">🎉 Loan fully repaid — All ${total} EMIs collected</div>`:'';
+    const totalInterest=loan.emis.reduce((a,e)=>a+e.interest,0);
+    const totalRepay=loan.emis.reduce((a,e)=>a+e.total,0);
+    return `<div class="card" style="${isClosed?'opacity:0.85;border-left:3px solid var(--color-text-success)':''}">
+      ${closedBanner}
+      <div style="display:grid;grid-template-columns:1fr auto;gap:16px;margin-bottom:14px">
+        <div>
+          <div style="font-weight:500;font-size:16px;margin-bottom:6px">${m?.name} ${sb}</div>
+          <div style="font-size:12px;color:var(--color-text-secondary);display:grid;grid-template-columns:auto auto auto auto;gap:20px">
+            <div>Loan: <strong>${fmt(loan.amount)} KD</strong></div>
+            <div>EMIs: <strong>${loan.emis.length}mo</strong></div>
+            <div>Rate: <strong>${loan.rate}%</strong></div>
+            <div>Started: <strong>${loan.month}</strong>${!isClosed&&isAdmin()?` <button class="btn-sm" onclick="editLoanStartDate(${loan.id})" title="Edit start date">✏️</button>`:''}</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:8px">${paid}/${total} paid</div>
+          ${!isClosed&&isAdmin()?`<button class="btn-sm" style="color:var(--color-text-danger)" onclick="deleteLoan(${loan.id})">Delete loan</button>`:''}
+        </div>
+      </div>
+      <div class="prog-bar" style="margin-bottom:14px"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div style="margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);font-size:12px;border:1px solid var(--color-border-tertiary)">
+          <div style="color:var(--color-text-secondary);margin-bottom:4px;font-weight:500">Outstanding</div>
+          <div class="${isClosed?'green':'red'}" style="font-weight:600;font-size:15px">${isClosed?'0.000':fmt(getOutstanding(loan))} KD</div>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);font-size:12px;border:1px solid var(--color-border-tertiary)">
+          <div style="color:var(--color-text-secondary);margin-bottom:4px;font-weight:500">Total Interest</div>
+          <div class="amber" style="font-weight:600;font-size:15px">${fmt(totalInterest)} KD</div>
+        </div>
+        <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);font-size:12px;border:1px solid var(--color-border-tertiary)">
+          <div style="color:var(--color-text-secondary);margin-bottom:4px;font-weight:500">Total Repay</div>
+          <div style="font-weight:600;font-size:15px">${fmt(totalRepay)} KD</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-tertiary)">
+        <div class="emi-row emi-header" style="background:var(--color-background-secondary)"><div>EMI</div><div>Principal</div><div>Interest</div><div>Total</div><div>Due</div><div>Status</div><div>Paid Date</div><div></div></div>
+        ${rows}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMembersManage(){
+  document.getElementById('members-manage').innerHTML=state.members.map(m=>`<tr>
+    <td style="width:44px">${memberAvatar(m,36)}</td>
+    <td>${m.name}</td>
+    <td>${getMemberPaidMonths(m.id)}</td>
+    <td>${fmt(getMemberTotalSaved(m.id))} KD</td>
+    <td>${state.loans.filter(l=>l.memberId===m.id).length}</td>
+    <td>${isAdmin()?`<button class="btn-sm" onclick="editMember(${m.id})">Edit</button> <button class="btn-sm" style="color:var(--color-text-danger)" onclick="removeMember(${m.id})">Remove</button>`:''}</td>
+  </tr>`).join('');
+}
+
+function renderRateHistory(){
+  // Sort rate history by date for display
+  const sortedRates = [...state.rateHistory].sort((a, b) => {
+    if(!a.fromKey) return -1;
+    if(!b.fromKey) return 1;
+    return compareKeys(a.fromKey, b.fromKey);
+  });
+  
+  document.getElementById('rate-history').innerHTML=sortedRates.map((r, displayIndex)=> {
+    // Find the actual index in the original array
+    const actualIndex = state.rateHistory.findIndex(rate => rate === r);
+    const canDelete = canDeleteRateHistory(actualIndex);
+    const deleteButton = canDelete && isAdmin() ? `<button class="btn-sm" style="color:var(--color-text-danger)" onclick="deleteRateHistory(${actualIndex})">Delete</button>` : '';
+    return `<tr>
+      <td>${r.fromKey?keyToLabel(r.fromKey):'Start'}</td>
+      <td>${r.amount} KD</td>
+      <td>${state.members.length*r.amount} KD</td>
+      <td>${deleteButton}</td>
+    </tr>`;
+  }).join('');
+}
+
+function canDeleteRateHistory(index){
+  if(state.rateHistory.length <= 1) return false; // Must keep at least one rate entry
+  
+  const rateEntry = state.rateHistory[index];
+  const nextRateEntry = state.rateHistory[index + 1];
+  const endKey = nextRateEntry ? nextRateEntry.fromKey : null;
+  
+  // Check if any payments exist for months under this rate
+  for(const month of state.months){
+    if(!rateEntry.fromKey || compareKeys(month.key, rateEntry.fromKey) >= 0){
+      if(endKey && compareKeys(month.key, endKey) >= 0) continue;
+      
+      // Check if any member has paid for this month
+      for(const member of state.members){
+        if(isPaid(member.id, month.key)){
+          return false; // Found a payment, cannot delete
+        }
+      }
+    }
+  }
+  
+  return true; // No payments found, can delete
+}
+
+async function deleteRateHistory(index){
+  if(!requireAdminAction('delete rate history')) return;
+  if(!canDeleteRateHistory(index)){
+    alert('Cannot delete this rate history: payments have been made under this rate.');
+    return;
+  }
+  
+  if(!confirm('Are you sure you want to delete this contribution rate? This will update future months to use the appropriate remaining rate.')) return;
+  
+  // Remove the rate history entry
+  state.rateHistory.splice(index, 1);
+  
+  // Recalculate month amounts based on remaining rate history
+  for(const month of state.months){
+    for(const rate of state.rateHistory.slice().reverse()){
+      if(!rate.fromKey || compareKeys(month.key, rate.fromKey) >= 0){
+        month.amount = rate.amount;
+        break;
+      }
+    }
+  }
+  
+  await saveAppState();
+  render();
+}
+
+function renderQuickBtns(){
+  const cur=parseInt(document.getElementById('nl-emis')?.value)||4;
+  const el=document.getElementById('emi-quick-btns');
+  if(el)el.innerHTML=QUICK_EMIS.map(n=>`<button class="emi-btn${n===cur?' sel':''}" onclick="setEmiCount(${n})">${n} months</button>`).join('');
+}
+function setEmiCount(n){document.getElementById('nl-emis').value=n;updateEmiPreview();renderQuickBtns();}
+
+function updateMemberSelect(){
+  const sel=document.getElementById('nl-member');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">Select member</option>'+state.members.map(m=>`<option value="${m.id}"${cur==m.id?' selected':''}>${m.name}</option>`).join('');
+}
+
+function updateAvailNote(){
+  const el=document.getElementById('available-balance-note');if(!el)return;
+  const workingMonth=getWorkingMonth();
+  const avail = availableBalance();
+  const totalPool = avail + state.loanedOut;
+  
+  // Working month installment status
+  const wmPaid=state.members.filter(m=>isPaid(m.id,workingMonth)).length;
+  const wmTotal=state.members.length;
+  // Working month EMI status
+  let emisDue=[], emisPaid=[];
+  state.loans.forEach(loan=>loan.emis.forEach(emi=>{
+    const dm=emiDueMonth(loan.month,emi.num);
+    if(dm===workingMonth){
+      const member=getMember(loan.memberId);
+      if(emi.paid) emisPaid.push(member?.name);
+      else emisDue.push(member?.name);
+    }
+  }));
+  
+  el.innerHTML=`<div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;font-size:12px">
+    <div style="margin-bottom:8px"><strong>📍 Working Month: ${keyToLabel(workingMonth)}</strong></div>
+    <div>Installments: <strong>${wmPaid}/${wmTotal}</strong> members paid${wmPaid<wmTotal?` · <span class="red">Pending: ${state.members.filter(m=>!isPaid(m.id,workingMonth)).map(m=>m.name).join(', ')}</span>`:' · <span class="green">All paid ✓</span>'}</div>
+    ${emisDue.length||emisPaid.length?`<div style="margin-top:4px">EMIs due: <strong>${emisPaid.length}/${emisPaid.length+emisDue.length}</strong> collected${emisDue.length?` · <span class="amber">Pending: ${emisDue.join(', ')}</span>`:' · <span class="green">All collected ✓</span>'}</div>`:''}
+    <div style="margin-top:8px;color:var(--color-text-secondary)">Available: <strong class="green">${fmt(avail)} KD</strong> | Loaned out: <strong class="amber">${fmt(state.loanedOut)} KD</strong> | Total Pool: <strong>${fmt(totalPool)} KD</strong></div>
+  </div>`;
+}
+
+function updateEmiPreview(){
+  const amount=parseFloat(document.getElementById('nl-amount')?.value)||0;
+  const rate=parseFloat(document.getElementById('nl-rate')?.value)||2;
+  const numEmis=parseInt(document.getElementById('nl-emis')?.value)||4;
+  const avail=availableBalance();
+  if(!amount){document.getElementById('emi-preview').innerHTML='<p style="font-size:13px;color:var(--color-text-secondary)">Enter a loan amount.</p>';return;}
+  const emis=calcEMIs(amount,rate,numEmis);
+  const totalRepay=emis.reduce((a,e)=>a+e.total,0);
+  const totalInt=emis.reduce((a,e)=>a+e.interest,0);
+  const warn=amount>avail?`<div style="background:var(--color-background-danger);color:var(--color-text-danger);padding:8px 12px;border-radius:var(--border-radius-md);font-size:13px;margin-bottom:10px">Exceeds available balance (${fmt(avail)} KD)</div>`:'';
+  document.getElementById('emi-preview').innerHTML=warn+`
+    <div class="emi-row emi-header"><div>EMI</div><div>Principal</div><div>Interest</div><div>Total</div><div>Pending before</div><div></div></div>
+    ${emis.map(e=>`<div class="emi-row"><div>EMI ${e.num}</div><div>${fmt(e.principal)} KD</div><div class="amber">${fmt(e.interest)} KD</div><div style="font-weight:500">${fmt(e.total)} KD</div><div style="color:var(--color-text-secondary)">${fmt(e.pending)} KD</div><div></div></div>`).join('')}
+    <div class="hbox"><span>Total repayment: <strong>${fmt(totalRepay)} KD</strong></span><span class="amber">Total interest: <strong>${fmt(totalInt)} KD</strong></span></div>`;
+}
+
+async function issueLoan(){
+  if(!requireAdminAction('issue loans')) return;
+  const memberId=parseInt(document.getElementById('nl-member').value);
+  const amount=parseFloat(document.getElementById('nl-amount').value);
+  const rate=parseFloat(document.getElementById('nl-rate').value);
+  const numEmis=parseInt(document.getElementById('nl-emis').value);
+  const month=document.getElementById('nl-month').value;
+  if(!memberId){alert('Select a member.');return;}
+  if(!amount||amount<=0){alert('Enter a valid amount.');return;}
+  if(amount>availableBalance()){alert(`Not enough balance. Available: ${fmt(availableBalance())} KD`);return;}
+  if(getActiveLoan(memberId)){alert('Member already has an active loan.');return;}
+  if(!numEmis||numEmis<1){alert('Enter valid EMI count.');return;}
+  const loan={id:state.nextLoanId++,memberId,amount,rate,month,status:'active',emis:calcEMIs(amount,rate,numEmis)};
+  state.loans.push(loan);
+  state.loanedOut=parseFloat((state.loanedOut+amount).toFixed(4));
+  await addTransaction({
+    type:'loan',
+    amount,
+    desc:`Loan to ${getMember(memberId).name} · ${numEmis} EMIs @ ${rate}%`,
+    date:new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})
+  });
+  await saveAppState();
+  render();showTab('loans');
+}
+
+let pendingPay=null;
+function openPayEmi(loanId,emiNum){
+  const loan=state.loans.find(l=>l.id===loanId);
+  if(!loan||loan.status==='closed'){alert('This loan is closed.');return;}
+  const emi=loan.emis.find(e=>e.num===emiNum);
+  const m=getMember(loan.memberId);
+  pendingPay={loanId,emiNum};
+  document.getElementById('pay-emi-info').innerHTML=`
+    <div style="font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">${m.name} — Loan #${loan.id}</div>
+    <div class="row"><span>EMI</span><strong>${emiNum} of ${loan.emis.length}</strong></div>
+    <hr class="divider">
+    <div class="row"><span>Principal</span><strong>${fmt(emi.principal)} KD</strong></div>
+    <div class="row"><span>Interest (${loan.rate}% on ${fmt(emi.pending)} KD)</span><strong class="amber">${fmt(emi.interest)} KD</strong></div>
+    <hr class="divider">
+    <div class="row"><span style="font-size:15px">Total</span><strong style="font-size:18px">${fmt(emi.total)} KD</strong></div>
+    <p style="font-size:12px;color:var(--color-text-secondary);margin-top:8px">Principal returns to available balance. Interest is profit.</p>`;
+  openModal('pay-emi-modal');
+}
+
+async function confirmPayEmi(){
+  if(!requireAdminAction('collect EMI payments')) return;
+  if(!pendingPay)return;
+  const{loanId,emiNum}=pendingPay;
+  const loan=state.loans.find(l=>l.id===loanId);
+  const emi=loan.emis.find(e=>e.num===emiNum);
+  const m=getMember(loan.memberId);
+  emi.paid=true;
+  emi.date=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+  state.loanedOut=parseFloat((state.loanedOut-emi.principal).toFixed(4));
+  if(state.loanedOut<0)state.loanedOut=0;
+  await addTransaction({
+    type:'emi_return',
+    amount:emi.total,
+    desc:`EMI ${emiNum} from ${m.name} (${fmt(emi.interest)} KD interest)`,
+    date:emi.date
+  });
+  if(loan.emis.every(e=>e.paid))loan.status='closed';
+  await saveAppState();
+  pendingPay=null;closeModal('pay-emi-modal');render();
+}
+
+async function markEmiNotDone(loanId, emiNum){
+  if(!requireAdminAction('modify EMI payments')) return;
+  const loan = state.loans.find(l => l.id === loanId);
+  if(!loan||loan.status==='closed'){alert('This loan is closed. Transactions are locked.');return;}
+  if(!confirm('Mark this EMI as not done? This will reverse the payment.')) return;
+  const emi = loan.emis.find(e => e.num === emiNum);
+  const m = getMember(loan.memberId);
+  if(!emi.paid) return;
+  emi.paid = false;
+  emi.date = null;
+  state.loanedOut = parseFloat((state.loanedOut + emi.principal).toFixed(4));
+  await addTransaction({
+    type: 'emi_reversal',
+    amount: -emi.total,
+    desc: `Reversed EMI ${emiNum} from ${m.name}`,
+    date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})
+  });
+  if(loan.status === 'closed') loan.status = 'active';
+  await saveAppState();
+  render();
+}
+
+
+async function editLoanStartDate(loanId){
+  if(!requireAdminAction('edit loan dates')) return;
+  const loan=state.loans.find(l=>l.id===loanId);
+  if(!loan)return;
+  const member=getMember(loan.memberId);
+  // Build month options
+  const start=new Date(2023,0,1);
+  let opts='';
+  for(let i=0;i<60;i++){
+    const d=new Date(start.getFullYear(),start.getMonth()+i,1);
+    const k=monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear());
+    const sel=k===loan.month?'selected':'';
+    opts+=`<option value="${k}" ${sel}>${keyToLabel(k)}</option>`;
+  }
+  const html=`<div style="padding:20px">
+    <h3 style="margin-bottom:12px">Edit Loan Start Date</h3>
+    <p style="margin-bottom:12px;font-size:13px;color:var(--color-text-secondary)">${member?.name} — ${fmt(loan.amount)} KD loan</p>
+    <label style="font-size:12px;font-weight:500">First EMI Due Month</label>
+    <select id="edit-loan-month" class="input" style="margin-top:4px">${opts}</select>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn-sm" onclick="document.getElementById('edit-loan-modal').remove()">Cancel</button>
+      <button class="btn-sm" style="background:var(--color-background-success);color:var(--color-text-success)" onclick="saveLoanStartDate(${loan.id})">Save</button>
+    </div>
+  </div>`;
+  // Remove existing modal if any
+  const old=document.getElementById('edit-loan-modal');
+  if(old)old.remove();
+  const modal=document.createElement('div');
+  modal.id='edit-loan-modal';
+  modal.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  modal.innerHTML=`<div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);max-width:360px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.3)">${html}</div>`;
+  modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
+  document.body.appendChild(modal);
+}
+async function saveLoanStartDate(loanId){
+  const loan=state.loans.find(l=>l.id===loanId);
+  if(!loan)return;
+  const sel=document.getElementById('edit-loan-month');
+  if(!sel)return;
+  const newMonth=sel.value;
+  if(newMonth===loan.month){document.getElementById('edit-loan-modal')?.remove();return;}
+  loan.month=newMonth;
+  console.log('Saving loan', loanId, 'month to', newMonth);
+  console.log('Full loans before save:', JSON.stringify(state.loans.map(l=>({id:l.id,month:l.month}))));
+  const result = await saveAppState();
+  console.log('Save result:', result);
+  // Verify by re-fetching
+  try {
+    const verify = await fetch(`${API_BASE}/state`, { credentials: 'include' });
+    const vData = await verify.json();
+    console.log('Verified from server:', vData.state.loans?.map(l=>l.id+':'+l.month));
+  } catch(e) { console.error('Verify failed:', e); }
+  document.getElementById('edit-loan-modal')?.remove();
+  render();
+}
+async function deleteLoan(loanId){
+  if(!requireAdminAction('delete loans')) return;
+  if(!confirm('Are you sure you want to delete this loan? This will reverse all payments and cannot be undone.')) return;
+
+  const loanIndex = state.loans.findIndex(l => l.id === loanId);
+  if(loanIndex === -1) return;
+
+  const loan = state.loans[loanIndex];
+  const member = getMember(loan.memberId);
+
+  // Reverse all paid EMIs
+  const paidEmis = loan.emis.filter(e => e.paid);
+  for(const emi of paidEmis){
+    // Add reversal transaction
+    await addTransaction({
+      type: 'emi_reversal',
+      amount: -emi.total,
+      desc: `Reversed EMI ${emi.num} payment from ${member.name}`,
+      date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})
+    });
+  }
+
+  // Reverse the loan amount from loanedOut
+  state.loanedOut = parseFloat((state.loanedOut - loan.amount).toFixed(4));
+
+  // Add loan deletion transaction
+  await addTransaction({
+    type: 'loan_deletion',
+    amount: -loan.amount,
+    desc: `Deleted loan to ${member.name} (${loan.emis.length} EMIs @ ${loan.rate}%)`,
+    date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})
+  });
+
+  // Remove the loan
+  state.loans.splice(loanIndex, 1);
+
+  await saveAppState();
+  render();
+}
+
+async function addMember(){
+  if(!requireAdminAction('add members')) return;
+  const name=document.getElementById('new-member-name').value.trim();
+  const phone=document.getElementById('new-member-phone').value.trim();
+  const email=document.getElementById('new-member-email').value.trim();
+  const address=document.getElementById('new-member-address').value.trim();
+  if(!name){alert('Enter a name.');return;}
+  const preview=document.getElementById('new-member-photo-preview');
+  const photo=preview.dataset.photoData||'';
+  state.members.push({id:state.nextMemberId++,name,phone,email,address,photo});
+  closeModal('add-member-modal');
+  await saveAppState();
+  render();
+}
+
+function editMember(id){
+  if(!requireAdminAction('edit members')) return;
+  const member = state.members.find(m => m.id === id);
+  if(!member) return;
+  document.getElementById('edit-member-id').value = member.id;
+  document.getElementById('edit-member-name').value = member.name || '';
+  document.getElementById('edit-member-phone').value = member.phone || '';
+  document.getElementById('edit-member-email').value = member.email || '';
+  document.getElementById('edit-member-address').value = member.address || '';
+  document.getElementById('edit-member-photo').value = '';
+  const preview = document.getElementById('edit-member-photo-preview');
+  delete preview.dataset.photoRemoved;
+  if(member.photo){
+    preview.innerHTML = `<img src="${member.photo}">`;
+    preview.dataset.photoData = member.photo;
+  } else {
+    preview.innerHTML = '<span style="font-size:28px;color:var(--color-text-secondary)">📷</span>';
+    delete preview.dataset.photoData;
+  }
+  openModal('edit-member-modal');
+}
+
+async function updateMember(){
+  const id = parseInt(document.getElementById('edit-member-id').value);
+  const name = document.getElementById('edit-member-name').value.trim();
+  const phone = document.getElementById('edit-member-phone').value.trim();
+  const email = document.getElementById('edit-member-email').value.trim();
+  const address = document.getElementById('edit-member-address').value.trim();
+  if(!name){alert('Enter a name.');return;}
+  const member = state.members.find(m => m.id === id);
+  if(!member) return;
+  member.name = name;
+  member.phone = phone;
+  member.email = email;
+  member.address = address;
+  const preview = document.getElementById('edit-member-photo-preview');
+  if(preview.dataset.photoRemoved === 'true'){
+    member.photo = '';
+  } else if(preview.dataset.photoData){
+    member.photo = preview.dataset.photoData;
+  }
+  closeModal('edit-member-modal');
+  await saveAppState();
+  render();
+}
+
+async function removeMember(id){
+  if(!requireAdminAction('remove members')) return;
+  if(!confirm('Are you sure you want to remove this member? This will remove all their payments, loans, and related data. This cannot be undone.')) return;
+  if(getActiveLoan(id)){alert('Cannot remove member with an active loan.');return;}
+  if(state.members.length<=1){alert('Must have at least one member.');return;}
+
+  const member = getMember(id);
+  if(!member) return;
+
+  // Remove all payments by this member
+  const memberPayments = Object.keys(state.payments).filter(key => key.startsWith(id + '-'));
+  for(const paymentKey of memberPayments){
+    const payment = state.payments[paymentKey];
+    if(payment && payment.paid){
+      // Add reversal transaction
+      await addTransaction({
+        type: 'installment_reversal',
+        amount: -payment.amount,
+        desc: `${member.name} payment removed for ${keyToLabel(paymentKey.split('-').slice(1).join('-'))}`,
+        date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})
+      });
+    }
+    delete state.payments[paymentKey];
+  }
+
+  // Remove all loans by this member
+  const memberLoans = state.loans.filter(loan => loan.memberId === id);
+  for(const loan of memberLoans){
+    // Reverse all paid EMIs
+    const paidEmis = loan.emis.filter(e => e.paid);
+    for(const emi of paidEmis){
+      // Add reversal transaction
+      await addTransaction({
+        type: 'emi_reversal',
+        amount: -emi.total,
+        desc: `Reversed EMI ${emi.num} payment from ${member.name} (member removal)`,
+        date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})
+      });
+    }
+
+    // Add loan deletion transaction
+    await addTransaction({
+      type: 'loan_deletion',
+      amount: -loan.amount,
+      desc: `Deleted loan to ${member.name} (${loan.emis.length} EMIs @ ${loan.rate}%) - member removal`,
+      date: new Date().toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: 'numeric'})
+    });
+  }
+  state.loans = state.loans.filter(loan => loan.memberId !== id);
+
+  // Remove the member
+  state.members = state.members.filter(m => m.id !== id);
+
+  await saveAppState();
+  render();
+}
+
+// --- Gold Reserve ---
+function renderGold(){
+  if(!state.goldTransactions) state.goldTransactions=[];
+  const grams = totalGoldGrams();
+  const cost = totalGoldCost();
+  const avg = avgGoldPrice();
+  const loanedOut = state.loanedOut || 0;
+  const coverage = loanedOut > 0 ? Math.round((cost/loanedOut)*100) : 0;
+
+  // Build market price card (placeholder until fetched)
+  const marketId = 'gold-market-card';
+
+  document.getElementById('gold-summary').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+      <div style="background:var(--color-background-secondary);padding:16px;border-radius:var(--border-radius-md);text-align:center;border:1px solid var(--color-border-tertiary);transition:all var(--transition-fast)">
+        <div style="font-size:12px;color:var(--color-text-secondary);font-weight:500;margin-bottom:4px">Holdings</div>
+        <div style="font-size:22px;font-weight:700;color:var(--color-gold)">${grams.toFixed(3)} g</div>
+      </div>
+      <div style="background:var(--color-background-secondary);padding:16px;border-radius:var(--border-radius-md);text-align:center;border:1px solid var(--color-border-tertiary);transition:all var(--transition-fast)">
+        <div style="font-size:12px;color:var(--color-text-secondary);font-weight:500;margin-bottom:4px">Total Invested</div>
+        <div style="font-size:22px;font-weight:700">${fmt(cost)} KD</div>
+      </div>
+      <div style="background:var(--color-background-secondary);padding:16px;border-radius:var(--border-radius-md);text-align:center;border:1px solid var(--color-border-tertiary);transition:all var(--transition-fast)">
+        <div style="font-size:12px;color:var(--color-text-secondary);font-weight:500;margin-bottom:4px">Avg Price/gram</div>
+        <div style="font-size:22px;font-weight:700">${grams>0?avg.toFixed(3):'0.000'} KD</div>
+      </div>
+      <div style="background:var(--color-background-secondary);padding:16px;border-radius:var(--border-radius-md);text-align:center;border:1px solid var(--color-border-tertiary);transition:all var(--transition-fast)">
+        <div style="font-size:12px;color:var(--color-text-secondary);font-weight:500;margin-bottom:4px">Loan Coverage</div>
+        <div style="font-size:22px;font-weight:700;${coverage>=100?'color:var(--color-text-success)':coverage>=50?'color:var(--color-gold)':'color:var(--color-text-danger)'}">${coverage}%</div>
+        <div style="font-size:11px;color:var(--color-text-secondary)">of ${fmt(loanedOut)} KD loaned</div>
+      </div>
+    </div>
+    <div id="${marketId}" style="margin-top:12px;padding:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--border-radius-md);color:#fff;box-shadow:var(--shadow-md)">
+      <div style="font-size:12px;opacity:0.7;margin-bottom:6px">📡 Live Gold Market Price (24K)</div>
+      <div style="font-size:14px;opacity:0.5">Loading market price...</div>
+    </div>`;
+
+  // Fetch live gold price and auto-refresh 3 times a day (every 8 hours)
+  fetchGoldMarketPrice(grams, cost, avg);
+  if(window._goldAutoRefresh) clearInterval(window._goldAutoRefresh);
+  window._goldAutoRefresh = setInterval(()=>{ refreshGoldPrice(); }, 28800000);
+
+
+  const txs = [...state.goldTransactions].reverse();
+  document.getElementById('gold-history').innerHTML = txs.length ? `<table>
+    <thead><tr><th>Date</th><th>Type</th><th>Grams</th><th>Price/g</th><th>Total (KD)</th><th>Balance (g)</th>${isAdmin()?'<th></th>':''}</tr></thead>
+    <tbody>${txs.map(t=>{
+      const idx = state.goldTransactions.indexOf(t);
+      let running = 0;
+      for(const tx of state.goldTransactions){
+        running += tx.type==='buy' ? tx.grams : -tx.grams;
+        if(tx === t) break;
+      }
+      const isBuy = t.type==='buy';
+      return `<tr>
+        <td>${t.date}</td>
+        <td><span class="badge ${isBuy?'badge-green':'badge-red'}">${isBuy?'Buy':'Sell'}</span></td>
+        <td>${isBuy?'+':'−'}${t.grams.toFixed(3)} g</td>
+        <td>${t.pricePerGram.toFixed(3)} KD</td>
+        <td class="${isBuy?'red':'green'}">${isBuy?'−':'+'}${fmt(t.totalCost)} KD</td>
+        <td>${running.toFixed(3)} g</td>
+        ${isAdmin()?`<td><button class="btn-sm" onclick="editGoldDate(${idx})">✏️</button> <button class="btn-sm" style="color:var(--color-text-danger)" onclick="deleteGoldTransaction(${idx})" title="Delete">🗑️</button></td>`:''}
+      </tr>`;
+    }).join('')}</tbody>
+  </table>` : '<div class="empty-state"><div class="empty-state-icon">🥇</div><div class="empty-state-text">No gold transactions yet. Use "Buy gold" to start building your reserve.</div></div>';
+}
+
+let goldPriceCache = { data: null, fetchedAt: 0 };
+
+async function fetchGoldMarketPrice(grams, cost, avg, force){
+  const el = document.getElementById('gold-market-card');
+  if(!el){ console.warn('gold-market-card not found'); return; }
+  // Use cached data if less than 8 hours old (unless force)
+  if(!force && goldPriceCache.data && Date.now() - goldPriceCache.fetchedAt < 28800000){
+    return displayGoldMarketPrice(el, goldPriceCache.data, grams, cost, avg);
+  }
+  try {
+    el.innerHTML = `<div style="font-size:12px;opacity:0.7">📡 Fetching live gold price...</div>`;
+    const res = await fetch(`${API_BASE}/gold-price${force?'?force=1':''}`, { credentials: 'include' });
+    const data = await res.json();
+    console.log('Gold price response:', data);
+    if(!res.ok || !data.success) throw new Error(data.message || 'API returned ' + res.status);
+    goldPriceCache = { data, fetchedAt: Date.now() };
+    displayGoldMarketPrice(el, data, grams, cost, avg);
+  } catch(err) {
+    console.error('Gold price fetch failed:', err);
+    el.innerHTML = `
+      <div style="font-size:12px;opacity:0.7;margin-bottom:6px">📡 Live Gold Market Price (24K)</div>
+      <div style="font-size:13px;opacity:0.5">Unable to fetch live price: ${err.message}</div>`;
+  }
+}
+
+async function refreshGoldPrice(){
+  goldPriceCache = { data: null, fetchedAt: 0 };
+  const grams = totalGoldGrams();
+  const cost = totalGoldCost();
+  const avg = avgGoldPrice();
+  await fetchGoldMarketPrice(grams, cost, avg, true);
+}
+
+function displayGoldMarketPrice(el, data, grams, cost, avg){
+  const price24k = data.pricePerGram24K;
+  const price22k = data.pricePerGram22K;
+  const marketValue = grams * price24k;
+  const pl = marketValue - cost;
+  const plPct = cost > 0 ? ((pl / cost) * 100).toFixed(1) : 0;
+  const isProfit = pl >= 0;
+  const staleTag = data.stale ? ' <span style="font-size:10px;opacity:0.5">(cached)</span>' : '';
+  const updated = data.timestamp ? new Date(data.timestamp * 1000).toLocaleString() : '';
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:12px;opacity:0.7;margin-bottom:8px">📡 Live Gold Market Price${staleTag} <button onclick="refreshGoldPrice()" style="background:none;border:1px solid rgba(255,255,255,0.3);color:#D4A017;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px" title="Refresh price">🔄 Refresh</button></div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;opacity:0.5">24K per gram</div>
+            <div style="font-size:22px;font-weight:700;color:#D4A017">${price24k.toFixed(3)} KD</div>
+          </div>
+          <div>
+            <div style="font-size:11px;opacity:0.5">22K per gram</div>
+            <div style="font-size:18px;font-weight:600;color:#D4A017">${price22k.toFixed(3)} KD</div>
+          </div>
+        </div>
+        ${updated ? `<div style="font-size:10px;opacity:0.4;margin-top:6px">Updated: ${updated}</div>` : ''}
+      </div>
+      ${grams > 0 ? `<div style="text-align:right">
+        <div style="font-size:11px;opacity:0.5">Market value (${grams.toFixed(3)}g × 24K)</div>
+        <div style="font-size:20px;font-weight:700">${fmt(marketValue)} KD</div>
+        <div style="font-size:14px;font-weight:600;color:${isProfit?'#4ade80':'#f87171'};margin-top:4px">
+          ${isProfit?'▲':'▼'} ${isProfit?'+':''}${fmt(pl)} KD (${isProfit?'+':''}${plPct}%)
+        </div>
+        <div style="font-size:11px;opacity:0.5;margin-top:2px">vs invested ${fmt(cost)} KD</div>
+      </div>` : ''}
+    </div>`;
+}
+
+async function editGoldDate(idx){
+  if(!requireAdminAction('edit gold dates')) return;
+  const t = state.goldTransactions[idx];
+  if(!t) return;
+  const newDate = prompt('Edit date (YYYY-MM-DD):', t.date);
+  if(!newDate || newDate === t.date) return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(newDate)){alert('Invalid date format. Use YYYY-MM-DD.');return;}
+  t.date = newDate;
+  await saveAppState();
+  render();
+}
+
+async function deleteGoldTransaction(idx){
+  if(!requireAdminAction('delete gold transactions')) return;
+  const t = state.goldTransactions[idx];
+  if(!t) return;
+  if(!confirm(`Delete this ${t.type} transaction?\n${t.grams.toFixed(3)}g @ ${t.pricePerGram.toFixed(3)} KD/g = ${fmt(t.totalCost)} KD\n\nThis will recalculate all balances.`)) return;
+  state.goldTransactions.splice(idx, 1);
+  await saveAppState();
+  render();
+}
+
+function editEmi(loanId, emiNum){
+  if(!requireAdminAction('edit EMI details')) return;
+  const loan = state.loans.find(l=>l.id===loanId);
+  if(!loan) return;
+  const emi = loan.emis.find(e=>e.num===emiNum);
+  if(!emi) return;
+  const m = getMember(loan.memberId);
+  const html = `<div style="padding:20px">
+    <h3 style="margin-bottom:4px">Edit EMI ${emi.num}</h3>
+    <p style="margin-bottom:14px;font-size:13px;color:var(--color-text-secondary)">${m?.name} — Loan #${loan.id} (${fmt(loan.amount)} KD)</p>
+    <div style="display:grid;gap:10px">
+      <div>
+        <label style="font-size:12px;font-weight:500">Principal (KD)</label>
+        <input type="number" step="0.00001" id="edit-emi-principal" class="input" style="margin-top:4px" value="${emi.principal}">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500">Interest (KD)</label>
+        <input type="number" step="0.00001" id="edit-emi-interest" class="input" style="margin-top:4px" value="${emi.interest}">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500">Total (KD) — auto-calculated</label>
+        <input type="number" step="0.00001" id="edit-emi-total" class="input" style="margin-top:4px;background:var(--color-background-secondary)" value="${emi.total}" readonly>
+      </div>
+      <div style="padding:6px 0">
+        <label style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="edit-emi-paid" ${emi.paid?'checked':''}>
+          Paid
+        </label>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:500">Paid Date</label>
+        <input type="text" id="edit-emi-date" class="input" style="margin-top:4px" value="${emi.date||''}" placeholder="e.g. 02 Apr 2025">
+      </div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn-sm" onclick="document.getElementById('edit-emi-modal').remove()">Cancel</button>
+      <button class="btn-sm" style="background:var(--color-background-success);color:var(--color-text-success)" onclick="saveEmiEdit(${loan.id},${emi.num})">Save</button>
+    </div>
+  </div>`;
+  const old = document.getElementById('edit-emi-modal');
+  if(old) old.remove();
+  const modal = document.createElement('div');
+  modal.id = 'edit-emi-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999';
+  modal.innerHTML = `<div style="background:var(--color-background-primary);border-radius:var(--border-radius-lg);max-width:400px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.3)">${html}</div>`;
+  modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+  document.getElementById('edit-emi-principal').addEventListener('input', updateEmiEditTotal);
+  document.getElementById('edit-emi-interest').addEventListener('input', updateEmiEditTotal);
+}
+
+function updateEmiEditTotal(){
+  const p = parseFloat(document.getElementById('edit-emi-principal').value)||0;
+  const i = parseFloat(document.getElementById('edit-emi-interest').value)||0;
+  document.getElementById('edit-emi-total').value = parseFloat((p+i).toFixed(4));
+}
+
+async function saveEmiEdit(loanId, emiNum){
+  try{
+  if(!requireAdminAction('edit EMI details')) return;
+  const loan = state.loans.find(l=>l.id===loanId);
+  if(!loan) return;
+  const emi = loan.emis.find(e=>e.num===emiNum);
+  if(!emi) return;
+  const oldPaid = emi.paid;
+  const oldStatus = loan.status;
+  const newPrincipal = parseFloat(document.getElementById('edit-emi-principal').value);
+  const newInterest = parseFloat(document.getElementById('edit-emi-interest').value);
+  const newPaid = document.getElementById('edit-emi-paid').checked;
+  const newDate = document.getElementById('edit-emi-date').value.trim();
+  if(isNaN(newPrincipal)||newPrincipal<0||isNaN(newInterest)||newInterest<0){
+    alert('Enter valid amounts.');return;
+  }
+  emi.principal = parseFloat(newPrincipal.toFixed(4));
+  emi.interest = parseFloat(newInterest.toFixed(4));
+  emi.total = parseFloat((emi.principal + emi.interest).toFixed(4));
+  emi.paid = newPaid;
+  emi.date = newPaid ? (newDate || emi.date || new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})) : null;
+  // Recalculate pending values for this loan
+  let remaining = loan.amount;
+  for(const e of loan.emis.sort((a,b)=>a.num-b.num)){
+    e.pending = parseFloat(remaining.toFixed(4));
+    remaining -= e.principal;
+  }
+  // Recalculate loan status
+  const allPaid = loan.emis.every(e => e.paid);
+  loan.status = allPaid ? 'closed' : 'active';
+  // Recalculate loanedOut from scratch
+  state.loanedOut = parseFloat(state.loans.reduce((sum, l) => {
+    const paidPrincipal = l.emis.filter(e => e.paid).reduce((s, e) => s + e.principal, 0);
+    return sum + l.amount - paidPrincipal;
+  }, 0).toFixed(4));
+  if(state.loanedOut < 0) state.loanedOut = 0;
+  console.log(`EMI Edit: Loan#${loanId} EMI#${emiNum} paid:${oldPaid}→${newPaid} status:${oldStatus}→${loan.status} loanedOut:${state.loanedOut}`);
+  await saveAppState();
+  const modal = document.getElementById('edit-emi-modal');
+  if(modal) modal.remove();
+  render();
+  if(oldStatus !== loan.status){
+    alert(`Loan status changed: ${oldStatus} → ${loan.status}`);
+  }
+  }catch(err){
+    console.error('saveEmiEdit error:', err);
+    alert('Error saving EMI edit: '+err.message);
+  }
+}
+
+function updateGoldBuyTotal(){
+  const grams = parseFloat(document.getElementById('gold-buy-grams').value)||0;
+  const total = parseFloat(document.getElementById('gold-buy-total').value)||0;
+  const pricePerGram = grams > 0 ? parseFloat((total / grams).toFixed(3)) : 0;
+  document.getElementById('gold-buy-price').value = pricePerGram || '';
+  const avail = availableBalance();
+  const el = document.getElementById('gold-buy-preview');
+  el.innerHTML = `<div>Total cost: <strong${total>avail?' class="red"':''}>${fmt(total)} KD</strong>${grams>0?` · Price/g: <strong>${pricePerGram.toFixed(3)} KD</strong>`:''}</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">Available balance: ${fmt(avail)} KD${total>avail?' — <span class="red">insufficient funds</span>':''}</div>`;
+}
+function updateGoldSellTotal(){
+  const grams = parseFloat(document.getElementById('gold-sell-grams').value)||0;
+  const total = parseFloat(document.getElementById('gold-sell-total').value)||0;
+  const pricePerGram = grams > 0 ? parseFloat((total / grams).toFixed(3)) : 0;
+  document.getElementById('gold-sell-price').value = pricePerGram || '';
+  const holding = totalGoldGrams();
+  const el = document.getElementById('gold-sell-preview');
+  el.innerHTML = `<div>Sale value: <strong class="green">${fmt(total)} KD</strong>${grams>0?' · Price/g: <strong>'+pricePerGram.toFixed(3)+' KD</strong>':''}</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-top:4px">Current holding: ${holding.toFixed(3)} g${grams>holding?' — <span class="red">not enough gold</span>':''}</div>`;
+}
+
+async function buyGold(){
+  if(!requireAdminAction('buy gold')) return;
+  const grams = parseFloat(document.getElementById('gold-buy-grams').value);
+  const total = parseFloat(document.getElementById('gold-buy-total').value);
+  const date = document.getElementById('gold-buy-date').value;
+  if(!grams||grams<=0||!total||total<=0){alert('Enter valid weight and total price.');return;}
+  if(!date){alert('Enter a date.');return;}
+  const price = parseFloat((total/grams).toFixed(4));
+  if(total > availableBalance()){alert('Not enough available balance. Need '+fmt(total)+' KD but only '+fmt(availableBalance())+' KD available.');return;}
+  if(!state.goldTransactions) state.goldTransactions=[];
+  state.goldTransactions.push({type:'buy', grams, pricePerGram:price, totalCost:parseFloat(total.toFixed(4)), date});
+  await addTransaction({type:'gold_buy', amount:-total, desc:`Bought ${grams.toFixed(3)}g gold @ ${price.toFixed(3)} KD/g`, date:new Date(date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})});
+  closeModal('buy-gold-modal');
+  document.getElementById('gold-buy-grams').value='';
+  document.getElementById('gold-buy-total').value='';
+  document.getElementById('gold-buy-price').value='';
+  await saveAppState();
+  render();
+}
+
+async function sellGold(){
+  if(!requireAdminAction('sell gold')) return;
+  const grams = parseFloat(document.getElementById('gold-sell-grams').value);
+  const total = parseFloat(document.getElementById('gold-sell-total').value);
+  const date = document.getElementById('gold-sell-date').value;
+  if(!grams||grams<=0||!total||total<=0){alert('Enter valid weight and total price.');return;}
+  if(!date){alert('Enter a date.');return;}
+  if(grams > totalGoldGrams()){alert('Not enough gold. You have '+totalGoldGrams().toFixed(3)+'g.');return;}
+  const price = parseFloat((total/grams).toFixed(4));
+  if(!state.goldTransactions) state.goldTransactions=[];
+  state.goldTransactions.push({type:'sell', grams, pricePerGram:price, totalCost:parseFloat(total.toFixed(4)), date});
+  await addTransaction({type:'gold_sell', amount:total, desc:`Sold ${grams.toFixed(3)}g gold @ ${price.toFixed(3)} KD/g`, date:new Date(date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})});
+  closeModal('sell-gold-modal');
+  document.getElementById('gold-sell-grams').value='';
+  document.getElementById('gold-sell-total').value='';
+  document.getElementById('gold-sell-price').value='';
+  await saveAppState();
+  render();
+}
+
+function populateMonthSelects(){
+  const sorted=[...state.months].sort((a,b)=>compareKeys(a.key,b.key));
+  ['setup-from','setup-to'].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const allKeys=[];
+    // generate range for setup starting from 2023
+    const start=new Date(2023,0,1);
+    for(let i=0;i<60;i++){
+      const d=new Date(start.getFullYear(),start.getMonth()+i,1);
+      allKeys.push(monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear()));
+    }
+    sel.innerHTML=allKeys.map(k=>`<option value="${k}">${keyToLabel(k)}</option>`).join('');
+    if(id==='setup-from')sel.value=CUR_KEY;
+    if(id==='setup-to'){
+      const d=new Date(now.getFullYear(),now.getMonth()+2,1);
+      sel.value=monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear());
+    }
+  });
+  // mark-payment month select
+  const mpSel=document.getElementById('mp-month');
+  if(mpSel){
+    mpSel.innerHTML='<option value="">Select month</option>'+sorted.filter(m=>!m.isFuture).map(m=>`<option value="${m.key}">${keyToLabel(m.key)}</option>`).join('');
+  }
+  // mark-payment member select
+  const mpMem=document.getElementById('mp-member');
+  if(mpMem){
+    mpMem.innerHTML='<option value="">Select</option>'+state.members.map(m=>`<option value="${m.id}">${m.name}</option>`).join('');
+  }
+  // new-rate-month
+  const nrm=document.getElementById('new-rate-month');
+  if(nrm){
+    const keys=[];
+    // Start from January 2023 through December 2027
+    const startDate = new Date(2023, 0, 1);
+    for(let i=0;i<60;i++){
+      const d=new Date(startDate.getFullYear(), startDate.getMonth()+i, 1);
+      keys.push(monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear()));
+    }
+    nrm.innerHTML=keys.map(k=>`<option value="${k}">${keyToLabel(k)}</option>`).join('');
+  }
+  // nl-month
+  const nlm=document.getElementById('nl-month');
+  if(nlm){
+    const keys=[];
+    // Start from January 2023 through December 2027
+    const startDate = new Date(2023, 0, 1);
+    for(let i=0;i<60;i++){
+      const d=new Date(startDate.getFullYear(), startDate.getMonth()+i, 1);
+      keys.push(monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear()));
+    }
+    nlm.innerHTML=keys.map(k=>`<option value="${k}"${k===CUR_KEY?' selected':''}>${keyToLabel(k)}</option>`).join('');
+  }
+}
+
+function showTab(tab){
+  const tabs=['dashboard','tracker','loans','new-loan','gold','members'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  if(tab==='new-loan'){updateMemberSelect();updateEmiPreview();renderQuickBtns();populateMonthSelects();document.getElementById('nl-amount').value = availableBalance();document.getElementById('nl-amount').max = availableBalance();}
+  if(tab==='tracker'){renderTracker();}
+  if(tab==='gold'){renderGold();}
+}
+
+function updateMarkPaymentPreview(){
+  const memberId = parseInt(document.getElementById('mp-member').value);
+  const mk = document.getElementById('mp-month').value;
+  const previewEl = document.getElementById('mp-preview');
+  if(!previewEl) return;
+
+  if(!memberId || !mk){
+    previewEl.innerHTML = '<p style="font-size:12px;color:var(--color-text-secondary)">Select member and month to see current status</p>';
+    return;
+  }
+
+  const member = getMember(memberId);
+  const isCurrentlyPaid = isPaid(memberId, mk);
+  const status = isCurrentlyPaid ? 'Currently marked as PAID' : 'Currently marked as UNPAID';
+  const action = isCurrentlyPaid ? 'Click to mark as UNPAID' : 'Click to mark as PAID';
+
+  previewEl.innerHTML = `
+    <div style="padding:8px 12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px">
+      <div><strong>${member?.name}</strong> - ${keyToLabel(mk)}</div>
+      <div style="margin-top:4px;color:${isCurrentlyPaid ? 'var(--color-text-success)' : 'var(--color-text-danger)'}">${status}</div>
+      <div style="margin-top:4px;font-size:12px;color:var(--color-text-secondary)">${action}</div>
+    </div>
+  `;
+}
+
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  populateMonthSelects();
+  if(id === 'mark-payment-modal'){
+    updateMarkPaymentPreview();
+  }
+  if(id === 'buy-gold-modal'){
+    document.getElementById('gold-buy-date').value = new Date().toISOString().split('T')[0];
+    updateGoldBuyTotal();
+  }
+  if(id === 'sell-gold-modal'){
+    document.getElementById('gold-sell-date').value = new Date().toISOString().split('T')[0];
+    updateGoldSellTotal();
+  }
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+document.addEventListener('input',e=>{
+  if(['nl-amount','nl-rate','nl-emis'].includes(e.target.id)){updateEmiPreview();renderQuickBtns();}
+});
+
+document.addEventListener('change',e=>{
+  if(['mp-member','mp-month'].includes(e.target.id)){updateMarkPaymentPreview();}
+});
+
+populateMonthSelects();
+showServerWarning();
+// Apply saved theme on load
+(function(){
+  const saved = localStorage.getItem('fsb-theme');
+  if(saved) document.documentElement.setAttribute('data-theme', saved);
+  // Respect system preference if no saved preference
+  else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+checkAuth();
+</script>
+</body>
+</html>
