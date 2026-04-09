@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FriendBank">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/logo.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -122,7 +122,7 @@ textarea{font-family:var(--font-sans);font-size:13px;padding:8px 12px;border:1px
 .tabs{display:flex;gap:4px;margin-bottom:1.5rem;padding:4px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);border:1px solid var(--color-border-tertiary);overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tab{padding:8px 18px;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--color-text-secondary);border-radius:var(--border-radius-sm);font-family:var(--font-sans);white-space:nowrap;transition:all var(--transition-fast);font-weight:500;position:relative}
 .tab:hover{color:var(--color-text-primary);background:var(--color-background-primary)}
-.tab.active{color:var(--color-text-primary);background:var(--color-background-primary);box-shadow:var(--shadow-sm);font-weight:600}
+.tab.active{color:#fff;background:var(--color-accent);box-shadow:var(--shadow-md);font-weight:600}
 
 /* ===== SECTION ===== */
 .section{display:none;animation:fadeSlideIn 0.3s ease}
@@ -166,7 +166,7 @@ button:active{transform:translateY(0);box-shadow:none}
 button:disabled{background:var(--color-background-secondary);color:var(--color-text-secondary);cursor:not-allowed;opacity:0.6;transform:none;box-shadow:none}
 button.primary{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
 button.primary:hover{opacity:0.9;box-shadow:0 4px 12px rgba(99,102,241,0.3)}
-.btn-sm{padding:5px 12px;font-size:12px;border-radius:var(--border-radius-sm)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:var(--border-radius-sm);white-space:nowrap}
 
 /* ===== FORMS ===== */
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
@@ -187,7 +187,7 @@ input::placeholder{color:var(--color-text-secondary);opacity:0.6}
 
 /* ===== UTILITIES ===== */
 .divider{border:none;border-top:1px solid var(--color-border-tertiary);margin:12px 0}
-.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .hbox{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 16px;display:flex;gap:20px;flex-wrap:wrap;font-size:13px;margin-top:10px;border:1px solid var(--color-border-tertiary)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 
@@ -196,7 +196,7 @@ input::placeholder{color:var(--color-text-secondary);opacity:0.6}
 .emi-btn{padding:6px 14px;font-size:13px;border-radius:var(--border-radius-sm);border:1px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-secondary);cursor:pointer;font-family:var(--font-sans);transition:all var(--transition-fast);font-weight:500}
 .emi-btn:hover{border-color:var(--color-accent);color:var(--color-accent)}
 .emi-btn.sel{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
-.emi-row{display:grid;grid-template-columns:55px 1fr 1fr 1fr 1fr 1fr 1fr auto;gap:6px;align-items:center;font-size:13px;padding:10px 14px;border-bottom:1px solid var(--color-border-tertiary);transition:background var(--transition-fast)}
+.emi-row{display:grid;grid-template-columns:55px 1fr 1fr 1fr 1fr 1fr 1fr auto;gap:6px;align-items:center;font-size:13px;padding:10px 14px;border-bottom:1px solid var(--color-border-tertiary);transition:background var(--transition-fast);min-width:600px}
 .emi-row:hover{background:var(--color-background-secondary)}
 .emi-header{font-size:11px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
 .emi-header:hover{background:transparent}
@@ -274,7 +274,7 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
   .balance-hero{padding:1.25rem}
   .bal-big{font-size:28px}
   .form-row{grid-template-columns:1fr}
-  .emi-row{grid-template-columns:45px 1fr 1fr 1fr 1fr 1fr 1fr auto;font-size:12px;padding:8px 10px}
+  .emi-row{grid-template-columns:45px 1fr 1fr 1fr 1fr 1fr 1fr auto;font-size:12px;padding:8px 10px;min-width:580px}
   .modal{padding:1.25rem;border-radius:var(--border-radius-lg)}
   .navbar-brand-text{display:none}
   .hbox{gap:12px;padding:10px 12px;flex-wrap:wrap}
@@ -283,6 +283,12 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
   .loan-info-grid{grid-template-columns:1fr 1fr;gap:8px 16px}
   .loan-stats-grid{grid-template-columns:1fr 1fr 1fr;gap:8px}
   .loan-header-grid{grid-template-columns:1fr}
+  .gold-summary-grid{grid-template-columns:1fr 1fr !important}
+  .gold-summary-grid>div{padding:10px !important}
+  .gold-summary-grid>div>div:last-child{font-size:18px !important}
+  .gold-market-card{padding:12px !important}
+  .gold-market-card .gold-market-inner{flex-direction:column !important;gap:16px !important}
+  .gold-market-card .gold-market-inner>div:last-child{text-align:left !important}
 }
 
 @media(max-width:480px){
@@ -290,11 +296,13 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
   .metrics{grid-template-columns:1fr 1fr}
   .navbar-user-info span:not(.badge){display:none}
   .navbar-actions .btn-sm-text{display:none}
-  .emi-row{grid-template-columns:40px 1fr 1fr 1fr auto;font-size:11px;padding:6px 8px}
-  .emi-row>div:nth-child(5),.emi-row>div:nth-child(7),.emi-header>div:nth-child(5),.emi-header>div:nth-child(7){display:none}
+  .emi-row{font-size:11px;padding:6px 8px;min-width:540px}
   .loan-info-grid{grid-template-columns:1fr 1fr;gap:6px 12px;font-size:11px}
   .loan-stats-grid{grid-template-columns:1fr;gap:8px}
   .loan-header-grid{grid-template-columns:1fr}
+  .gold-summary-grid{grid-template-columns:1fr !important}
+  .gold-market-card .gold-prices{gap:12px !important}
+  .gold-market-card .gold-prices>div{min-width:0}
   .balance-hero{padding:1rem}
   .bal-big{font-size:24px}
 }
@@ -493,7 +501,9 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
     </div>
     <div id="gold-summary" style="margin-bottom:16px"></div>
     <h3 style="margin-bottom:8px">Transaction history</h3>
+    <div class="table-scroll">
     <div id="gold-history"></div>
+    </div>
   </div>
 </div>
 
@@ -2231,7 +2241,7 @@ function renderGold(){
   const marketId = 'gold-market-card';
 
   document.getElementById('gold-summary').innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
+    <div class="gold-summary-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px">
       <div style="background:var(--color-background-secondary);padding:16px;border-radius:var(--border-radius-md);text-align:center;border:1px solid var(--color-border-tertiary);transition:all var(--transition-fast)">
         <div style="font-size:12px;color:var(--color-text-secondary);font-weight:500;margin-bottom:4px">Holdings</div>
         <div style="font-size:22px;font-weight:700;color:var(--color-gold)">${grams.toFixed(3)} g</div>
@@ -2250,7 +2260,7 @@ function renderGold(){
         <div style="font-size:11px;color:var(--color-text-secondary)">of ${fmt(loanedOut)} KD loaned</div>
       </div>
     </div>
-    <div id="${marketId}" style="margin-top:12px;padding:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--border-radius-md);color:#fff;box-shadow:var(--shadow-md)">
+    <div id="${marketId}" class="gold-market-card" style="margin-top:12px;padding:16px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:var(--border-radius-md);color:#fff;box-shadow:var(--shadow-md)">
       <div style="font-size:12px;opacity:0.7;margin-bottom:6px">📡 Live Gold Market Price (24K)</div>
       <div style="font-size:14px;opacity:0.5">Loading market price...</div>
     </div>`;
@@ -2279,7 +2289,7 @@ function renderGold(){
         <td>${t.pricePerGram.toFixed(3)} KD</td>
         <td class="${isBuy?'red':'green'}">${isBuy?'−':'+'}${fmt(t.totalCost)} KD</td>
         <td>${running.toFixed(3)} g</td>
-        ${isAdmin()?`<td><button class="btn-sm" onclick="editGoldDate(${idx})">✏️</button> <button class="btn-sm" style="color:var(--color-text-danger)" onclick="deleteGoldTransaction(${idx})" title="Delete">🗑️</button></td>`:''}
+        ${isAdmin()?`<td style="white-space:nowrap"><button class="btn-sm" onclick="editGoldDate(${idx})">✏️</button> <button class="btn-sm" style="color:var(--color-text-danger)" onclick="deleteGoldTransaction(${idx})" title="Delete">🗑️</button></td>`:''}
       </tr>`;
     }).join('')}</tbody>
   </table>` : '<div class="empty-state"><div class="empty-state-icon">🥇</div><div class="empty-state-text">No gold transactions yet. Use "Buy gold" to start building your reserve.</div></div>';
@@ -2329,10 +2339,10 @@ function displayGoldMarketPrice(el, data, grams, cost, avg){
   const updated = data.timestamp ? new Date(data.timestamp * 1000).toLocaleString() : '';
 
   el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
-      <div>
+    <div class="gold-market-inner" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+      <div style="min-width:0">
         <div style="font-size:12px;opacity:0.7;margin-bottom:8px">📡 Live Gold Market Price${staleTag} <button onclick="refreshGoldPrice()" style="background:none;border:1px solid rgba(255,255,255,0.3);color:#D4A017;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-left:8px" title="Refresh price">🔄 Refresh</button></div>
-        <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div class="gold-prices" style="display:flex;gap:20px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;opacity:0.5">24K per gram</div>
             <div style="font-size:22px;font-weight:700;color:#D4A017">${price24k.toFixed(3)} KD</div>
