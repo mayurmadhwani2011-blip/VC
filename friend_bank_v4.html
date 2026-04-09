@@ -565,6 +565,33 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
 </div>
 
 <!-- MODALS -->
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-bg" id="change-password-modal">
+<div class="modal">
+  <h3>🔑 Change Password</h3>
+  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:14px">Enter your current password and choose a new one.</p>
+  <div class="form-group" style="margin-bottom:12px">
+    <label>Current password</label>
+    <input type="password" id="cp-current" placeholder="Enter current password">
+  </div>
+  <div class="form-group" style="margin-bottom:12px">
+    <label>New password</label>
+    <input type="password" id="cp-new" placeholder="Min 4 characters">
+  </div>
+  <div class="form-group" style="margin-bottom:14px">
+    <label>Confirm new password</label>
+    <input type="password" id="cp-confirm" placeholder="Re-enter new password">
+  </div>
+  <div id="cp-error" style="display:none;color:var(--color-text-danger);font-size:13px;margin-bottom:10px;padding:8px 12px;background:var(--color-background-danger);border-radius:var(--border-radius-sm)"></div>
+  <div id="cp-success" style="display:none;color:var(--color-text-success);font-size:13px;margin-bottom:10px;padding:8px 12px;background:var(--color-background-success);border-radius:var(--border-radius-sm)"></div>
+  <div class="modal-actions">
+    <button onclick="closeModal('change-password-modal')">Cancel</button>
+    <button class="primary" onclick="submitChangePassword()">Change Password</button>
+  </div>
+</div>
+</div>
+
 <div class="modal-bg" id="setup-months-modal">
 <div class="modal">
   <h3>Setup tracking months</h3>
@@ -801,10 +828,28 @@ async function doLogout(){
 }
 
 async function openChangePassword(){
-  const current = prompt('Enter current password:');
-  if(!current) return;
-  const newPw = prompt('Enter new password (min 4 chars):');
-  if(!newPw || newPw.length < 4){ alert('Password must be at least 4 characters.'); return; }
+  document.getElementById('cp-current').value = '';
+  document.getElementById('cp-new').value = '';
+  document.getElementById('cp-confirm').value = '';
+  document.getElementById('cp-error').style.display = 'none';
+  document.getElementById('cp-success').style.display = 'none';
+  openModal('change-password-modal');
+}
+
+async function submitChangePassword(){
+  const errEl = document.getElementById('cp-error');
+  const okEl = document.getElementById('cp-success');
+  errEl.style.display = 'none';
+  okEl.style.display = 'none';
+
+  const current = document.getElementById('cp-current').value;
+  const newPw = document.getElementById('cp-new').value;
+  const confirm = document.getElementById('cp-confirm').value;
+
+  if(!current){ errEl.textContent = 'Please enter your current password.'; errEl.style.display = 'block'; return; }
+  if(!newPw || newPw.length < 4){ errEl.textContent = 'New password must be at least 4 characters.'; errEl.style.display = 'block'; return; }
+  if(newPw !== confirm){ errEl.textContent = 'New passwords do not match.'; errEl.style.display = 'block'; return; }
+
   try {
     const res = await fetch(`${API_BASE}/change-password`, {
       method: 'POST', credentials: 'include',
@@ -812,9 +857,18 @@ async function openChangePassword(){
       body: JSON.stringify({ currentPassword: current, newPassword: newPw })
     });
     const data = await res.json();
-    if(data.success) alert('Password changed successfully!');
-    else alert(data.message || 'Failed to change password.');
-  } catch(e) { alert('Server error.'); }
+    if(data.success){
+      okEl.textContent = 'Password changed successfully!';
+      okEl.style.display = 'block';
+      document.getElementById('cp-current').value = '';
+      document.getElementById('cp-new').value = '';
+      document.getElementById('cp-confirm').value = '';
+      setTimeout(() => closeModal('change-password-modal'), 1500);
+    } else {
+      errEl.textContent = data.message || 'Failed to change password.';
+      errEl.style.display = 'block';
+    }
+  } catch(e) { errEl.textContent = 'Server error. Please try again.'; errEl.style.display = 'block'; }
 }
 
 function requireAdminAction(action){
