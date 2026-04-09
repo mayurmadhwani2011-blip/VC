@@ -1,10 +1,8 @@
-const CACHE_NAME = 'friendbank-v1';
+const CACHE_NAME = 'friendbank-v2';
 const PRECACHE_URLS = [
   '/',
   '/friend_bank_v4.html',
-  '/logo.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/logo.png'
 ];
 
 // Install — cache shell assets
