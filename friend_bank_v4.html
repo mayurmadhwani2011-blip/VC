@@ -3,8 +3,17 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Friend Savings Bank</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#667EEA">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FriendBank">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -248,6 +257,11 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
 .year-btn.sel{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
 
 /* ===== RESPONSIVE ===== */
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.loan-info-grid{display:grid;grid-template-columns:auto auto auto auto;gap:20px}
+.loan-stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.loan-header-grid{display:grid;grid-template-columns:1fr auto;gap:16px}
+
 @media(max-width:768px){
   .app{padding:0 0.75rem 1.5rem}
   .navbar{padding:8px 1rem}
@@ -260,10 +274,15 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
   .balance-hero{padding:1.25rem}
   .bal-big{font-size:28px}
   .form-row{grid-template-columns:1fr}
-  .emi-row{grid-template-columns:45px 1fr 1fr 1fr auto;font-size:12px;padding:8px 10px}
+  .emi-row{grid-template-columns:45px 1fr 1fr 1fr 1fr 1fr 1fr auto;font-size:12px;padding:8px 10px}
   .modal{padding:1.25rem;border-radius:var(--border-radius-lg)}
   .navbar-brand-text{display:none}
-  .hbox{gap:12px;padding:10px 12px}
+  .hbox{gap:12px;padding:10px 12px;flex-wrap:wrap}
+  th{white-space:normal;font-size:11px;padding:8px 6px}
+  td{padding:8px 6px;font-size:12px}
+  .loan-info-grid{grid-template-columns:1fr 1fr;gap:8px 16px}
+  .loan-stats-grid{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .loan-header-grid{grid-template-columns:1fr}
 }
 
 @media(max-width:480px){
@@ -271,6 +290,13 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
   .metrics{grid-template-columns:1fr 1fr}
   .navbar-user-info span:not(.badge){display:none}
   .navbar-actions .btn-sm-text{display:none}
+  .emi-row{grid-template-columns:40px 1fr 1fr 1fr auto;font-size:11px;padding:6px 8px}
+  .emi-row>div:nth-child(5),.emi-row>div:nth-child(7),.emi-header>div:nth-child(5),.emi-header>div:nth-child(7){display:none}
+  .loan-info-grid{grid-template-columns:1fr 1fr;gap:6px 12px;font-size:11px}
+  .loan-stats-grid{grid-template-columns:1fr;gap:8px}
+  .loan-header-grid{grid-template-columns:1fr}
+  .balance-hero{padding:1rem}
+  .bal-big{font-size:24px}
 }
 
 /* ===== LOADING SKELETON ===== */
@@ -369,8 +395,10 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
   </div>
   <div class="card">
     <h3>Members overview</h3>
-    <table><thead><tr><th>Member</th><th>Total saved</th><th>Months paid</th><th>Pending months</th><th>Active loan</th><th>Status</th></tr></thead>
+    <div class="table-scroll">
+    <table><thead><tr><th style="width:44px"></th><th>Member</th><th>Total saved</th><th>Months paid</th><th>Pending months</th><th>Active loan</th><th>Status</th></tr></thead>
     <tbody id="members-table"></tbody></table>
+    </div>
   </div>
   <div class="card">
     <h3>Recent transactions</h3>
@@ -473,8 +501,10 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
 <div id="members" class="section">
   <div class="card">
     <div class="row"><h3 style="margin:0">Members</h3><button class="btn-sm admin-only" onclick="openAddMemberModal()">+ Add member</button></div>
+    <div class="table-scroll">
     <table><thead><tr><th></th><th>Name</th><th>Months paid</th><th>Total contributed</th><th>Loans taken</th><th></th></tr></thead>
     <tbody id="members-manage"></tbody></table>
+    </div>
   </div>
   <div class="card">
     <h3>Contribution rate history</h3>
@@ -1274,11 +1304,11 @@ function renderPaymentSummary(){
       ? '<span style="color:var(--color-text-success);font-size:18px" title="All paid">✅</span>'
       : '<span style="color:var(--color-text-danger);font-size:18px" title="Payment pending">⏳</span>';
 
-    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:8px;${allDone?'opacity:0.7':''}">
-      <div style="flex-shrink:0;padding-top:2px">${statusIcon}</div>
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px;border:1px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);margin-bottom:8px;${allDone?'opacity:0.7':''}">
+      <div style="flex-shrink:0;padding-top:2px">${memberAvatar(m,40)}</div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-          <strong>${m.name}</strong>
+          <div><strong>${m.name}</strong> ${statusIcon}</div>
           <div style="text-align:right">
             <div style="font-size:11px;color:var(--color-text-secondary)">Total</div>
             <div style="font-weight:600;font-size:15px;${allDone?'color:var(--color-text-success)':'color:var(--color-text-primary)'}">${allDone?'All clear':fmt(fullTotal)+' KD'}</div>
@@ -1323,13 +1353,44 @@ function renderPaymentSummary(){
   el.innerHTML = rows;
 }
 
+function memberAvatarColor(name){
+  // Generate a consistent hue from member name
+  let hash = 0;
+  for(let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return {
+    bg1: `hsl(${hue}, 70%, 55%)`,
+    bg2: `hsl(${(hue + 40) % 360}, 65%, 45%)`,
+    text: '#fff'
+  };
+}
+
 function memberAvatar(m, size){
   size = size || 36;
   if(m.photo){
     return `<img src="${m.photo}" alt="${m.name}" class="avatar" style="width:${size}px;height:${size}px">`;
   }
   const initials = m.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  return `<div class="avatar avatar-placeholder" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.38)}px">${initials}</div>`;
+  const c = memberAvatarColor(m.name);
+  return `<div class="avatar avatar-placeholder" style="width:${size}px;height:${size}px;font-size:${Math.round(size*0.38)}px;background:linear-gradient(135deg,${c.bg1},${c.bg2});color:${c.text};border-color:${c.bg1}">${initials}</div>`;
+}
+
+function memberAvatarSVG(name, size){
+  // Generate a full SVG avatar with pattern + initials (for exports/fallback)
+  size = size || 80;
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const c = memberAvatarColor(name);
+  let hash = 0;
+  for(let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  // Generate decorative circles
+  const circles = [];
+  for(let i = 0; i < 3; i++){
+    const cx = 10 + ((hash >> (i*4)) & 0xF) * 4;
+    const cy = 10 + ((hash >> (i*4+2)) & 0xF) * 4;
+    const r = 8 + (i * 6);
+    circles.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(255,255,255,0.1)"/>`);
+  }
+  return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="${c.bg1}"/><stop offset="100%" stop-color="${c.bg2}"/></linearGradient></defs><rect width="${size}" height="${size}" rx="${size/2}" fill="url(#g)"/>${circles.join('')}<text x="50%" y="52%" dominant-baseline="central" text-anchor="middle" fill="white" font-family="Inter,sans-serif" font-weight="600" font-size="${Math.round(size*0.38)}">${initials}</text></svg>`)}`
 }
 
 function previewMemberPhoto(input, previewId){
@@ -1391,6 +1452,7 @@ function renderMembersTable(){
     const unpaid=totalMonths-paidCount;
     const loan=getActiveLoan(m.id);
     return `<tr>
+      <td style="width:44px">${memberAvatar(m,32)}</td>
       <td>${m.name}</td>
       <td>${fmt(getMemberTotalSaved(m.id))} KD</td>
       <td><span class="badge badge-green">${paidCount} months</span></td>
@@ -1398,7 +1460,7 @@ function renderMembersTable(){
       <td>${loan?loan.amount+' KD':'—'}</td>
       <td>${loan?'<span class="badge badge-amber">Active loan</span>':'<span class="badge badge-green">Clear</span>'}</td>
     </tr>`;
-  }).join('')||'<tr><td colspan="6" style="color:var(--color-text-secondary)">No members</td></tr>';
+  }).join('')||'<tr><td colspan="7" style="color:var(--color-text-secondary)">No members</td></tr>';
 }
 
 function renderRecentTx(){
@@ -1676,10 +1738,10 @@ function renderLoans(){
     const totalRepay=loan.emis.reduce((a,e)=>a+e.total,0);
     return `<div class="card" style="${isClosed?'opacity:0.85;border-left:3px solid var(--color-text-success)':''}">
       ${closedBanner}
-      <div style="display:grid;grid-template-columns:1fr auto;gap:16px;margin-bottom:14px">
+      <div class="loan-header-grid" style="margin-bottom:14px">
         <div>
           <div style="font-weight:500;font-size:16px;margin-bottom:6px">${m?.name} ${sb}</div>
-          <div style="font-size:12px;color:var(--color-text-secondary);display:grid;grid-template-columns:auto auto auto auto;gap:20px">
+          <div class="loan-info-grid" style="font-size:12px;color:var(--color-text-secondary)">
             <div>Loan: <strong>${fmt(loan.amount)} KD</strong></div>
             <div>EMIs: <strong>${loan.emis.length}mo</strong></div>
             <div>Rate: <strong>${loan.rate}%</strong></div>
@@ -1692,7 +1754,7 @@ function renderLoans(){
         </div>
       </div>
       <div class="prog-bar" style="margin-bottom:14px"><div class="prog-fill" style="width:${pct}%"></div></div>
-      <div style="margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div class="loan-stats-grid" style="margin-bottom:14px">
         <div style="background:var(--color-background-secondary);padding:12px;border-radius:var(--border-radius-md);font-size:12px;border:1px solid var(--color-border-tertiary)">
           <div style="color:var(--color-text-secondary);margin-bottom:4px;font-weight:500">Outstanding</div>
           <div class="${isClosed?'green':'red'}" style="font-weight:600;font-size:15px">${isClosed?'0.000':fmt(getOutstanding(loan))} KD</div>
@@ -2609,6 +2671,11 @@ showServerWarning();
   }
 })();
 checkAuth();
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
