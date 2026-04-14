@@ -1581,7 +1581,7 @@ function renderTracker(){
       const locked=isMonthLocked(m.key);
       const isCurrent=m.key===workingMonth;
       const future=isMonthFuture(m.key);
-      return `<th class="${locked?'locked-col':''} ${isCurrent?'current-month-header':''}">${p.month.slice(0,3)}<br><span style="font-weight:400;color:var(--color-text-secondary);font-size:10px">${m.amount} KD</span>${!future&&isAdmin()?`<br><button class="lock-btn" title="${locked?'Unlock':'Lock'} this month" onclick="toggleLockMonth('${m.key}')">${locked?'🔒':'🔓'}</button>`:''}</th>`;
+      return `<th class="${locked?'locked-col':''} ${isCurrent?'current-month-header':''}">${p.month.slice(0,3)}<br><span style="font-weight:400;color:var(--color-text-secondary);font-size:10px">${m.amount} KD</span>${isAdmin()?`<br><button class="lock-btn" title="${locked?'Unlock':'Lock'} this month" onclick="toggleLockMonth('${m.key}')">${locked?'🔒':'🔓'}</button>`:''}</th>`;
     }).join('')}
     <th>Paid</th><th>Pending</th><th>Total (KD)</th>
   </tr>`;
