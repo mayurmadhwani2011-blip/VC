@@ -7,8 +7,10 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data.json');
-const USERS_FILE = path.join(__dirname, 'users.json');
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : __dirname;
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+const DATA_FILE = path.join(DATA_DIR, 'data.json');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 // Trust proxy for HTTPS on Render/Heroku
 app.set('trust proxy', 1);
