@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: friend-savings-bank
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GOLD_API_KEY
+        sync: false
