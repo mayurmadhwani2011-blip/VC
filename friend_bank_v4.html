@@ -1700,14 +1700,20 @@ async function setupMonths(){
   if(compareKeys(fromSel,toSel)>0){alert('From must be before To.');return;}
   // generate all months between, always update amount and isFuture for the range
   let cur=fromSel;
-  let added=0;
+  let safetyCounter=0;
+  let addedCount=0;
+  let updatedCount=0;
   while(compareKeys(cur,toSel)<=0){
     const isFuture=compareKeys(cur,CUR_KEY)>0;
     const idx = state.months.findIndex(m=>m.key===cur);
     if(idx === -1){
       state.months.push({key:cur,amount,isFuture});
+      addedCount++;
     } else {
       // Always update amount and isFuture for existing months in the range
+      if(state.months[idx].amount !== amount || state.months[idx].isFuture !== isFuture){
+        updatedCount++;
+      }
       state.months[idx].amount = amount;
       state.months[idx].isFuture = isFuture;
     }
@@ -1715,13 +1721,17 @@ async function setupMonths(){
     const p=parseKey(cur);
     const d=new Date(p.year,monthIndex(p.month)+1,1);
     cur=monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear());
-    if(++added>60)break;
+    if(++safetyCounter>240)break;
   }
   state.months.sort((a,b)=>compareKeys(a.key,b.key));
   closeModal('setup-months-modal');
-  ensureActiveYear(parseKey(toSel).year);
+  const targetYear=parseKey(toSel).year;
+  ensureActiveYear(targetYear);
   await saveAppState();
-  render();
+  showTab('tracker');
+  setYear(targetYear);
+  populateMonthSelects();
+  alert(`Months updated successfully. Added: ${addedCount}, Updated: ${updatedCount}`);
 }
 
 async function markPaymentFromModal(){
@@ -2624,12 +2634,15 @@ async function sellGold(){
 
 function populateMonthSelects(){
   const sorted=[...state.months].sort((a,b)=>compareKeys(a.key,b.key));
+  const startYear = 2023;
+  const endYear = now.getFullYear() + 10;
+  const totalMonths = (endYear - startYear + 1) * 12;
   ['setup-from','setup-to'].forEach(id=>{
     const sel=document.getElementById(id);if(!sel)return;
     const allKeys=[];
-    // generate range for setup starting from 2023
-    const start=new Date(2023,0,1);
-    for(let i=0;i<60;i++){
+    // generate a dynamic range so setup keeps working in future years
+    const start=new Date(startYear,0,1);
+    for(let i=0;i<totalMonths;i++){
       const d=new Date(start.getFullYear(),start.getMonth()+i,1);
       allKeys.push(monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear()));
     }
@@ -2654,9 +2667,8 @@ function populateMonthSelects(){
   const nrm=document.getElementById('new-rate-month');
   if(nrm){
     const keys=[];
-    // Start from January 2023 through December 2027
-    const startDate = new Date(2023, 0, 1);
-    for(let i=0;i<60;i++){
+    const startDate = new Date(startYear, 0, 1);
+    for(let i=0;i<totalMonths;i++){
       const d=new Date(startDate.getFullYear(), startDate.getMonth()+i, 1);
       keys.push(monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear()));
     }
@@ -2666,9 +2678,8 @@ function populateMonthSelects(){
   const nlm=document.getElementById('nl-month');
   if(nlm){
     const keys=[];
-    // Start from January 2023 through December 2027
-    const startDate = new Date(2023, 0, 1);
-    for(let i=0;i<60;i++){
+    const startDate = new Date(startYear, 0, 1);
+    for(let i=0;i<totalMonths;i++){
       const d=new Date(startDate.getFullYear(), startDate.getMonth()+i, 1);
       keys.push(monthKey(MONTHS_LIST[d.getMonth()],d.getFullYear()));
     }
