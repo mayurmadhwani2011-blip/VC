@@ -1598,7 +1598,15 @@ function renderTracker(){
       const isCurrent=mo.key===workingMonth;
       const currentClass=isCurrent?' current-month':'';
       if(future){
-        bodyHtml+=`<td><span class="pay-cell future" title="Future – not yet">–</span></td>`;
+        if(isAdmin()){
+          if(paid){
+            bodyHtml+=`<td><span class="pay-cell paid${currentClass}" title="Advance paid ✓ — click to unmark" onclick="quickMarkPaid(${m.id},'${mo.key}')" style="cursor:pointer">✓</span></td>`;
+          } else {
+            bodyHtml+=`<td><span class="pay-cell unpaid${currentClass}" title="Future month — click to mark paid" onclick="quickMarkPaid(${m.id},'${mo.key}')" style="cursor:pointer">✗</span></td>`;
+          }
+        } else {
+          bodyHtml+=`<td><span class="pay-cell future" title="Future – not yet">–</span></td>`;
+        }
       } else if(locked && paid){
         paidCount++;totalPaid+=state.payments[payKey(m.id,mo.key)].amount;
         bodyHtml+=`<td class="locked-col"><span class="pay-cell paid locked${currentClass}" title="Paid (month locked)">✓</span></td>`;
@@ -1636,7 +1644,7 @@ function renderTracker(){
 function renderTrackerSummary(yearMonths){
   const year=state.activeYear;
   const totalExpected=yearMonths.filter(m=>!isMonthFuture(m.key)).reduce((a,m)=>a+m.amount*state.members.length,0);
-  const totalCollected=yearMonths.reduce((a,m)=>{
+  const totalCollected=yearMonths.filter(m=>!isMonthFuture(m.key)).reduce((a,m)=>{
     return a+state.members.reduce((b,mem)=>{
       const p=state.payments[payKey(mem.id,m.key)];
       return b+(p&&p.paid?p.amount:0);
@@ -1667,7 +1675,7 @@ async function quickMarkPaid(memberId,mk){
   if(!isAdmin()){alert('Only admins can modify payments.');return;}
   if(isMonthLocked(mk)){alert('This month is locked. Unlock it first to make changes.');return;}
   const mo=state.months.find(m=>m.key===mk);
-  if(!mo||isMonthFuture(mo.key))return;
+  if(!mo)return;
   const pk=payKey(memberId,mk);
   const m=getMember(memberId);
   const alreadyPaid = !!state.payments[pk];
