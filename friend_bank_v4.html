@@ -1088,13 +1088,12 @@ let state={
 function fmt(n){return parseFloat(n||0).toFixed(3);}
 function isMonthFuture(mk){return compareKeys(mk,CUR_KEY)>0;}
 function getWorkingMonth(){
-  // Latest month where all members have paid their installment
-  const sorted=[...state.months].filter(m=>!isMonthFuture(m.key)).sort((a,b)=>compareKeys(b.key,a.key));
-  for(const mo of sorted){
-    const allPaid=state.members.every(m=>isPaid(m.id,mo.key));
-    if(allPaid) return mo.key;
-  }
-  return sorted.length ? sorted[sorted.length-1].key : CUR_KEY;
+  // Working month is the first month in order that is not fully paid.
+  // This makes the month advance immediately once everyone is marked paid.
+  const sorted=[...state.months].sort((a,b)=>compareKeys(a.key,b.key));
+  if(!sorted.length) return CUR_KEY;
+  const firstPending=sorted.find(mo=>!state.members.every(m=>isPaid(m.id,mo.key)));
+  return firstPending ? firstPending.key : sorted[sorted.length-1].key;
 }
 function isMonthLocked(mk){return (state.lockedMonths||[]).includes(mk);}
 async function toggleLockMonth(mk){
