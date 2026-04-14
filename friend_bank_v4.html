@@ -429,7 +429,10 @@ th.current-month-header{background:var(--color-accent-light)!important;color:var
     </div>
     <div class="filter-bar" id="year-filter"></div>
     <div class="tracker-wrap">
-      <table class="tracker-table" id="tracker-grid"></table>
+      <table class="tracker-table">
+        <thead id="tracker-head"></thead>
+        <tbody id="tracker-grid"></tbody>
+      </table>
     </div>
     <div id="tracker-summary" style="margin-top:14px"></div>
   </div>
@@ -743,9 +746,11 @@ async function checkAuth(){
       currentUser = data.user;
       showApp();
       await fetchAppState();
-      const wm=getWorkingMonth();
-      const wmYear=parseKey(wm).year;
-      if(getYears().includes(wmYear)) state.activeYear=wmYear;
+      // Default to current real-world year, not working-month year
+      const curYear = now.getFullYear();
+      const availYears = getYears();
+      if(availYears.includes(curYear)) state.activeYear=curYear;
+      else if(availYears.length) state.activeYear=availYears[availYears.length-1];
       render();
       return true;
     }
@@ -1560,14 +1565,17 @@ function renderTracker(){
   renderYearFilter();
   const year=state.activeYear;
   const yearMonths=monthsForYear(year);
+  const headEl=document.getElementById('tracker-head');
+  const bodyEl=document.getElementById('tracker-grid');
   if(!yearMonths.length){
-    document.getElementById('tracker-grid').innerHTML='<tr><td style="padding:2rem;color:var(--color-text-secondary)">No months set up for this year. Use "Setup months" to add them.</td></tr>';
+    if(headEl) headEl.innerHTML='';
+    if(bodyEl) bodyEl.innerHTML='<tr><td colspan="20" style="padding:2rem;color:var(--color-text-secondary)">No months set up for this year. Use "Setup months" to add them.</td></tr>';
     renderTrackerSummary(yearMonths);
     return;
   }
   // header
   const workingMonth=getWorkingMonth();
-  let html=`<thead><tr>
+  if(headEl) headEl.innerHTML=`<tr>
     <th class="member-col">Member</th>
     ${yearMonths.map(m=>{
       const p=parseKey(m.key);
@@ -1577,10 +1585,11 @@ function renderTracker(){
       return `<th class="${locked?'locked-col':''} ${isCurrent?'current-month-header':''}">${p.month.slice(0,3)}<br><span style="font-weight:400;color:var(--color-text-secondary);font-size:10px">${m.amount} KD</span>${!future&&isAdmin()?`<br><button class="lock-btn" title="${locked?'Unlock':'Lock'} this month" onclick="toggleLockMonth('${m.key}')">${locked?'🔒':'🔓'}</button>`:''}</th>`;
     }).join('')}
     <th>Paid</th><th>Pending</th><th>Total (KD)</th>
-  </tr></thead><tbody>`;
+  </tr>`;
   // member rows
+  let bodyHtml='';
   state.members.forEach(m=>{
-    html+=`<tr><td class="member-name">${m.name}</td>`;
+    bodyHtml+=`<tr><td class="member-name">${m.name}</td>`;
     let paidCount=0,pendingCount=0,totalPaid=0;
     yearMonths.forEach(mo=>{
       const paid=isPaid(m.id,mo.key);
@@ -1589,27 +1598,27 @@ function renderTracker(){
       const isCurrent=mo.key===workingMonth;
       const currentClass=isCurrent?' current-month':'';
       if(future){
-        html+=`<td><span class="pay-cell future" title="Future">–</span></td>`;
+        bodyHtml+=`<td><span class="pay-cell future" title="Future – not yet">–</span></td>`;
       } else if(locked && paid){
         paidCount++;totalPaid+=state.payments[payKey(m.id,mo.key)].amount;
-        html+=`<td class="locked-col"><span class="pay-cell paid locked${currentClass}" title="Month locked">✓</span></td>`;
+        bodyHtml+=`<td class="locked-col"><span class="pay-cell paid locked${currentClass}" title="Paid (month locked)">✓</span></td>`;
       } else if(locked && !paid){
         pendingCount++;
-        html+=`<td class="locked-col"><span class="pay-cell unpaid locked${currentClass}" title="Month locked">✗</span></td>`;
+        bodyHtml+=`<td class="locked-col"><span class="pay-cell unpaid locked${currentClass}" title="Unpaid (month locked)">✗</span></td>`;
       } else if(paid){
         paidCount++;totalPaid+=state.payments[payKey(m.id,mo.key)].amount;
-        html+=isAdmin()?`<td><span class="pay-cell paid${currentClass}" title="Click to unmark payment" onclick="quickMarkPaid(${m.id},'${mo.key}')" style="cursor:pointer">✓</span></td>`:`<td><span class="pay-cell paid${currentClass}">✓</span></td>`;
+        bodyHtml+=isAdmin()?`<td><span class="pay-cell paid${currentClass}" title="Paid ✓ — click to unmark" onclick="quickMarkPaid(${m.id},'${mo.key}')" style="cursor:pointer">✓</span></td>`:`<td><span class="pay-cell paid${currentClass}" title="Paid">✓</span></td>`;
       } else {
         pendingCount++;
-        html+=isAdmin()?`<td><span class="pay-cell unpaid${currentClass}" title="Click to mark paid" onclick="quickMarkPaid(${m.id},'${mo.key}')">✗</span></td>`:`<td><span class="pay-cell unpaid${currentClass}">✗</span></td>`;
+        bodyHtml+=isAdmin()?`<td><span class="pay-cell unpaid${currentClass}" title="Unpaid — click to mark paid" onclick="quickMarkPaid(${m.id},'${mo.key}')">✗</span></td>`:`<td><span class="pay-cell unpaid${currentClass}" title="Unpaid">✗</span></td>`;
       }
     });
-    html+=`<td><span class="badge badge-green" style="font-size:11px">${paidCount}</span></td>
+    bodyHtml+=`<td><span class="badge badge-green" style="font-size:11px">${paidCount}</span></td>
       <td>${pendingCount>0?`<span class="badge badge-red" style="font-size:11px">${pendingCount}</span>`:'<span class="badge badge-gray" style="font-size:11px">0</span>'}</td>
       <td><strong>${fmt(totalPaid)}</strong></td></tr>`;
   });
   // totals row
-  html+=`<tr class="summary-row"><td class="member-name" style="background:var(--color-background-secondary)">Month total</td>`;
+  bodyHtml+=`<tr class="summary-row"><td class="member-name" style="background:var(--color-background-secondary)">Month total</td>`;
   let grandTotal=0;
   yearMonths.forEach(mo=>{
     const monthTotal=state.members.reduce((a,m)=>{
@@ -1617,11 +1626,10 @@ function renderTracker(){
       return a+(p&&p.paid?p.amount:0);
     },0);
     grandTotal+=monthTotal;
-    html+=`<td class="month-total">${monthTotal>0?fmt(monthTotal):'—'}</td>`;
+    bodyHtml+=`<td class="month-total">${monthTotal>0?fmt(monthTotal):'—'}</td>`;
   });
-  html+=`<td colspan="2"></td><td style="font-weight:500">${fmt(grandTotal)}</td></tr>`;
-  html+=`</tbody>`;
-  document.getElementById('tracker-grid').innerHTML=html;
+  bodyHtml+=`<td colspan="2"></td><td style="font-weight:500">${fmt(grandTotal)}</td></tr>`;
+  if(bodyEl) bodyEl.innerHTML=bodyHtml;
   renderTrackerSummary(yearMonths);
 }
 
@@ -1725,13 +1733,19 @@ async function setupMonths(){
   }
   state.months.sort((a,b)=>compareKeys(a.key,b.key));
   closeModal('setup-months-modal');
-  const targetYear=parseKey(toSel).year;
-  ensureActiveYear(targetYear);
+  const fromYear=parseKey(fromSel).year;
+  const toYear=parseKey(toSel).year;
+  // Jump to the year the user just set up
+  state.activeYear=fromYear;
   await saveAppState();
   showTab('tracker');
-  setYear(targetYear);
+  renderYearFilter();
+  renderTracker();
   populateMonthSelects();
-  alert(`Months updated successfully. Added: ${addedCount}, Updated: ${updatedCount}`);
+  const yearHint = fromYear !== toYear
+    ? `\n\nYour months span ${fromYear}–${toYear}. Use the year buttons at the top of the Installments tab to switch between years.`
+    : '';
+  alert(`Done! Added ${addedCount} new month(s), updated ${updatedCount} existing month(s).\nNow showing year ${fromYear} in Installments.${yearHint}`);
 }
 
 async function markPaymentFromModal(){
@@ -2762,9 +2776,16 @@ checkAuth();
 
 // Register service worker for PWA
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(reg => reg.update())
-    .catch(() => {});
+  const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  if (isLocalHost) {
+    navigator.serviceWorker.getRegistrations()
+      .then(regs => Promise.all(regs.map(r => r.unregister())))
+      .catch(() => {});
+  } else {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => reg.update())
+      .catch(() => {});
+  }
 }
 </script>
 </body>
