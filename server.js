@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : __dirname;
+const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
@@ -209,4 +209,8 @@ app.get('/api/gold-price', requireAuth, async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`[STORAGE] DATA_DIR (local data folder) = ${DATA_DIR}`);
+  if (process.env.NODE_ENV === 'production' && !process.env.DATA_DIR) {
+    console.warn('[STORAGE] WARNING: Using ephemeral app filesystem; changes may be lost after restart/redeploy.');
+  }
 });

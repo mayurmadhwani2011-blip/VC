@@ -19,7 +19,7 @@
   ],
   "nextMemberId": 9,
   "mainBalance": 20,
-  "loanedOut": 1171.4095,
+  "loanedOut": 980.8905,
   "months": [
     {
       "key": "April-2024",
@@ -726,6 +726,16 @@
     "8-March-2026": {
       "paid": true,
       "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-April-2026": {
+      "paid": true,
+      "date": "14 Apr 2026",
+      "amount": 30
+    },
+    "7-April-2026": {
+      "paid": true,
+      "date": "14 Apr 2026",
       "amount": 30
     }
   },
@@ -1503,7 +1513,7 @@
       "amount": 762.076,
       "rate": 2,
       "month": "January-2026",
-      "status": "active",
+      "status": "closed",
       "emis": [
         {
           "num": 1,
@@ -1538,8 +1548,8 @@
           "interest": 3.8104,
           "total": 194.3294,
           "pending": 190.519,
-          "paid": false,
-          "date": null
+          "paid": true,
+          "date": "14 Apr 2026"
         }
       ]
     },
@@ -3602,6 +3612,24 @@
       "amount": -30,
       "desc": "Vicky unpaid installment for April 2026",
       "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 194.3294,
+      "desc": "EMI 4 from Mayur (3.810 KD interest)",
+      "date": "14 Apr 2026"
     }
   ],
   "lockedMonths": [
