@@ -1209,6 +1209,18 @@ function getYears(){
   return [...ys].sort();
 }
 
+function ensureActiveYear(preferredYear){
+  const years=getYears();
+  if(!years.length) return;
+  if(preferredYear && years.includes(preferredYear)){
+    state.activeYear=preferredYear;
+    return;
+  }
+  if(!years.includes(state.activeYear)){
+    state.activeYear=years[years.length-1];
+  }
+}
+
 function monthsForYear(year){
   return state.months.filter(m=>parseKey(m.key).year===year).sort((a,b)=>compareKeys(a.key,b.key));
 }
@@ -1544,6 +1556,7 @@ function renderRecentTx(){
 }
 
 function renderTracker(){
+  ensureActiveYear();
   renderYearFilter();
   const year=state.activeYear;
   const yearMonths=monthsForYear(year);
@@ -1632,6 +1645,7 @@ function renderTrackerSummary(yearMonths){
 }
 
 function renderYearFilter(){
+  ensureActiveYear();
   const years=getYears();
   document.getElementById('year-filter').innerHTML=years.map(y=>
     `<button class="year-btn${y===state.activeYear?' sel':''}" onclick="setYear(${y})">${y}</button>`
@@ -1705,8 +1719,7 @@ async function setupMonths(){
   }
   state.months.sort((a,b)=>compareKeys(a.key,b.key));
   closeModal('setup-months-modal');
-  const years=getYears();
-  if(years.length)state.activeYear=years[0];
+  ensureActiveYear(parseKey(toSel).year);
   await saveAppState();
   render();
 }
