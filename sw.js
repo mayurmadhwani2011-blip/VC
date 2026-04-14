@@ -1,4 +1,4 @@
-const CACHE_NAME = 'friendbank-v2';
+const CACHE_NAME = 'friendbank-v3';
 const PRECACHE_URLS = [
   '/',
   '/friend_bank_v4.html',
@@ -30,6 +30,14 @@ self.addEventListener('fetch', event => {
   // Always go to network for API calls
   if (url.pathname.startsWith('/api/')) {
     return event.respondWith(fetch(event.request));
+  }
+
+  // For HTML navigation requests, prefer fresh network content.
+  // This avoids serving stale app shells after deployments.
+  if (event.request.mode === 'navigate') {
+    return event.respondWith(
+      fetch(event.request).catch(() => caches.match('/friend_bank_v4.html'))
+    );
   }
 
   // For everything else: network first, fall back to cache
