@@ -1,0 +1,4227 @@
+{
+  "members": [
+    {
+      "id": 5,
+      "name": "Mayur"
+    },
+    {
+      "id": 6,
+      "name": "Gagan"
+    },
+    {
+      "id": 7,
+      "name": "Himesh"
+    },
+    {
+      "id": 8,
+      "name": "Vicky"
+    }
+  ],
+  "nextMemberId": 9,
+  "mainBalance": 20,
+  "loanedOut": 980.8905,
+  "months": [
+    {
+      "key": "April-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "May-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "June-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "July-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "August-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "September-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "October-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "November-2024",
+      "amount": 25,
+      "isFuture": false
+    },
+    {
+      "key": "December-2024",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "January-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "February-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "March-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "April-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "May-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "June-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "July-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "August-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "September-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "October-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "November-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "December-2025",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "January-2026",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "February-2026",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "March-2026",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "April-2026",
+      "amount": 30,
+      "isFuture": false
+    },
+    {
+      "key": "May-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "June-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "July-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "August-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "September-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "October-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "November-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "December-2026",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "January-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "February-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "March-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "April-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "May-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "June-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "July-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "August-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "September-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "October-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "November-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "December-2027",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "January-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "February-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "March-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "April-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "May-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "June-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "July-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "August-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "September-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "October-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "November-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "December-2028",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "January-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "February-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "March-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "April-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "May-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "June-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "July-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "August-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "September-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "October-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "November-2029",
+      "amount": 30,
+      "isFuture": true
+    },
+    {
+      "key": "December-2029",
+      "amount": 30,
+      "isFuture": true
+    }
+  ],
+  "payments": {
+    "5-April-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "6-April-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "7-April-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "8-April-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "5-May-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "6-May-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "7-May-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "8-May-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "5-June-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "6-June-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "7-June-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "8-June-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "5-July-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "6-July-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "7-July-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "8-July-2024": {
+      "paid": true,
+      "date": "08 Apr 2026",
+      "amount": 25
+    },
+    "5-August-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "6-August-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "7-August-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "8-August-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "5-September-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "6-September-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "7-September-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "8-September-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "5-October-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "6-October-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "7-October-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "8-October-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "5-November-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "6-November-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "7-November-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "8-November-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 25
+    },
+    "5-December-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-December-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-December-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-December-2024": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-January-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-January-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-January-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-January-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-February-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-February-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-February-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-February-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-March-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-March-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-March-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-March-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-April-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-April-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-April-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-April-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-May-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-May-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-May-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-May-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-June-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-June-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-June-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-June-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-July-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-July-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-July-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-July-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-August-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-August-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-August-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-August-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-September-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-September-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-September-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-September-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-October-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-October-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-October-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-October-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-November-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-November-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-November-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-November-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-December-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-December-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-December-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-December-2025": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-January-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-January-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-January-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-January-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-February-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-February-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-February-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-February-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "5-March-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "6-March-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "7-March-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+    "8-March-2026": {
+      "paid": true,
+      "date": "09 Apr 2026",
+      "amount": 30
+    },
+<<<<<<<< HEAD:data/data.json
+    "5-April-2026": {
+      "paid": true,
+      "date": "14 Apr 2026",
+      "amount": 30
+    },
+========
+>>>>>>>> 4a955eb (feat: billing/followup/store UI improvements and performance fixes):friend-bank/data/data.json
+    "7-April-2026": {
+      "paid": true,
+      "date": "14 Apr 2026",
+      "amount": 30
+<<<<<<<< HEAD:data/data.json
+========
+    },
+    "5-April-2026": {
+      "paid": true,
+      "date": "14 Apr 2026",
+      "amount": 30
+>>>>>>>> 4a955eb (feat: billing/followup/store UI improvements and performance fixes):friend-bank/data/data.json
+    }
+  },
+  "rateHistory": [
+    {
+      "amount": 25,
+      "fromKey": "April-2024",
+      "label": "April 2024"
+    },
+    {
+      "amount": 30,
+      "fromKey": "December-2024",
+      "label": "December 2024"
+    }
+  ],
+  "loans": [
+    {
+      "id": 2,
+      "memberId": 5,
+      "amount": 100,
+      "rate": 2,
+      "month": "May-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 25,
+          "interest": 2,
+          "total": 27,
+          "pending": 100,
+          "paid": true,
+          "date": "08 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 25,
+          "interest": 1.5,
+          "total": 26.5,
+          "pending": 75,
+          "paid": true,
+          "date": "08 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 25,
+          "interest": 1,
+          "total": 26,
+          "pending": 50,
+          "paid": true,
+          "date": "08 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 25,
+          "interest": 0.5,
+          "total": 25.5,
+          "pending": 25,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "memberId": 6,
+      "amount": 127,
+      "rate": 2,
+      "month": "June-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 31.75,
+          "interest": 2.54,
+          "total": 34.29,
+          "pending": 127,
+          "paid": true,
+          "date": "08 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 31.75,
+          "interest": 1.905,
+          "total": 33.655,
+          "pending": 95.25,
+          "paid": true,
+          "date": "08 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 31.75,
+          "interest": 1.27,
+          "total": 33.02,
+          "pending": 63.5,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 31.75,
+          "interest": 0.635,
+          "total": 32.385,
+          "pending": 31.75,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "memberId": 7,
+      "amount": 160.79,
+      "rate": 2,
+      "month": "July-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 40.1975,
+          "interest": 3.2158,
+          "total": 43.4133,
+          "pending": 160.79,
+          "paid": true,
+          "date": "08 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 40.1975,
+          "interest": 2.4118,
+          "total": 42.6093,
+          "pending": 120.5925,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 40.1975,
+          "interest": 1.6079,
+          "total": 41.8054,
+          "pending": 80.395,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 40.1975,
+          "interest": 0.8039,
+          "total": 41.0014,
+          "pending": 40.1975,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "memberId": 8,
+      "amount": 203.0683,
+      "rate": 2,
+      "month": "August-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 50.7671,
+          "interest": 4.0614,
+          "total": 54.8285,
+          "pending": 203.0683,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 50.7671,
+          "interest": 3.046,
+          "total": 53.8131,
+          "pending": 152.3012,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 50.7671,
+          "interest": 2.0307,
+          "total": 52.7978,
+          "pending": 101.5341,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 50.767,
+          "interest": 1.0153,
+          "total": 51.7823,
+          "pending": 50.767,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "memberId": 5,
+      "amount": 255.9578,
+      "rate": 2,
+      "month": "September-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 63.9894,
+          "interest": 5.1192,
+          "total": 69.1086,
+          "pending": 255.9578,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 63.9894,
+          "interest": 3.8394,
+          "total": 67.8288,
+          "pending": 191.9684,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 63.9894,
+          "interest": 2.5596,
+          "total": 66.549,
+          "pending": 127.979,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 63.9896,
+          "interest": 1.2798,
+          "total": 65.2694,
+          "pending": 63.9896,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "memberId": 6,
+      "amount": 297.1121,
+      "rate": 2,
+      "month": "October-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 74.278,
+          "interest": 5.9422,
+          "total": 80.2202,
+          "pending": 297.1121,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 74.278,
+          "interest": 4.4567,
+          "total": 78.7347,
+          "pending": 222.8341,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 74.278,
+          "interest": 2.9711,
+          "total": 77.2491,
+          "pending": 148.5561,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 74.2781,
+          "interest": 1.4856,
+          "total": 75.7637,
+          "pending": 74.2781,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "memberId": 7,
+      "amount": 341.8482,
+      "rate": 2,
+      "month": "November-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 85.4621,
+          "interest": 6.837,
+          "total": 92.2991,
+          "pending": 341.8482,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 85.4621,
+          "interest": 5.1277,
+          "total": 90.5898,
+          "pending": 256.3861,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 85.4621,
+          "interest": 3.4185,
+          "total": 88.8806,
+          "pending": 170.924,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 85.4619,
+          "interest": 1.7092,
+          "total": 87.1711,
+          "pending": 85.4619,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "memberId": 8,
+      "amount": 389.3651,
+      "rate": 2,
+      "month": "December-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 97.3413,
+          "interest": 7.7873,
+          "total": 105.1286,
+          "pending": 389.3651,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 97.3413,
+          "interest": 5.8405,
+          "total": 103.1818,
+          "pending": 292.0238,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 97.3413,
+          "interest": 3.8937,
+          "total": 101.235,
+          "pending": 194.6825,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 97.3412,
+          "interest": 1.9468,
+          "total": 99.288,
+          "pending": 97.3412,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "memberId": 5,
+      "amount": 458.2369,
+      "rate": 2,
+      "month": "January-2025",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 114.5592,
+          "interest": 9.1647,
+          "total": 123.7239,
+          "pending": 458.2369,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 114.5592,
+          "interest": 6.8736,
+          "total": 121.4328,
+          "pending": 343.6777,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 114.5592,
+          "interest": 4.5824,
+          "total": 119.1416,
+          "pending": 229.1185,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 114.5593,
+          "interest": 2.2912,
+          "total": 116.8505,
+          "pending": 114.5593,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "memberId": 6,
+      "amount": 511.55,
+      "rate": 2,
+      "month": "February-2025",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 127.8875,
+          "interest": 10.231,
+          "total": 138.1185,
+          "pending": 511.55,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 127.8875,
+          "interest": 7.6733,
+          "total": 135.5608,
+          "pending": 383.6625,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 127.8875,
+          "interest": 5.1155,
+          "total": 133.003,
+          "pending": 255.775,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 127.8875,
+          "interest": 2.5577,
+          "total": 130.4452,
+          "pending": 127.8875,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "memberId": 7,
+      "amount": 567.9574,
+      "rate": 2,
+      "month": "March-2025",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 141.9894,
+          "interest": 11.3591,
+          "total": 153.3485,
+          "pending": 567.9574,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 141.9894,
+          "interest": 8.5194,
+          "total": 150.5088,
+          "pending": 425.968,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 141.9894,
+          "interest": 5.6796,
+          "total": 147.669,
+          "pending": 283.9786,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 141.9892,
+          "interest": 2.8398,
+          "total": 144.829,
+          "pending": 141.9892,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "memberId": 8,
+      "amount": 627.3389,
+      "rate": 2,
+      "month": "April-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 156.8347,
+          "interest": 12.5468,
+          "total": 169.3815,
+          "pending": 627.3389,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 156.8347,
+          "interest": 9.4101,
+          "total": 166.2448,
+          "pending": 470.5042,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 156.8347,
+          "interest": 6.2734,
+          "total": 163.1081,
+          "pending": 313.6695,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 156.8348,
+          "interest": 3.1367,
+          "total": 159.9715,
+          "pending": 156.8348,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "memberId": 5,
+      "amount": 89.7439,
+      "rate": 2,
+      "month": "April-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 22.436,
+          "interest": 1.7949,
+          "total": 24.2309,
+          "pending": 89.7439,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 22.436,
+          "interest": 1.3462,
+          "total": 23.7822,
+          "pending": 67.3079,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 22.436,
+          "interest": 0.8974,
+          "total": 23.3334,
+          "pending": 44.8719,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 22.4359,
+          "interest": 0.4487,
+          "total": 22.8846,
+          "pending": 22.4359,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "memberId": 6,
+      "amount": 60.2775,
+      "rate": 2,
+      "month": "May-2025",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 15.0694,
+          "interest": 1.2056,
+          "total": 16.275,
+          "pending": 60.2775,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 15.0694,
+          "interest": 0.9042,
+          "total": 15.9736,
+          "pending": 45.2081,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 15.0694,
+          "interest": 0.6028,
+          "total": 15.6722,
+          "pending": 30.1387,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 15.0693,
+          "interest": 0.3014,
+          "total": 15.3707,
+          "pending": 15.0693,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "memberId": 7,
+      "amount": 70.9937,
+      "rate": 2,
+      "month": "June-2024",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 17.7484,
+          "interest": 1.4199,
+          "total": 19.1683,
+          "pending": 70.9937,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 17.7484,
+          "interest": 1.0649,
+          "total": 18.8133,
+          "pending": 53.2453,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 17.7484,
+          "interest": 0.7099,
+          "total": 18.4583,
+          "pending": 35.4969,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 17.7485,
+          "interest": 0.355,
+          "total": 18.1035,
+          "pending": 17.7485,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "memberId": 6,
+      "amount": 53.829,
+      "rate": 2,
+      "month": "October-2025",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 13.4573,
+          "interest": 1.0766,
+          "total": 14.5339,
+          "pending": 53.829,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 13.4573,
+          "interest": 0.8074,
+          "total": 14.2647,
+          "pending": 40.3717,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 13.4573,
+          "interest": 0.5383,
+          "total": 13.9956,
+          "pending": 26.9144,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 13.4571,
+          "interest": 0.2691,
+          "total": 13.7262,
+          "pending": 13.4571,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "memberId": 8,
+      "amount": 615.7651,
+      "rate": 2,
+      "month": "December-2025",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 615.7651,
+          "interest": 12.3153,
+          "total": 628.0804,
+          "pending": 615.7651,
+          "paid": true,
+          "date": "09 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "memberId": 5,
+      "amount": 762.076,
+      "rate": 2,
+      "month": "January-2026",
+      "status": "closed",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 190.519,
+          "interest": 15.2415,
+          "total": 205.7605,
+          "pending": 762.076,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 190.519,
+          "interest": 11.4311,
+          "total": 201.9501,
+          "pending": 571.557,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 190.519,
+          "interest": 7.6208,
+          "total": 198.1398,
+          "pending": 381.038,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 4,
+          "principal": 190.519,
+          "interest": 3.8104,
+          "total": 194.3294,
+          "pending": 190.519,
+          "paid": true,
+          "date": "14 Apr 2026"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "memberId": 6,
+      "amount": 339.4867,
+      "rate": 2,
+      "month": "February-2026",
+      "status": "active",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 84.8717,
+          "interest": 6.7897,
+          "total": 91.6614,
+          "pending": 339.4867,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 2,
+          "principal": 84.8717,
+          "interest": 5.0923,
+          "total": 89.964,
+          "pending": 254.615,
+          "paid": true,
+          "date": "09 Apr 2026"
+        },
+        {
+          "num": 3,
+          "principal": 84.8717,
+          "interest": 3.3949,
+          "total": 88.2666,
+          "pending": 169.7433,
+          "paid": false,
+          "date": null
+        },
+        {
+          "num": 4,
+          "principal": 84.8716,
+          "interest": 1.6974,
+          "total": 86.569,
+          "pending": 84.8716,
+          "paid": false,
+          "date": null
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "memberId": 8,
+      "amount": 824.6043,
+      "rate": 2,
+      "month": "April-2026",
+      "status": "active",
+      "emis": [
+        {
+          "num": 1,
+          "principal": 824.6043,
+          "interest": 16.4921,
+          "total": 841.0964,
+          "pending": 824.6043,
+          "paid": false,
+          "date": null
+        }
+      ]
+    }
+  ],
+  "nextLoanId": 26,
+  "transactions": [
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Mayur paid installment for August 2024",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Gagan paid installment for August 2024",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Vicky paid installment for August 2024",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Himesh paid installment for August 2024",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 25.5,
+      "desc": "EMI 4 from Mayur (0.500 KD interest)",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 33.02,
+      "desc": "EMI 3 from Gagan (1.270 KD interest)",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 42.6093,
+      "desc": "EMI 2 from Himesh (2.412 KD interest)",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Mayur unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Gagan unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Vicky unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Himesh unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Mayur paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Gagan paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Himesh paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Vicky paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Mayur unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Gagan unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Himesh unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -25,
+      "desc": "Vicky unpaid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -25.5,
+      "desc": "Reversed EMI 4 from Mayur",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -33.02,
+      "desc": "Reversed EMI 3 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -42.6093,
+      "desc": "Reversed EMI 2 from Himesh",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 203.0683,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Mayur paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Gagan paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Himesh paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Vicky paid installment for August 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 25.5,
+      "desc": "EMI 4 from Mayur (0.500 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 33.02,
+      "desc": "EMI 3 from Gagan (1.270 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 42.6093,
+      "desc": "EMI 2 from Himesh (2.412 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 54.8285,
+      "desc": "EMI 1 from Vicky (4.061 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 255.9578,
+      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Mayur paid installment for September 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Gagan paid installment for September 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Himesh paid installment for September 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Vicky paid installment for September 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 32.385,
+      "desc": "EMI 4 from Gagan (0.635 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 41.8054,
+      "desc": "EMI 3 from Himesh (1.608 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 53.8131,
+      "desc": "EMI 2 from Vicky (3.046 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 69.1086,
+      "desc": "EMI 1 from Mayur (5.119 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 297.1121,
+      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Mayur paid installment for October 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Gagan paid installment for October 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Himesh paid installment for October 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Vicky paid installment for October 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 41.0014,
+      "desc": "EMI 4 from Himesh (0.804 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 52.7978,
+      "desc": "EMI 3 from Vicky (2.031 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 67.8288,
+      "desc": "EMI 2 from Mayur (3.839 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 80.2202,
+      "desc": "EMI 1 from Gagan (5.942 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 341.8482,
+      "desc": "Loan to Himesh · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Mayur paid installment for November 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Gagan paid installment for November 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Himesh paid installment for November 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 25,
+      "desc": "Vicky paid installment for November 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 51.7823,
+      "desc": "EMI 4 from Vicky (1.015 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 66.549,
+      "desc": "EMI 3 from Mayur (2.560 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 78.7347,
+      "desc": "EMI 2 from Gagan (4.457 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 92.2991,
+      "desc": "EMI 1 from Himesh (6.837 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 389.3651,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan_deletion",
+      "amount": -389.3651,
+      "desc": "Deleted loan to Vicky (4 EMIs @ 2%)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 389.3651,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for December 2024",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 65.2694,
+      "desc": "EMI 4 from Mayur (1.280 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 77.2491,
+      "desc": "EMI 3 from Gagan (2.971 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 90.5898,
+      "desc": "EMI 2 from Himesh (5.128 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 105.1286,
+      "desc": "EMI 1 from Vicky (7.787 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 458.2369,
+      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for January 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for January 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for January 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for January 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 75.7637,
+      "desc": "EMI 4 from Gagan (1.486 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 88.8806,
+      "desc": "EMI 3 from Himesh (3.418 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 103.1818,
+      "desc": "EMI 2 from Vicky (5.840 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 123.7239,
+      "desc": "EMI 1 from Mayur (9.165 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 511.55,
+      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for February 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for February 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for February 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for February 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 87.1711,
+      "desc": "EMI 4 from Himesh (1.709 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 101.235,
+      "desc": "EMI 3 from Vicky (3.894 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 121.4328,
+      "desc": "EMI 2 from Mayur (6.874 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 138.1185,
+      "desc": "EMI 1 from Gagan (10.231 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 567.9574,
+      "desc": "Loan to Himesh · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for March 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for March 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for March 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for March 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 99.288,
+      "desc": "EMI 4 from Vicky (1.947 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 119.1416,
+      "desc": "EMI 3 from Mayur (4.582 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 135.5608,
+      "desc": "EMI 2 from Gagan (7.673 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 153.3485,
+      "desc": "EMI 1 from Himesh (11.359 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for April 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 627.3389,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan_deletion",
+      "amount": -627.3389,
+      "desc": "Deleted loan to Vicky (4 EMIs @ 2%)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 627.3389,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for April 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for April 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for April 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 116.8505,
+      "desc": "EMI 4 from Mayur (2.291 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 133.003,
+      "desc": "EMI 3 from Gagan (5.115 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 150.5088,
+      "desc": "EMI 2 from Himesh (8.519 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 169.3815,
+      "desc": "EMI 1 from Vicky (12.547 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -599.9999,
+      "desc": "Bought 18.680g gold @ 32.120 KD/g",
+      "date": "10 Apr 2025"
+    },
+    {
+      "type": "loan",
+      "amount": 89.7439,
+      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for May 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for May 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 130.4452,
+      "desc": "EMI 4 from Gagan (2.558 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 147.669,
+      "desc": "EMI 3 from Himesh (5.680 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 166.2448,
+      "desc": "EMI 2 from Vicky (9.410 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 24.2309,
+      "desc": "EMI 1 from Mayur (1.795 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -528.3124,
+      "desc": "Bought 16.010g gold @ 32.999 KD/g",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 60.2775,
+      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for June 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for June 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for June 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for June 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 144.829,
+      "desc": "EMI 4 from Himesh (2.840 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 163.1081,
+      "desc": "EMI 3 from Vicky (6.273 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 23.7822,
+      "desc": "EMI 2 from Mayur (1.346 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 16.275,
+      "desc": "EMI 1 from Gagan (1.206 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -397.0006,
+      "desc": "Bought 11.970g gold @ 33.166 KD/g",
+      "date": "10 Jun 2025"
+    },
+    {
+      "type": "loan",
+      "amount": 70.9937,
+      "desc": "Loan to Himesh · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for July 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for July 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for July 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for July 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 159.9715,
+      "desc": "EMI 4 from Vicky (3.137 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 23.3334,
+      "desc": "EMI 3 from Mayur (0.897 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.9736,
+      "desc": "EMI 2 from Gagan (0.904 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 19.1683,
+      "desc": "EMI 1 from Himesh (1.420 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -338.4413,
+      "desc": "Bought 10.320g gold @ 32.795 KD/g",
+      "date": "08 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 22.8846,
+      "desc": "EMI 4 from Mayur (0.449 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.6722,
+      "desc": "EMI 3 from Gagan (0.603 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 18.8133,
+      "desc": "EMI 2 from Himesh (1.065 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -177.3678,
+      "desc": "Bought 5.380g gold @ 32.968 KD/g",
+      "date": "10 Aug 2025"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.3707,
+      "desc": "EMI 4 from Gagan (0.301 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 18.4583,
+      "desc": "EMI 3 from Himesh (0.710 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -153.8361,
+      "desc": "Bought 3.790g gold @ 40.590 KD/g",
+      "date": "10 Sept 2025"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 18.1035,
+      "desc": "EMI 4 from Himesh (0.355 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 130.4452,
+      "desc": "EMI 4 from Gagan (2.558 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 144.829,
+      "desc": "EMI 4 from Himesh (2.840 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 159.9715,
+      "desc": "EMI 4 from Vicky (3.137 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -15.6722,
+      "desc": "Reversed EMI 3 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -18.4583,
+      "desc": "Reversed EMI 3 from Himesh",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -18.8133,
+      "desc": "Reversed EMI 2 from Himesh",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 338.4468,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan_deletion",
+      "amount": -338.4468,
+      "desc": "Deleted loan to Vicky (4 EMIs @ 2%)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -338.446,
+      "desc": "Bought 10.320g gold @ 32.795 KD/g",
+      "date": "10 Jul 2025"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -23.3334,
+      "desc": "Reversed EMI 3 from Mayur",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -15.9736,
+      "desc": "Reversed EMI 2 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -19.1683,
+      "desc": "Reversed EMI 1 from Himesh",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 23.3334,
+      "desc": "EMI 3 from Mayur (0.897 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.9736,
+      "desc": "EMI 2 from Gagan (0.904 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 19.1683,
+      "desc": "EMI 1 from Himesh (1.420 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -19.1683,
+      "desc": "Reversed EMI 1 from Himesh",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -15.9736,
+      "desc": "Reversed EMI 2 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -23.3334,
+      "desc": "Reversed EMI 3 from Mayur",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for August 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 23.3334,
+      "desc": "EMI 3 from Mayur (0.897 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.9736,
+      "desc": "EMI 2 from Gagan (0.904 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 19.1683,
+      "desc": "EMI 1 from Himesh (1.420 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 22.8846,
+      "desc": "EMI 4 from Mayur (0.449 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.6722,
+      "desc": "EMI 3 from Gagan (0.603 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 18.8133,
+      "desc": "EMI 2 from Himesh (1.065 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -177.3709,
+      "desc": "Bought 5.380g gold @ 32.969 KD/g",
+      "date": "10 Aug 2025"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for September 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 15.3707,
+      "desc": "EMI 4 from Gagan (0.301 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 18.4583,
+      "desc": "EMI 3 from Himesh (0.710 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -100,
+      "desc": "Bought 2.680g gold @ 37.313 KD/g",
+      "date": "10 Sept 2025"
+    },
+    {
+      "type": "loan",
+      "amount": 53.829,
+      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for October 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 18.1035,
+      "desc": "EMI 4 from Himesh (0.355 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 14.5339,
+      "desc": "EMI 1 from Gagan (1.077 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -152.637,
+      "desc": "Bought 3.790g gold @ 40.274 KD/g",
+      "date": "10 Oct 2025"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for November 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_sell",
+      "amount": 481.5,
+      "desc": "Sold 11.850g gold @ 40.633 KD/g",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -14.5339,
+      "desc": "Reversed EMI 1 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 14.2647,
+      "desc": "EMI 2 from Gagan (0.807 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -14.2647,
+      "desc": "Reversed EMI 2 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 14.5339,
+      "desc": "EMI 1 from Gagan (1.077 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 14.2647,
+      "desc": "EMI 2 from Gagan (0.807 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 615.7651,
+      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 13.9956,
+      "desc": "EMI 3 from Gagan (0.538 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 166.2566,
+      "desc": "EMI 1 from Vicky (12.315 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -166.2566,
+      "desc": "Reversed EMI 1 payment from Vicky",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan_deletion",
+      "amount": -615.7651,
+      "desc": "Deleted loan to Vicky (4 EMIs @ 2%)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_reversal",
+      "amount": -13.9956,
+      "desc": "Reversed EMI 3 from Gagan",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 615.7651,
+      "desc": "Loan to Vicky · 1 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for December 2025",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 13.9956,
+      "desc": "EMI 3 from Gagan (0.538 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 628.0804,
+      "desc": "EMI 1 from Vicky (12.315 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 762.076,
+      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 13.7262,
+      "desc": "EMI 4 from Gagan (0.269 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 205.7605,
+      "desc": "EMI 1 from Mayur (15.242 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 339.4867,
+      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for January 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for January 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for January 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for January 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for February 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for February 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for February 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for February 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 201.9501,
+      "desc": "EMI 2 from Mayur (11.431 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 91.6614,
+      "desc": "EMI 1 from Gagan (6.790 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_buy",
+      "amount": -413.611,
+      "desc": "Bought 8.150g gold @ 50.750 KD/g",
+      "date": "10 Feb 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for March 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 198.1398,
+      "desc": "EMI 3 from Mayur (7.621 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 89.964,
+      "desc": "EMI 2 from Gagan (5.092 KD interest)",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "gold_sell",
+      "amount": 416.5,
+      "desc": "Sold 8.150g gold @ 51.104 KD/g",
+      "date": "10 Mar 2026"
+    },
+    {
+      "type": "loan",
+      "amount": 824.6043,
+      "desc": "Loan to Vicky · 1 EMIs @ 2%",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for April 2026",
+      "date": "09 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "emi_return",
+      "amount": 194.3294,
+      "desc": "EMI 4 from Mayur (3.810 KD interest)",
+      "date": "14 Apr 2026"
+<<<<<<<< HEAD:data/data.json
+========
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for May 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for April 2026",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Mayur paid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Gagan paid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Himesh paid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment",
+      "amount": 30,
+      "desc": "Vicky paid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Vicky unpaid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Himesh unpaid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Gagan unpaid installment for December 2029",
+      "date": "14 Apr 2026"
+    },
+    {
+      "type": "installment_reversal",
+      "amount": -30,
+      "desc": "Mayur unpaid installment for December 2029",
+      "date": "14 Apr 2026"
+>>>>>>>> 4a955eb (feat: billing/followup/store UI improvements and performance fixes):friend-bank/data/data.json
+    }
+  ],
+  "lockedMonths": [
+    "April-2024",
+    "May-2024",
+    "June-2024",
+    "July-2024",
+    "August-2024",
+    "September-2024",
+    "October-2024",
+    "November-2024",
+    "December-2024",
+    "February-2025",
+    "March-2025",
+    "April-2025",
+    "May-2025",
+    "June-2025",
+    "July-2025",
+    "January-2025",
+    "August-2025",
+    "September-2025",
+    "November-2025",
+    "October-2025",
+    "January-2026",
+    "February-2026",
+    "March-2026"
+  ],
+  "activeYear": 2029,
+  "goldTransactions": [
+    {
+      "type": "buy",
+      "grams": 18.68,
+      "pricePerGram": 32.11991,
+      "totalCost": 599.9999,
+      "date": "2025-04-10"
+    },
+    {
+      "type": "buy",
+      "grams": 16.01,
+      "pricePerGram": 32.9989,
+      "totalCost": 528.3124,
+      "date": "2025-05-10"
+    },
+    {
+      "type": "buy",
+      "grams": 11.97,
+      "pricePerGram": 33.1663,
+      "totalCost": 397.0006,
+      "date": "2025-06-10"
+    },
+    {
+      "type": "buy",
+      "grams": 10.32,
+      "pricePerGram": 32.7952,
+      "totalCost": 338.446,
+      "date": "2025-07-10"
+    },
+    {
+      "type": "buy",
+      "grams": 5.38,
+      "pricePerGram": 32.9686,
+      "totalCost": 177.3709,
+      "date": "2025-08-10"
+    },
+    {
+      "type": "buy",
+      "grams": 2.68,
+      "pricePerGram": 37.3134,
+      "totalCost": 100,
+      "date": "2025-09-10"
+    },
+    {
+      "type": "buy",
+      "grams": 3.79,
+      "pricePerGram": 40.2736,
+      "totalCost": 152.637,
+      "date": "2025-10-10"
+    },
+    {
+      "type": "sell",
+      "grams": 11.85,
+      "pricePerGram": 40.6329,
+      "totalCost": 481.5,
+      "date": "2026-04-09"
+    },
+    {
+      "type": "buy",
+      "grams": 8.15,
+      "pricePerGram": 50.7498,
+      "totalCost": 413.611,
+      "date": "2026-02-10"
+    },
+    {
+      "type": "sell",
+      "grams": 8.15,
+      "pricePerGram": 51.1043,
+      "totalCost": 416.5,
+      "date": "2026-03-10"
+    }
+  ]
+}
