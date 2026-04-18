@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 3000;
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
+const DATA_BACKUP_FILE = path.join(DATA_DIR, 'data.backup.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 // Trust proxy for HTTPS on Render/Heroku
@@ -171,16 +172,62 @@ app.get('/', (req, res) => {
 });
 
 function readData() {
+  const fallback = { transactions: [] };
   try {
+    if (!fs.existsSync(DATA_FILE)) {
+      writeJsonAtomic(DATA_FILE, fallback);
+      writeJsonAtomic(DATA_BACKUP_FILE, fallback);
+      return fallback;
+    }
+
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(raw);
-  } catch {
-    return { transactions: [] };
+    if (hasConflictMarkers(raw)) {
+      console.warn('[DATA] Conflict markers detected in data.json. Attempting recovery from backup.');
+      return recoverDataFromBackup(fallback);
+    }
+
+    const parsed = JSON.parse(raw);
+    // Keep a continuously refreshed valid backup.
+    writeJsonAtomic(DATA_BACKUP_FILE, parsed);
+    return parsed;
+  } catch (err) {
+    console.warn('[DATA] Failed to parse data.json:', err.message);
+    return recoverDataFromBackup(fallback);
   }
 }
 
 function writeData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  writeJsonAtomic(DATA_FILE, data);
+  writeJsonAtomic(DATA_BACKUP_FILE, data);
+}
+
+function hasConflictMarkers(raw) {
+  return raw.includes('<<<<<<<') || raw.includes('=======') || raw.includes('>>>>>>>');
+}
+
+function writeJsonAtomic(targetFile, data) {
+  const tempFile = `${targetFile}.tmp`;
+  fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tempFile, targetFile);
+}
+
+function recoverDataFromBackup(fallback) {
+  try {
+    if (fs.existsSync(DATA_BACKUP_FILE)) {
+      const backupRaw = fs.readFileSync(DATA_BACKUP_FILE, 'utf-8');
+      const backupData = JSON.parse(backupRaw);
+      writeJsonAtomic(DATA_FILE, backupData);
+      console.log('[DATA] Recovered data.json from data.backup.json');
+      return backupData;
+    }
+  } catch (err) {
+    console.warn('[DATA] Backup recovery failed:', err.message);
+  }
+
+  writeJsonAtomic(DATA_FILE, fallback);
+  writeJsonAtomic(DATA_BACKUP_FILE, fallback);
+  console.warn('[DATA] Initialized fresh fallback state because no valid backup was available.');
+  return fallback;
 }
 
 app.get('/api/transactions', requireAuth, (req, res) => {
