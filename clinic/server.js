@@ -40,7 +40,6 @@ const ALL_PERMISSIONS = [
   'billing.view','billing.create','billing.edit','billing.delete','billing.print_history',
   'billing.discount.view','billing.discount.apply','billing.discount.open','billing.discount.override',
   'billing.refund.view','billing.refund.initiate',
-  'expenses.view','expenses.create','expenses.edit','expenses.delete',
   'reports.view',
   'users.view','users.create','users.edit','users.delete',
   'services.view','services.create','services.edit','services.delete','services.import','services.export',
@@ -48,7 +47,7 @@ const ALL_PERMISSIONS = [
   'setup.view','setup.edit',
   'role_permissions.view','role_permissions.edit',
   'store.view','store.manage','store.purchase','store.transfer'
-  ,'store.consume','store.consume.cost','store.adjust'
+  ,'store.consume'
 ];
 const DEFAULT_PERMISSIONS = {
   admin: ALL_PERMISSIONS,
@@ -60,7 +59,6 @@ const DEFAULT_PERMISSIONS = {
     'patient_packages.view',
     'prescriptions.view','prescriptions.create','prescriptions.delete',
     'billing.view',
-    'expenses.view',
     'reports.view',
     'services.view','packages.view',
     'store.view'
@@ -72,9 +70,8 @@ const DEFAULT_PERMISSIONS = {
     'scheduler.view',
     'patient_packages.view','patient_packages.create','patient_packages.edit',
     'billing.view','billing.create','billing.edit',
-    'expenses.view','expenses.create','expenses.edit',
     'services.view','services.import','services.export','packages.view',
-    'store.view','store.consume','store.consume.cost','store.adjust'
+    'store.view','store.consume'
   ]
 };
 
@@ -93,10 +90,10 @@ function hasPermission(db, role, perm) {
 function blankDB() {
   return {
     users:[], patients:[], appointments:[], prescriptions:[], bills:[], services:[], packages:[],
-    payment_methods:[], patient_packages:[], service_categories:[], expense_categories:[], doctor_departments:[], role_permissions:{}, custom_roles:[], _seq:{},
-    discounts:[], refunds:[], expenses:[],
+    payment_methods:[], patient_packages:[], service_categories:[], doctor_departments:[], role_permissions:{}, custom_roles:[], _seq:{},
+    discounts:[], refunds:[],
     store_products:[], store_suppliers:[], store_sub_stores:[], store_stock:[],
-    store_purchase_orders:[], store_supplier_invoice_payments:[], store_transfers:[], store_adjustments:[], store_service_products:[], store_service_consumptions:[], store_manual_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
+    store_purchase_orders:[], store_transfers:[], store_service_products:[], store_service_consumptions:[], store_manual_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
     activity_logs:[], doctor_schedules:[], clinic_profile:null, follow_ups:[]
   };
 }
@@ -905,22 +902,6 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
     db._seq.service_categories = 5;
     didSeed = true;
   }
-  if (!db.expense_categories) db.expense_categories = [];
-  if (db.expense_categories.length === 0) {
-    const ec = (id, name) => db.expense_categories.push({ id, name, created_at: now() });
-    ec(1, 'Utilities');
-    ec(2, 'Travel');
-    ec(3, 'Pantry');
-    ec(4, 'Maintenance');
-    ec(5, 'Marketing');
-    ec(6, 'Miscellaneous');
-    db._seq.expense_categories = 6;
-    didSeed = true;
-  }
-  if (!(db.expense_categories || []).some(c => String(c.name || '').toLowerCase() === 'supplier invoice payment')) {
-    db.expense_categories.push({ id: nextId(db, 'expense_categories'), name: 'Supplier Invoice Payment', created_at: now() });
-    didSeed = true;
-  }
   if (!db.doctor_departments) db.doctor_departments = [];
   if (db.doctor_departments.length === 0) {
     const dd = (id, name) => db.doctor_departments.push({ id, name, active:true, created_at: now() });
@@ -1047,8 +1028,6 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
   if (!db.activity_logs) db.activity_logs = [];
   if (!db.store_service_consumptions) db.store_service_consumptions = [];
   if (!db.store_manual_consumptions) db.store_manual_consumptions = [];
-  if (!db.expenses) db.expenses = [];
-  if (!db.expense_categories) db.expense_categories = [];
   if (!db.custom_roles) db.custom_roles = [];
   writeDB(db);
   if (didSeed) console.log('Sample data initialized.');
@@ -1355,78 +1334,9 @@ function requirePermission(perm) {
   };
 }
 
-function sanitizeManualConsumptionEntryForUser(db, req, entry) {
-  if (!entry || hasPermission(db, req.session.user.role, 'store.consume.cost')) return entry;
-  return {
-    ...entry,
-    total_cost: undefined,
-    items: (entry.items || []).map((item) => ({
-      ...item,
-      cost: undefined,
-      total_cost: undefined,
-    })),
-  };
-}
-
 function getSessionUserRecord(db, req) {
   if (!req || !req.session || !req.session.user) return null;
   return (db.users || []).find(u => u.id === req.session.user.id) || null;
-}
-
-function normalizeUserStoreIds(user) {
-  if (!user || !Array.isArray(user.store_ids)) return [];
-  return [...new Set(user.store_ids.map((id) => parseInt(id, 10)).filter((id) => id > 0))];
-}
-
-function getAccessibleStoreIds(db, req) {
-  if (!req || !req.session || !req.session.user) return null;
-  if (req.session.user.role === 'admin') return null;
-  const user = getSessionUserRecord(db, req);
-  const storeIds = normalizeUserStoreIds(user);
-  return storeIds.length ? new Set(storeIds) : null;
-}
-
-function filterStoresForUser(db, req, stores) {
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-  if (!allowedStoreIds) return stores;
-  return (stores || []).filter((store) => allowedStoreIds.has(parseInt(store.id, 10)));
-}
-
-function assertStoreAccess(db, req, storeId, label = 'store') {
-  const normalizedStoreId = parseInt(storeId, 10);
-  if (!normalizedStoreId) return false;
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-  if (!allowedStoreIds) return true;
-  return allowedStoreIds.has(normalizedStoreId);
-}
-
-function parseSubmittedStoreIds(db, storeIds) {
-  ensureStore(db);
-  if (storeIds === undefined || storeIds === null) return [];
-  let rawIds = [];
-  if (Array.isArray(storeIds)) {
-    rawIds = storeIds;
-  } else if (typeof storeIds === 'string') {
-    rawIds = storeIds.split(',').map((part) => part.trim()).filter(Boolean);
-  } else if (typeof storeIds === 'number') {
-    rawIds = [storeIds];
-  } else {
-    rawIds = [storeIds];
-  }
-  const validStoreIds = new Set((db.store_sub_stores || []).map((store) => parseInt(store.id, 10)));
-  const normalized = [...new Set(rawIds.map((id) => parseInt(id, 10)).filter((id) => validStoreIds.has(id)))];
-  return normalized;
-}
-
-function getSubmittedStoreIds(body) {
-  if (!body || typeof body !== 'object') return { provided: false, value: [] };
-  const keys = ['store_ids', 'storeIds', 'allowed_store_ids', 'allowedStoreIds', 'store_access_ids', 'storeAccessIds'];
-  for (const key of keys) {
-    if (Object.prototype.hasOwnProperty.call(body, key)) {
-      return { provided: true, value: body[key] };
-    }
-  }
-  return { provided: false, value: [] };
 }
 
 function getVisibleDoctorIds(db, req) {
@@ -1465,13 +1375,10 @@ app.get('/api/me', (req, res) => {
   const permissions = getPermissions(db, req.session.user.role);
   const full = (db.users || []).find(u => u.id === req.session.user.id) || {};
   const dept = (db.doctor_departments || []).find(d => d.id === parseInt(full.department_id));
-  const accessibleStores = filterStoresForUser(db, req, db.store_sub_stores || []).map((store) => ({ id: parseInt(store.id, 10), name: store.name || '' }));
   res.json({
     ...req.session.user,
     department_id: full.department_id || null,
     department_name: dept ? dept.name : '',
-    store_ids: normalizeUserStoreIds(full),
-    accessible_stores: accessibleStores,
     permissions,
     system
   });
@@ -2202,26 +2109,16 @@ app.put('/api/role-permissions', requireRole('admin'), (req, res) => {
 // ===================== USERS =====================
 app.get('/api/users', requireRole('admin'), (req, res) => {
   const db = readDB();
-  ensureStore(db);
   const deptById = new Map((db.doctor_departments || []).map(d => [d.id, d]));
-  const storesById = new Map((db.store_sub_stores || []).map((store) => [parseInt(store.id, 10), store]));
   res.json(db.users.map(({ password, ...u }) => {
     const dep = deptById.get(parseInt(u.department_id));
-    const storeIds = normalizeUserStoreIds(u);
-    return {
-      ...u,
-      store_ids: storeIds,
-      store_names: storeIds.map((id) => storesById.get(id)?.name || `Store #${id}`),
-      department_name: dep ? dep.name : ''
-    };
+    return { ...u, department_name: dep ? dep.name : '' };
   }));
 });
 app.post('/api/users', requireRole('admin'), (req, res) => {
   const { name, username, password, role, slot_duration, department_id, active } = req.body;
-  const submittedStores = getSubmittedStoreIds(req.body || {});
   if (!name||!username||!password||!role) return res.status(400).json({ error:'All fields required' });
   const db = readDB();
-  ensureStore(db);
   const builtInRoles = ['admin','doctor','receptionist'];
   const customRoleNames = (db.custom_roles || []).map(r => r.name);
   const allValidRoles = [...builtInRoles, ...customRoleNames];
@@ -2229,7 +2126,6 @@ app.post('/api/users', requireRole('admin'), (req, res) => {
   if (db.users.find(u => u.username === username)) return res.status(400).json({ error:'Username exists' });
   const id = nextId(db,'users');
   const user = { id, name, username, password:bcrypt.hashSync(password,10), role, active: active !== false && active !== 'false' };
-  if (role !== 'admin') user.store_ids = parseSubmittedStoreIds(db, submittedStores.value);
   if (role === 'doctor' || role === 'receptionist') {
     const depId = parseInt(department_id);
     if (!depId) return res.status(400).json({ error:`Department is required for ${role}` });
@@ -2245,10 +2141,8 @@ app.post('/api/users', requireRole('admin'), (req, res) => {
 });
 app.put('/api/users/:id', requireRole('admin'), (req, res) => {
   const db = readDB(); const idx = db.users.findIndex(u => u.id === parseInt(req.params.id));
-  ensureStore(db);
   if (idx === -1) return res.status(404).json({ error:'Not found' });
   const { name, slot_duration, department_id, active } = req.body;
-  const submittedStores = getSubmittedStoreIds(req.body || {});
   if (name) db.users[idx].name = name;
   if (db.users[idx].role === 'doctor' && slot_duration) db.users[idx].slot_duration = parseInt(slot_duration) || 30;
   if (active !== undefined) {
@@ -2263,9 +2157,6 @@ app.put('/api/users/:id', requireRole('admin'), (req, res) => {
     const dep = (db.doctor_departments || []).find(d => d.id === depId && d.active !== false);
     if (!dep) return res.status(400).json({ error:'Invalid department' });
     db.users[idx].department_id = depId;
-  }
-  if (db.users[idx].role !== 'admin' && submittedStores.provided) {
-    db.users[idx].store_ids = parseSubmittedStoreIds(db, submittedStores.value);
   }
   writeDB(db); const { password:_, ...safe } = db.users[idx]; res.json(safe);
 });
@@ -3594,12 +3485,7 @@ app.put('/api/prescriptions/:id', requireRole('doctor','admin'), (req, res) => {
 // ===================== BILLING =====================
 app.get('/api/bills', requireLogin, (req, res) => {
   const db=readDB(); const { patient_id,payment_status,date:fd,appointment_id } = req.query;
-  const visibleDoctorIds = getVisibleDoctorIds(db, req);
-  let list=db.bills.map(b=>{ const pat=db.patients.find(p=>p.id===b.patient_id)||{}; const doc=db.users.find(u=>u.id===parseInt(b.doctor_id))||{}; return { ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'', doctor_name: doc.name || '' }; });
-  if (visibleDoctorIds) list = list.filter(b => {
-    const did = parseInt(b.doctor_id, 10);
-    return did && visibleDoctorIds.has(did);
-  });
+  let list=db.bills.map(b=>{ const pat=db.patients.find(p=>p.id===b.patient_id)||{}; return { ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'' }; });
   if (patient_id)     list=list.filter(b=>b.patient_id===parseInt(patient_id));
   if (payment_status) list=list.filter(b=>b.payment_status===payment_status);
   if (fd)             list=list.filter(b=>(b.created_at||'').startsWith(fd));
@@ -3610,16 +3496,8 @@ app.get('/api/bills', requireLogin, (req, res) => {
 app.get('/api/bills/:id', requireLogin, (req, res) => {
   const db=readDB(); const b=db.bills.find(b=>b.id===parseInt(req.params.id));
   if (!b) return res.status(404).json({ error:'Not found' });
-  const visibleDoctorIds = getVisibleDoctorIds(db, req);
-  if (visibleDoctorIds) {
-    const did = parseInt(b.doctor_id, 10);
-    if (!did || !visibleDoctorIds.has(did)) {
-      return res.status(403).json({ error:'Forbidden for this doctor scope' });
-    }
-  }
   const pat=db.patients.find(p=>p.id===b.patient_id)||{};
-  const doc=db.users.find(u=>u.id===parseInt(b.doctor_id,10))||{};
-  res.json({ ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'', doctor_name: doc.name || '' });
+  res.json({ ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'' });
 });
 app.post('/api/bills', requireRole('admin','receptionist'), (req, res) => {
   const { patient_id,appointment_id,doctor_id,line_items,consultation_fee,medicine_charge,other_charges,payment_method,payment_status,pkg_sessions,payment_splits,discount_id,discount_type,discount_value,discount_label,discount_amount } = req.body;
@@ -4956,59 +4834,6 @@ app.get('/api/reports/stock-movement', requireRole('admin','doctor','receptionis
     }
   }
 
-  for (const adj of (db.store_adjustments || [])) {
-    const at = String(adj.created_at || `${adj.date || ''} 00:00:00`);
-    const day = String(adj.date || at).slice(0,10);
-    if (!day) continue;
-    if (dateFrom && day < dateFrom) continue;
-    if (dateTo && day > dateTo) continue;
-    if (typeFilter && !['adjustment', 'adjustments'].includes(typeFilter)) continue;
-
-    const sid = parseInt(adj.store_id || 0, 10) || null;
-    if (storeFilter && sid !== storeFilter) continue;
-    const store = storesById.get(sid) || {};
-
-    const pid = parseInt(adj.product_id || 0, 10);
-    const p = productsById.get(pid) || {};
-    const direction = String(adj.adjustment_type || '').toUpperCase() === 'IN' ? 'IN' : 'OUT';
-    const qty = parseFloat(adj.qty || 0) || 0;
-    const unitCost = parseFloat(adj.unit_cost || 0) || 0;
-    const totalCost = parseFloat(adj.total_cost != null ? adj.total_cost : (qty * unitCost)) || 0;
-
-    const blob = [
-      day,
-      'Stock Adjustment',
-      direction,
-      store.name,
-      p.name,
-      p.sku,
-      adj.adjustment_no || `ADJ#${adj.id || ''}`,
-      adj.reason,
-      adj.remarks,
-      adj.reversal_of_id ? `Reversal of ADJ#${adj.reversal_of_id}` : '',
-      adj.reversed_by_adjustment_id ? `Reversed by ADJ#${adj.reversed_by_adjustment_id}` : ''
-    ].map(v => String(v || '').toLowerCase()).join(' ');
-    if (q && !blob.includes(q)) continue;
-
-    rows.push({
-      at,
-      date: day,
-      movement_type: 'Adjustment',
-      direction,
-      store_id: sid,
-      store_name: store.name || 'Unknown',
-      product_id: pid,
-      product_name: p.name || `Product #${pid}`,
-      product_sku: p.sku || '',
-      qty: parseFloat(qty.toFixed(3)),
-      unit: p.unit || '',
-      unit_cost: parseFloat(unitCost.toFixed(3)),
-      total_cost: parseFloat(totalCost.toFixed(3)),
-      reference: adj.adjustment_no || `ADJ#${adj.id}`,
-      note: [adj.reason, String(adj.remarks || '').trim()].filter(Boolean).join(' | ')
-    });
-  }
-
   rows.sort((a, b) => {
     const ad = String(a.at || a.date || '');
     const bd = String(b.at || b.date || '');
@@ -5196,53 +5021,6 @@ app.delete('/api/service-categories/:id', requireRole('admin'), (req, res) => {
   writeDB(db); res.json({ success:true });
 });
 
-// ===================== EXPENSE CATEGORIES =====================
-app.get('/api/expense-categories', requireLogin, (req, res) => {
-  const db = readDB();
-  res.json(db.expense_categories || []);
-});
-app.post('/api/expense-categories', requireRole('admin'), (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error:'name required' });
-  const db = readDB();
-  if ((db.expense_categories || []).some(c => String(c.name || '').toLowerCase() === String(name).toLowerCase())) {
-    return res.status(400).json({ error:'Category already exists' });
-  }
-  if (!db.expense_categories) db.expense_categories = [];
-  const id = nextId(db, 'expense_categories');
-  const cat = { id, name, created_at: now() };
-  db.expense_categories.push(cat);
-  writeDB(db);
-  res.json(cat);
-});
-app.put('/api/expense-categories/:id', requireRole('admin'), (req, res) => {
-  const db = readDB();
-  const idx = (db.expense_categories || []).findIndex(c => c.id === parseInt(req.params.id));
-  if (idx === -1) return res.status(404).json({ error:'Not found' });
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error:'name required' });
-  const dup = (db.expense_categories || []).find((c, i) => i !== idx && String(c.name || '').toLowerCase() === String(name).toLowerCase());
-  if (dup) return res.status(400).json({ error:'Category already exists' });
-  const currentName = String(db.expense_categories[idx].name || '');
-  db.expense_categories[idx].name = name;
-  for (const expense of (db.expenses || [])) {
-    if (String(expense.category || '') === currentName) expense.category = name;
-  }
-  writeDB(db);
-  res.json(db.expense_categories[idx]);
-});
-app.delete('/api/expense-categories/:id', requireRole('admin'), (req, res) => {
-  const db = readDB();
-  const idx = (db.expense_categories || []).findIndex(c => c.id === parseInt(req.params.id));
-  if (idx === -1) return res.status(404).json({ error:'Not found' });
-  const categoryName = String(db.expense_categories[idx].name || '');
-  const inUse = (db.expenses || []).some(expense => String(expense.category || '') === categoryName);
-  if (inUse) return res.status(400).json({ error:'Cannot delete category already used in expenses' });
-  db.expense_categories.splice(idx, 1);
-  writeDB(db);
-  res.json({ success:true });
-});
-
 // ===================== DOCTOR DEPARTMENTS =====================
 app.get('/api/doctor-departments', requireLogin, (req, res) => {
   const db = readDB();
@@ -5315,188 +5093,6 @@ app.delete('/api/payment-methods/:id', requireRole('admin'), (req, res) => {
   const idx = db.payment_methods.findIndex(m => m.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error:'Not found' });
   db.payment_methods.splice(idx, 1); writeDB(db); res.json({ success:true });
-});
-
-// ===================== EXPENSES =====================
-app.get('/api/expenses', requirePermission('expenses.view'), (req, res) => {
-  const db = readDB();
-  if (!db.expenses) db.expenses = [];
-  if (!db.expense_categories) db.expense_categories = [];
-
-  const q = String(req.query.search || '').trim().toLowerCase();
-  const category = String(req.query.category || '').trim();
-  const dateFrom = String(req.query.date_from || '').slice(0, 10);
-  const dateTo = String(req.query.date_to || '').slice(0, 10);
-  const usersById = new Map((db.users || []).map((u) => [parseInt(u.id, 10), u]));
-
-  let rows = db.expenses.map((entry) => {
-    const createdBy = usersById.get(parseInt(entry.created_by, 10)) || {};
-    const updatedBy = usersById.get(parseInt(entry.updated_by, 10)) || {};
-    return {
-      ...entry,
-      created_by_name: createdBy.name || createdBy.username || '—',
-      updated_by_name: updatedBy.name || updatedBy.username || '—'
-    };
-  });
-
-  if (dateFrom) rows = rows.filter((row) => String(row.expense_date || '').slice(0, 10) >= dateFrom);
-  if (dateTo) rows = rows.filter((row) => String(row.expense_date || '').slice(0, 10) <= dateTo);
-  if (category) rows = rows.filter((row) => String(row.category || '') === category);
-  if (q) {
-    rows = rows.filter((row) => [
-      row.title,
-      row.category,
-      row.payment_method,
-      row.vendor,
-      row.notes,
-      row.reference_no,
-      row.created_by_name,
-      row.updated_by_name
-    ].map((v) => String(v || '').toLowerCase()).join(' ').includes(q));
-  }
-
-  rows.sort((a, b) => {
-    const ad = `${String(a.expense_date || '')} ${String(a.created_at || '')}`;
-    const bd = `${String(b.expense_date || '')} ${String(b.created_at || '')}`;
-    return ad < bd ? 1 : -1;
-  });
-
-  const categories = (db.expense_categories || []).map((row) => String(row.name || '').trim()).filter(Boolean).sort((a, b) => a.localeCompare(b));
-  const totalAmount = rows.reduce((sum, row) => sum + (parseFloat(row.amount || 0) || 0), 0);
-  const todayAmount = rows.filter((row) => String(row.expense_date || '').slice(0, 10) === today()).reduce((sum, row) => sum + (parseFloat(row.amount || 0) || 0), 0);
-
-  res.json({
-    rows,
-    summary: {
-      total_amount: parseFloat(totalAmount.toFixed(3)),
-      today_amount: parseFloat(todayAmount.toFixed(3)),
-      rows_count: rows.length,
-      categories_count: categories.length
-    },
-    filters: {
-      categories,
-      payment_methods: (db.payment_methods || []).filter((m) => m.active !== false).map((m) => m.name)
-    }
-  });
-});
-
-app.post('/api/expenses', requirePermission('expenses.create'), (req, res) => {
-  const db = readDB();
-  if (!db.expenses) db.expenses = [];
-  if (!db.expense_categories) db.expense_categories = [];
-
-  const title = String(req.body.title || '').trim();
-  const category = String(req.body.category || '').trim();
-  const amount = parseFloat(req.body.amount || 0);
-  const expenseDate = String(req.body.expense_date || today()).slice(0, 10);
-  const paymentMethod = String(req.body.payment_method || '').trim();
-  const vendor = String(req.body.vendor || '').trim();
-  const referenceNo = String(req.body.reference_no || '').trim();
-  const notes = String(req.body.notes || '').trim();
-  const actorId = (req.session && req.session.user && req.session.user.id) || req.session.userId || null;
-
-  if (!title) return res.status(400).json({ error:'Expense title is required' });
-  if (!category) return res.status(400).json({ error:'Expense category is required' });
-  if (!(db.expense_categories || []).some((item) => String(item.name || '') === category)) {
-    return res.status(400).json({ error:'Select a valid expense category from setup master' });
-  }
-  if (!(amount > 0)) return res.status(400).json({ error:'Amount must be greater than 0' });
-
-  const entry = {
-    id: nextId(db, 'expenses'),
-    title,
-    category,
-    amount: parseFloat(amount.toFixed(3)),
-    expense_date: expenseDate,
-    payment_method: paymentMethod,
-    vendor,
-    reference_no: referenceNo,
-    notes,
-    created_by: actorId,
-    updated_by: actorId,
-    created_at: now(),
-    updated_at: now()
-  };
-
-  db.expenses.push(entry);
-  logActivity(db, req, {
-    module: 'finance',
-    action: 'expense_created',
-    entity_type: 'expense',
-    entity_id: entry.id,
-    notes: `Expense ${entry.title} recorded for KD ${entry.amount.toFixed(3)}`,
-    meta: { category: entry.category, amount: entry.amount, expense_date: entry.expense_date }
-  });
-  writeDB(db);
-  res.json(entry);
-});
-
-app.put('/api/expenses/:id', requirePermission('expenses.edit'), (req, res) => {
-  const db = readDB();
-  if (!db.expenses) db.expenses = [];
-  if (!db.expense_categories) db.expense_categories = [];
-  const idx = db.expenses.findIndex((row) => parseInt(row.id, 10) === parseInt(req.params.id, 10));
-  if (idx === -1) return res.status(404).json({ error:'Expense not found' });
-
-  const current = db.expenses[idx];
-  const title = String(req.body.title !== undefined ? req.body.title : current.title).trim();
-  const category = String(req.body.category !== undefined ? req.body.category : current.category).trim();
-  const amount = parseFloat(req.body.amount !== undefined ? req.body.amount : current.amount);
-  const expenseDate = String(req.body.expense_date !== undefined ? req.body.expense_date : current.expense_date).slice(0, 10);
-  const paymentMethod = String(req.body.payment_method !== undefined ? req.body.payment_method : current.payment_method || '').trim();
-  const vendor = String(req.body.vendor !== undefined ? req.body.vendor : current.vendor || '').trim();
-  const referenceNo = String(req.body.reference_no !== undefined ? req.body.reference_no : current.reference_no || '').trim();
-  const notes = String(req.body.notes !== undefined ? req.body.notes : current.notes || '').trim();
-
-  if (!title) return res.status(400).json({ error:'Expense title is required' });
-  if (!category) return res.status(400).json({ error:'Expense category is required' });
-  if (!(db.expense_categories || []).some((item) => String(item.name || '') === category)) {
-    return res.status(400).json({ error:'Select a valid expense category from setup master' });
-  }
-  if (!(amount > 0)) return res.status(400).json({ error:'Amount must be greater than 0' });
-
-  db.expenses[idx] = {
-    ...current,
-    title,
-    category,
-    amount: parseFloat(amount.toFixed(3)),
-    expense_date: expenseDate,
-    payment_method: paymentMethod,
-    vendor,
-    reference_no: referenceNo,
-    notes,
-    updated_by: (req.session && req.session.user && req.session.user.id) || req.session.userId || null,
-    updated_at: now()
-  };
-  logActivity(db, req, {
-    module: 'finance',
-    action: 'expense_updated',
-    entity_type: 'expense',
-    entity_id: db.expenses[idx].id,
-    notes: `Expense ${db.expenses[idx].title} updated`,
-    meta: { category: db.expenses[idx].category, amount: db.expenses[idx].amount, expense_date: db.expenses[idx].expense_date }
-  });
-  writeDB(db);
-  res.json(db.expenses[idx]);
-});
-
-app.delete('/api/expenses/:id', requirePermission('expenses.delete'), (req, res) => {
-  const db = readDB();
-  if (!db.expenses) db.expenses = [];
-  const idx = db.expenses.findIndex((row) => parseInt(row.id, 10) === parseInt(req.params.id, 10));
-  if (idx === -1) return res.status(404).json({ error:'Expense not found' });
-  const removed = db.expenses[idx];
-  db.expenses.splice(idx, 1);
-  logActivity(db, req, {
-    module: 'finance',
-    action: 'expense_deleted',
-    entity_type: 'expense',
-    entity_id: removed.id,
-    notes: `Expense ${removed.title} deleted`,
-    meta: { category: removed.category, amount: removed.amount, expense_date: removed.expense_date }
-  });
-  writeDB(db);
-  res.json({ success:true });
 });
 
 // ===================== STORE PRODUCT CATEGORIES =====================
@@ -5856,14 +5452,10 @@ function ensureStore(db) {
   db.store_sub_stores      = db.store_sub_stores      || [];
   db.store_stock           = db.store_stock           || [];
   db.store_purchase_orders = db.store_purchase_orders || [];
-  db.store_supplier_invoice_payments = db.store_supplier_invoice_payments || [];
   db.store_transfers       = db.store_transfers       || [];
-  db.store_adjustments     = db.store_adjustments     || [];
   db.store_service_products= db.store_service_products|| [];
   db.store_service_consumptions = db.store_service_consumptions || [];
   db.store_manual_consumptions = db.store_manual_consumptions || [];
-  db.expenses              = db.expenses              || [];
-  db.expense_categories    = db.expense_categories    || [];
   db.uoms                  = db.uoms                  || [];
   db.store_product_categories = db.store_product_categories || [];
   db.store_product_uoms    = db.store_product_uoms    || [];
@@ -5933,7 +5525,7 @@ function getProductExpiryInfo(db, productId, storeId = null) {
 // ── Sub-stores ──────────────────────────────────────────
 app.get('/api/store/sub-stores', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  res.json(filterStoresForUser(db, req, db.store_sub_stores));
+  res.json(db.store_sub_stores);
 });
 app.post('/api/store/sub-stores', requireRole('admin'), (req,res) => {
   const db = readDB(); ensureStore(db);
@@ -5987,16 +5579,11 @@ app.delete('/api/store/suppliers/:id', requireRole('admin'), (req,res) => {
 // ── Products ────────────────────────────────────────────
 app.get('/api/store/products', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  const isManualConsumptionContext = String(req.query.context || '') === 'manual-consumption';
-  const includeCostPrice = !isManualConsumptionContext || hasPermission(db, req.session.user.role, 'store.consume.cost');
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
   const products = db.store_products.map(p => {
-    const totalStock = db.store_stock
-      .filter((s) => s.product_id === p.id && (!allowedStoreIds || allowedStoreIds.has(parseInt(s.store_id, 10))))
-      .reduce((t, s) => t + s.qty, 0);
+    const totalStock = db.store_stock.filter(s=>s.product_id===p.id).reduce((t,s)=>t+s.qty,0);
     const uom = getUomById(db, p.uom_id);
     const expiryInfo = getProductExpiryInfo(db, p.id);
-    return { ...p, cost_price: includeCostPrice ? p.cost_price : undefined, total_stock: totalStock, uom_symbol: uom ? uom.symbol : (p.unit || ''), uom_name: uom ? uom.name : (p.unit || ''), uom_options: getProductUomOptions(db, p), ...expiryInfo };
+    return { ...p, total_stock: totalStock, uom_symbol: uom ? uom.symbol : (p.unit || ''), uom_name: uom ? uom.name : (p.unit || ''), uom_options: getProductUomOptions(db, p), ...expiryInfo };
   });
   res.json(products);
 });
@@ -6067,19 +5654,14 @@ app.delete('/api/store/products/:id', requireRole('admin'), (req,res) => {
 app.get('/api/store/stock', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
   const { store_id } = req.query;
-  const includeAvgCost = String(req.query.context || '') !== 'manual-consumption'
-    || hasPermission(db, req.session.user.role, 'store.consume.cost');
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-  if (store_id && !assertStoreAccess(db, req, store_id)) return res.status(403).json({ error:'Store access denied' });
   let stock = db.store_stock;
-  if (allowedStoreIds) stock = stock.filter((s) => allowedStoreIds.has(parseInt(s.store_id, 10)));
   if (store_id) stock = stock.filter(s => s.store_id===parseInt(store_id));
   const enriched = stock.map(s => {
     const product = db.store_products.find(p => p.id===s.product_id) || {};
     const store   = db.store_sub_stores.find(st => st.id===s.store_id) || {};
     const uom = getUomById(db, product.uom_id);
     const expiryInfo = getProductExpiryInfo(db, s.product_id, s.store_id);
-    return { ...s, avg_cost: includeAvgCost ? (parseFloat(s.avg_cost || 0) || 0) : undefined, product_name:product.name, product_unit:(uom ? uom.symbol : product.unit), product_sku:product.sku, reorder_level:product.reorder_level||0, store_name:store.name, ...expiryInfo };
+    return { ...s, avg_cost: parseFloat(s.avg_cost || 0) || 0, product_name:product.name, product_unit:(uom ? uom.symbol : product.unit), product_sku:product.sku, reorder_level:product.reorder_level||0, store_name:store.name, ...expiryInfo };
   });
   res.json(enriched);
 });
@@ -6087,33 +5669,10 @@ app.get('/api/store/stock', requireLogin, (req,res) => {
 // ── Purchase Orders ─────────────────────────────────────
 app.get('/api/store/purchase-orders', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-  const paidByPo = new Map();
-  for (const p of (db.store_supplier_invoice_payments || [])) {
-    const pid = parseInt(p.po_id, 10);
-    if (!pid) continue;
-    paidByPo.set(pid, (paidByPo.get(pid) || 0) + (parseFloat(p.amount || 0) || 0));
-  }
-  const orders = db.store_purchase_orders.filter((order) => {
-    if (!allowedStoreIds) return true;
-    const receivedStoreId = parseInt(order.received_store_id, 10);
-    if (!receivedStoreId) return true;
-    return allowedStoreIds.has(receivedStoreId);
-  }).map(o => {
+  const orders = db.store_purchase_orders.map(o => {
     const supplier = db.store_suppliers.find(s=>s.id===o.supplier_id)||{};
     const receivedStore = db.store_sub_stores.find(st => st.id === parseInt(o.received_store_id)) || {};
-    const totalAmount = parseFloat(o.total_cost || 0) || 0;
-    const paidAmount = parseFloat((paidByPo.get(parseInt(o.id, 10)) || 0).toFixed(3));
-    const dueAmount = parseFloat(Math.max(0, totalAmount - paidAmount).toFixed(3));
-    const paymentStatus = dueAmount <= 0.0005 ? 'Paid' : (paidAmount > 0 ? 'Partially Paid' : 'Unpaid');
-    return {
-      ...o,
-      supplier_name: supplier.name||'—',
-      received_store_name: receivedStore.name || '',
-      paid_amount: paidAmount,
-      due_amount: dueAmount,
-      payment_status: paymentStatus
-    };
+    return { ...o, supplier_name: supplier.name||'—', received_store_name: receivedStore.name || '' };
   });
   res.json(orders.sort((a,b)=>b.id-a.id));
 });
@@ -6121,7 +5680,6 @@ app.get('/api/store/purchase-orders/:id', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
   const o = db.store_purchase_orders.find(x=>x.id===parseInt(req.params.id));
   if (!o) return res.status(404).json({ error:'Not found' });
-  if (o.received_store_id && !assertStoreAccess(db, req, o.received_store_id)) return res.status(403).json({ error:'Store access denied' });
   const supplier = db.store_suppliers.find(s=>s.id===o.supplier_id)||{};
   const receivedStore = db.store_sub_stores.find(st => st.id === parseInt(o.received_store_id)) || {};
   const items = (o.items||[]).map(i => {
@@ -6225,206 +5783,10 @@ app.delete('/api/store/purchase-orders/:id', requireRole('admin'), (req,res) => 
   writeDB(db); res.json({ success:true });
 });
 
-// ── Supplier Invoice Payments (Expense Integration) ─────
-app.get('/api/store/supplier-invoices', requirePermission('expenses.view'), (req, res) => {
-  const db = readDB(); ensureStore(db);
-  const q = String(req.query.search || '').trim().toLowerCase();
-  const dueOnly = ['1', 'true', 'yes'].includes(String(req.query.due_only || '').toLowerCase());
-  const supplierId = req.query.supplier_id ? parseInt(req.query.supplier_id, 10) : null;
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-
-  const paidByPo = new Map();
-  for (const p of (db.store_supplier_invoice_payments || [])) {
-    const pid = parseInt(p.po_id, 10);
-    if (!pid) continue;
-    paidByPo.set(pid, (paidByPo.get(pid) || 0) + (parseFloat(p.amount || 0) || 0));
-  }
-
-  let rows = (db.store_purchase_orders || []).filter((po) => {
-    if (!po || !po.supplier_id) return false;
-    if (supplierId && parseInt(po.supplier_id, 10) !== supplierId) return false;
-    if (allowedStoreIds && po.received_store_id && !allowedStoreIds.has(parseInt(po.received_store_id, 10))) return false;
-    return true;
-  }).map((po) => {
-    const supplier = (db.store_suppliers || []).find((s) => parseInt(s.id, 10) === parseInt(po.supplier_id, 10)) || {};
-    const totalAmount = parseFloat(po.total_cost || 0) || 0;
-    const paidAmount = parseFloat((paidByPo.get(parseInt(po.id, 10)) || 0).toFixed(3));
-    const dueAmount = parseFloat(Math.max(0, totalAmount - paidAmount).toFixed(3));
-    const paymentStatus = dueAmount <= 0.0005 ? 'Paid' : (paidAmount > 0 ? 'Partially Paid' : 'Unpaid');
-    return {
-      po_id: po.id,
-      supplier_id: po.supplier_id,
-      supplier_name: supplier.name || '—',
-      invoice_number: String(po.invoice_number || '').trim() || `PO-${po.id}`,
-      order_date: po.order_date || '',
-      purchase_status: po.status || 'Pending',
-      total_amount: parseFloat(totalAmount.toFixed(3)),
-      paid_amount: paidAmount,
-      due_amount: dueAmount,
-      payment_status: paymentStatus
-    };
-  });
-
-  if (dueOnly) rows = rows.filter((r) => (parseFloat(r.due_amount || 0) || 0) > 0.0005);
-  if (q) {
-    rows = rows.filter((r) => [
-      r.po_id,
-      r.supplier_name,
-      r.invoice_number,
-      r.order_date,
-      r.purchase_status,
-      r.payment_status
-    ].map((v) => String(v || '').toLowerCase()).join(' ').includes(q));
-  }
-
-  rows.sort((a, b) => {
-    const ad = String(a.order_date || '');
-    const bd = String(b.order_date || '');
-    if (ad !== bd) return ad < bd ? 1 : -1;
-    return parseInt(b.po_id || 0, 10) - parseInt(a.po_id || 0, 10);
-  });
-
-  res.json(rows);
-});
-
-app.get('/api/store/supplier-invoices/:id/payments', requirePermission('expenses.view'), (req, res) => {
-  const db = readDB(); ensureStore(db);
-  const poId = parseInt(req.params.id, 10);
-  const po = (db.store_purchase_orders || []).find((x) => parseInt(x.id, 10) === poId);
-  if (!po) return res.status(404).json({ error:'Supplier invoice not found' });
-  if (po.received_store_id && !assertStoreAccess(db, req, po.received_store_id)) return res.status(403).json({ error:'Store access denied' });
-
-  const usersById = new Map((db.users || []).map((u) => [parseInt(u.id, 10), u]));
-  const rows = (db.store_supplier_invoice_payments || [])
-    .filter((p) => parseInt(p.po_id, 10) === poId)
-    .map((p) => {
-      const actor = usersById.get(parseInt(p.created_by, 10)) || {};
-      return {
-        ...p,
-        created_by_name: actor.name || actor.username || '—'
-      };
-    })
-    .sort((a, b) => {
-      const ad = `${String(a.payment_date || '')} ${String(a.created_at || '')}`;
-      const bd = `${String(b.payment_date || '')} ${String(b.created_at || '')}`;
-      if (ad !== bd) return ad < bd ? 1 : -1;
-      return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
-    });
-
-  res.json(rows);
-});
-
-app.post('/api/store/supplier-invoices/:id/payments', requirePermission('expenses.create'), (req, res) => {
-  const db = readDB(); ensureStore(db);
-  const poId = parseInt(req.params.id, 10);
-  const po = (db.store_purchase_orders || []).find((x) => parseInt(x.id, 10) === poId);
-  if (!po) return res.status(404).json({ error:'Supplier invoice not found' });
-  if (po.received_store_id && !assertStoreAccess(db, req, po.received_store_id)) return res.status(403).json({ error:'Store access denied' });
-
-  const supplier = (db.store_suppliers || []).find((s) => parseInt(s.id, 10) === parseInt(po.supplier_id, 10)) || {};
-  const invoiceNumber = String(po.invoice_number || '').trim() || `PO-${po.id}`;
-  const totalAmount = parseFloat(po.total_cost || 0) || 0;
-  const paidSoFar = (db.store_supplier_invoice_payments || [])
-    .filter((p) => parseInt(p.po_id, 10) === poId)
-    .reduce((sum, p) => sum + (parseFloat(p.amount || 0) || 0), 0);
-  const dueAmount = parseFloat(Math.max(0, totalAmount - paidSoFar).toFixed(3));
-
-  const amount = parseFloat(req.body.amount || 0);
-  const paymentMethod = String(req.body.payment_method || '').trim();
-  const paymentDate = String(req.body.payment_date || today()).slice(0, 10);
-  const referenceNo = String(req.body.reference_no || '').trim();
-  const notes = String(req.body.notes || '').trim();
-  const categoryName = String(req.body.expense_category || 'Supplier Invoice Payment').trim() || 'Supplier Invoice Payment';
-  const actorId = (req.session && req.session.user && req.session.user.id) || req.session.userId || null;
-
-  if (!(amount > 0)) return res.status(400).json({ error:'Payment amount must be greater than 0' });
-  if (!(dueAmount > 0)) return res.status(400).json({ error:'This invoice is already fully paid' });
-  if (amount - dueAmount > 0.0005) return res.status(400).json({ error:`Amount exceeds due (KD ${dueAmount.toFixed(3)})` });
-
-  if (!db.expense_categories) db.expense_categories = [];
-  if (!(db.expense_categories || []).some((c) => String(c.name || '') === categoryName)) {
-    db.expense_categories.push({ id: nextId(db, 'expense_categories'), name: categoryName, created_at: now() });
-  }
-
-  const payment = {
-    id: nextId(db, 'store_supplier_invoice_payments'),
-    po_id: poId,
-    supplier_id: parseInt(po.supplier_id, 10) || null,
-    invoice_number: invoiceNumber,
-    amount: parseFloat(amount.toFixed(3)),
-    payment_method: paymentMethod,
-    payment_date: paymentDate,
-    reference_no: referenceNo,
-    notes,
-    expense_id: null,
-    created_by: actorId,
-    created_at: now()
-  };
-
-  const expense = {
-    id: nextId(db, 'expenses'),
-    title: `Supplier Invoice Payment · ${supplier.name || 'Supplier'} · ${invoiceNumber}`,
-    category: categoryName,
-    amount: payment.amount,
-    expense_date: paymentDate,
-    payment_method: paymentMethod,
-    vendor: supplier.name || '',
-    reference_no: referenceNo || invoiceNumber,
-    notes: notes || `Payment for supplier invoice ${invoiceNumber}`,
-    source_type: 'supplier_invoice_payment',
-    source_id: payment.id,
-    supplier_invoice_id: poId,
-    created_by: actorId,
-    updated_by: actorId,
-    created_at: now(),
-    updated_at: now()
-  };
-
-  payment.expense_id = expense.id;
-  db.store_supplier_invoice_payments.push(payment);
-  db.expenses.push(expense);
-
-  const paidAfter = paidSoFar + payment.amount;
-  const dueAfter = parseFloat(Math.max(0, totalAmount - paidAfter).toFixed(3));
-  const paymentStatus = dueAfter <= 0.0005 ? 'Paid' : (paidAfter > 0 ? 'Partially Paid' : 'Unpaid');
-
-  logActivity(db, req, {
-    module: 'finance',
-    action: 'supplier_invoice_payment_recorded',
-    entity_type: 'store_purchase_order',
-    entity_id: poId,
-    notes: `Supplier invoice ${invoiceNumber} payment of KD ${payment.amount.toFixed(3)} recorded (${paymentStatus})`,
-    meta: {
-      supplier_name: supplier.name || '',
-      invoice_number: invoiceNumber,
-      total_amount: parseFloat(totalAmount.toFixed(3)),
-      paid_amount: parseFloat(paidAfter.toFixed(3)),
-      due_amount: dueAfter,
-      payment_method: paymentMethod
-    }
-  });
-
-  writeDB(db);
-  res.json({
-    payment,
-    expense,
-    summary: {
-      total_amount: parseFloat(totalAmount.toFixed(3)),
-      paid_amount: parseFloat(paidAfter.toFixed(3)),
-      due_amount: dueAfter,
-      payment_status: paymentStatus
-    }
-  });
-});
-
 // ── Stock Transfers ─────────────────────────────────────
 app.get('/api/store/transfers', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-  const transfers = db.store_transfers.filter((transfer) => {
-    if (!allowedStoreIds) return true;
-    return allowedStoreIds.has(parseInt(transfer.from_store_id, 10)) || allowedStoreIds.has(parseInt(transfer.to_store_id, 10));
-  }).map(t => {
+  const transfers = db.store_transfers.map(t => {
     const from = db.store_sub_stores.find(s=>s.id===t.from_store_id)||{};
     const to   = db.store_sub_stores.find(s=>s.id===t.to_store_id)||{};
     return { ...t, from_store_name:from.name||'—', to_store_name:to.name||'—' };
@@ -6436,7 +5798,6 @@ app.post('/api/store/transfers', requireRole('admin','receptionist'), (req,res) 
   const { from_store_id, to_store_id, items, notes } = req.body;
   if (!from_store_id || !to_store_id || !items || !items.length) return res.status(400).json({ error:'From, to store and items required' });
   if (parseInt(from_store_id)===parseInt(to_store_id)) return res.status(400).json({ error:'From and to store must differ' });
-  if (!assertStoreAccess(db, req, from_store_id) || !assertStoreAccess(db, req, to_store_id)) return res.status(403).json({ error:'Store access denied' });
   // validate stock availability
   for (const item of items) {
     const factor = resolveLineFactor(db, item.product_id, item.uom_id, item.factor || 1);
@@ -6473,234 +5834,13 @@ app.post('/api/store/transfers', requireRole('admin','receptionist'), (req,res) 
   db.store_transfers.push(t); writeDB(db); res.json(t);
 });
 
-// ── Stock Adjustments (IN / OUT) ───────────────────────
-app.get('/api/store/adjustments', requirePermission('store.adjust'), (req, res) => {
-  const db = readDB(); ensureStore(db);
-  const dateFrom = String(req.query.date_from || '').slice(0, 10);
-  const dateTo = String(req.query.date_to || '').slice(0, 10);
-  const storeFilter = req.query.store_id ? parseInt(req.query.store_id, 10) : null;
-  const q = String(req.query.search || '').trim().toLowerCase();
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
-  if (storeFilter && !assertStoreAccess(db, req, storeFilter)) return res.status(403).json({ error:'Store access denied' });
-
-  const storesById = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id, 10), s]));
-  const productsById = new Map((db.store_products || []).map(p => [parseInt(p.id, 10), p]));
-  const usersById = new Map((db.users || []).map(u => [parseInt(u.id, 10), u]));
-  const adjustmentNoById = new Map((db.store_adjustments || []).map(a => [parseInt(a.id, 10), a.adjustment_no || `ADJ-${String(a.id || '').padStart(6, '0')}`]));
-
-  let rows = (db.store_adjustments || []).map((entry) => {
-    const store = storesById.get(parseInt(entry.store_id, 10)) || {};
-    const product = productsById.get(parseInt(entry.product_id, 10)) || {};
-    const user = usersById.get(parseInt(entry.created_by, 10)) || {};
-    return {
-      ...entry,
-      store_name: store.name || 'Unknown',
-      product_name: product.name || `Product #${entry.product_id}`,
-      product_sku: product.sku || '',
-      created_by_name: user.name || user.username || '—',
-      reversal_of_adjustment_no: entry.reversal_of_id ? (adjustmentNoById.get(parseInt(entry.reversal_of_id, 10)) || null) : null,
-      reversed_by_adjustment_no: entry.reversed_by_adjustment_id ? (adjustmentNoById.get(parseInt(entry.reversed_by_adjustment_id, 10)) || null) : null
-    };
-  });
-
-  if (allowedStoreIds) rows = rows.filter(r => allowedStoreIds.has(parseInt(r.store_id, 10)));
-  if (dateFrom) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0,10) >= dateFrom);
-  if (dateTo) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0,10) <= dateTo);
-  if (storeFilter) rows = rows.filter(r => parseInt(r.store_id, 10) === storeFilter);
-  if (q) {
-    rows = rows.filter(r => [
-      r.adjustment_no,
-      r.store_name,
-      r.product_name,
-      r.product_sku,
-      r.reason,
-      r.remarks,
-      r.adjustment_type,
-      r.created_by_name,
-      r.created_at
-    ].map(v => String(v || '').toLowerCase()).join(' ').includes(q));
-  }
-
-  rows.sort((a,b) => {
-    const ad = String(a.date || a.created_at || '');
-    const bd = String(b.date || b.created_at || '');
-    if (ad !== bd) return ad < bd ? 1 : -1;
-    return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
-  });
-
-  res.json(rows);
-});
-
-app.post('/api/store/adjustments', requirePermission('store.adjust'), (req, res) => {
-  const db = readDB(); ensureStore(db);
-  const { store_id, product_id, adjustment_type, qty, unit_cost, reason, remarks, date } = req.body || {};
-  const sid = parseInt(store_id, 10);
-  const pid = parseInt(product_id, 10);
-  const type = String(adjustment_type || '').toUpperCase();
-  const quantity = parseFloat(qty || 0);
-  const note = String(remarks || '').trim();
-  const why = String(reason || '').trim() || 'Adjustment';
-  const normalizedDate = String(date || today()).slice(0, 10);
-
-  if (!sid) return res.status(400).json({ error:'Store is required' });
-  if (!assertStoreAccess(db, req, sid)) return res.status(403).json({ error:'Store access denied' });
-  if (!pid) return res.status(400).json({ error:'Product is required' });
-  if (!['IN','OUT'].includes(type)) return res.status(400).json({ error:'Adjustment type must be IN or OUT' });
-  if (!(quantity > 0)) return res.status(400).json({ error:'Quantity must be greater than 0' });
-
-  const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
-  if (!store || store.active === false) return res.status(400).json({ error:'Invalid store' });
-  const product = (db.store_products || []).find(p => parseInt(p.id, 10) === pid);
-  if (!product || product.active === false) return res.status(400).json({ error:'Invalid product' });
-
-  const stock = getStock(db, pid, sid);
-  const stockBefore = parseFloat(stock.qty || 0) || 0;
-  if (type === 'OUT' && stockBefore < quantity) {
-    return res.status(400).json({ error:`Insufficient stock (available: ${stockBefore.toFixed(3)})` });
-  }
-
-  let resolvedUnitCost = parseFloat(unit_cost || 0);
-  if (!(resolvedUnitCost >= 0)) resolvedUnitCost = 0;
-  if (!(resolvedUnitCost > 0)) {
-    resolvedUnitCost = parseFloat(stock.avg_cost || product.cost_price || 0) || 0;
-  }
-
-  if (type === 'IN') {
-    stock.avg_cost = computeWac(stock.qty, stock.avg_cost, quantity, resolvedUnitCost);
-    stock.qty = parseFloat((stock.qty + quantity).toFixed(3));
-    product.cost_price = parseFloat(stock.avg_cost || 0) || 0;
-  } else {
-    stock.qty = parseFloat((stock.qty - quantity).toFixed(3));
-  }
-
-  const stockAfter = parseFloat(stock.qty || 0) || 0;
-  const totalCost = parseFloat((quantity * resolvedUnitCost).toFixed(3));
-  const id = nextId(db, 'store_adjustments');
-  const entry = {
-    id,
-    adjustment_no: `ADJ-${String(id).padStart(6, '0')}`,
-    date: normalizedDate,
-    store_id: sid,
-    product_id: pid,
-    adjustment_type: type,
-    qty: parseFloat(quantity.toFixed(3)),
-    unit_cost: parseFloat(resolvedUnitCost.toFixed(3)),
-    total_cost: totalCost,
-    stock_before: parseFloat(stockBefore.toFixed(3)),
-    stock_after: parseFloat(stockAfter.toFixed(3)),
-    reversal_of_id: null,
-    reversed_by_adjustment_id: null,
-    reason: why,
-    remarks: note,
-    created_by: (req.session && req.session.user && req.session.user.id) || req.session.userId || null,
-    created_at: now()
-  };
-
-  db.store_adjustments.push(entry);
-  logActivity(db, req, {
-    module: 'store',
-    action: 'stock_adjusted',
-    entity_type: 'store_adjustment',
-    entity_id: id,
-    notes: `${type} ${entry.qty.toFixed(3)} of ${product.name || ('Product #' + pid)} at ${store.name || ('Store #' + sid)} (${entry.adjustment_no})`,
-    meta: { store_id: sid, product_id: pid, adjustment_type: type, qty: entry.qty, total_cost: entry.total_cost }
-  });
-  writeDB(db);
-  res.json(entry);
-});
-
-app.post('/api/store/adjustments/:id/reverse', requirePermission('store.adjust'), (req, res) => {
-  const db = readDB(); ensureStore(db);
-  const actor = (req.session && req.session.user) || {};
-  if (String(actor.role || '').toLowerCase() !== 'admin') {
-    return res.status(403).json({ error:'Only admin can reverse adjustments' });
-  }
-
-  const targetId = parseInt(req.params.id, 10);
-  const target = (db.store_adjustments || []).find(a => parseInt(a.id, 10) === targetId);
-  if (!target) return res.status(404).json({ error:'Adjustment not found' });
-
-  const sid = parseInt(target.store_id, 10);
-  if (!assertStoreAccess(db, req, sid)) return res.status(403).json({ error:'Store access denied' });
-  if (target.reversal_of_id) return res.status(400).json({ error:'Reversal entry cannot be reversed again' });
-  if (target.reversed_by_adjustment_id) return res.status(400).json({ error:'Adjustment already reversed' });
-
-  const pid = parseInt(target.product_id, 10);
-  const qty = parseFloat(target.qty || 0) || 0;
-  if (!(qty > 0)) return res.status(400).json({ error:'Invalid adjustment quantity' });
-
-  const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
-  const product = (db.store_products || []).find(p => parseInt(p.id, 10) === pid);
-  if (!store || store.active === false) return res.status(400).json({ error:'Invalid store' });
-  if (!product || product.active === false) return res.status(400).json({ error:'Invalid product' });
-
-  const reverseType = String(target.adjustment_type || '').toUpperCase() === 'IN' ? 'OUT' : 'IN';
-  const stock = getStock(db, pid, sid);
-  const stockBefore = parseFloat(stock.qty || 0) || 0;
-  if (reverseType === 'OUT' && stockBefore < qty) {
-    return res.status(400).json({ error:`Cannot reverse: available stock is ${stockBefore.toFixed(3)}, required ${qty.toFixed(3)}` });
-  }
-
-  const sourceUnitCost = parseFloat(target.unit_cost || 0) || 0;
-  if (reverseType === 'IN') {
-    stock.avg_cost = computeWac(stock.qty, stock.avg_cost, qty, sourceUnitCost);
-    stock.qty = parseFloat((stock.qty + qty).toFixed(3));
-    product.cost_price = parseFloat(stock.avg_cost || 0) || 0;
-  } else {
-    stock.qty = parseFloat((stock.qty - qty).toFixed(3));
-  }
-
-  const stockAfter = parseFloat(stock.qty || 0) || 0;
-  const reversalId = nextId(db, 'store_adjustments');
-  const reversalNo = `ADJ-${String(reversalId).padStart(6, '0')}`;
-  const reasonNote = String((req.body && req.body.reason) || '').trim();
-  const entry = {
-    id: reversalId,
-    adjustment_no: reversalNo,
-    date: String(today()).slice(0, 10),
-    store_id: sid,
-    product_id: pid,
-    adjustment_type: reverseType,
-    qty: parseFloat(qty.toFixed(3)),
-    unit_cost: parseFloat(sourceUnitCost.toFixed(3)),
-    total_cost: parseFloat((qty * sourceUnitCost).toFixed(3)),
-    stock_before: parseFloat(stockBefore.toFixed(3)),
-    stock_after: parseFloat(stockAfter.toFixed(3)),
-    reversal_of_id: target.id,
-    reversed_by_adjustment_id: null,
-    reason: `Reversal of ${target.adjustment_no || ('ADJ#' + target.id)}`,
-    remarks: reasonNote,
-    created_by: actor.id || req.session.userId || null,
-    created_at: now()
-  };
-
-  target.reversed_by_adjustment_id = reversalId;
-  target.reversed_at = now();
-  target.reversed_by = actor.id || req.session.userId || null;
-  target.reversal_reason = reasonNote;
-
-  db.store_adjustments.push(entry);
-  logActivity(db, req, {
-    module: 'store',
-    action: 'stock_adjustment_reversed',
-    entity_type: 'store_adjustment',
-    entity_id: target.id,
-    notes: `Reversed ${target.adjustment_no || ('ADJ#' + target.id)} with ${reversalNo}`,
-    meta: { source_adjustment_id: target.id, reversal_adjustment_id: reversalId, reverse_type: reverseType, qty: entry.qty }
-  });
-  writeDB(db);
-  res.json({ success: true, source: target, reversal: entry });
-});
-
 // ── Manual Consumption ─────────────────────────────────
-app.get('/api/store/manual-consumptions', requirePermission('store.consume'), (req, res) => {
+app.get('/api/store/manual-consumptions', requireLogin, (req, res) => {
   const db = readDB(); ensureStore(db);
   const dateFrom = String(req.query.date_from || '').slice(0, 10);
   const dateTo = String(req.query.date_to || '').slice(0, 10);
   const storeFilter = req.query.store_id ? parseInt(req.query.store_id, 10) : null;
   const q = String(req.query.search || '').trim().toLowerCase();
-  if (storeFilter && !assertStoreAccess(db, req, storeFilter)) return res.status(403).json({ error:'Store access denied' });
-  const allowedStoreIds = getAccessibleStoreIds(db, req);
 
   const storesById = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id, 10), s]));
   const productsById = new Map((db.store_products || []).map(p => [parseInt(p.id, 10), p]));
@@ -6726,8 +5866,6 @@ app.get('/api/store/manual-consumptions', requirePermission('store.consume'), (r
     };
   });
 
-  if (allowedStoreIds) rows = rows.filter((row) => allowedStoreIds.has(parseInt(row.store_id, 10)));
-
   if (dateFrom) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0, 10) >= dateFrom);
   if (dateTo) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0, 10) <= dateTo);
   if (storeFilter) rows = rows.filter(r => parseInt(r.store_id, 10) === storeFilter);
@@ -6750,15 +5888,13 @@ app.get('/api/store/manual-consumptions', requirePermission('store.consume'), (r
     return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
   });
 
-  res.json(rows.map((row) => sanitizeManualConsumptionEntryForUser(db, req, row)));
+  res.json(rows);
 });
 
-app.post('/api/store/manual-consumptions', requirePermission('store.consume'), (req, res) => {
+app.post('/api/store/manual-consumptions', requireRole('admin','receptionist'), (req, res) => {
   const db = readDB(); ensureStore(db);
-  const canViewCost = hasPermission(db, req.session.user.role, 'store.consume.cost');
   const { store_id, date, remarks, items } = req.body || {};
   const sid = parseInt(store_id, 10);
-  if (!assertStoreAccess(db, req, sid)) return res.status(403).json({ error:'Store access denied' });
   const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
   if (!sid || !store) return res.status(400).json({ error:'Store is required' });
   if (store.active === false) return res.status(400).json({ error:'Selected store is inactive' });
@@ -6772,7 +5908,7 @@ app.post('/api/store/manual-consumptions', requirePermission('store.consume'), (
     const row = items[i] || {};
     const productId = parseInt(row.product_id, 10);
     const qty = parseFloat(row.qty || 0);
-    const providedCost = canViewCost && row.cost !== undefined && row.cost !== null && String(row.cost).trim() !== '';
+    const providedCost = row.cost !== undefined && row.cost !== null && String(row.cost).trim() !== '';
     const cost = providedCost ? parseFloat(row.cost || 0) : null;
     const reason = normalizeManualConsumptionReason(row.reason);
     const lineRemarks = String(row.remarks || '').trim();
@@ -6856,7 +5992,7 @@ app.post('/api/store/manual-consumptions', requirePermission('store.consume'), (
 
   db.store_manual_consumptions.push(entry);
   writeDB(db);
-  res.json(sanitizeManualConsumptionEntryForUser(db, req, entry));
+  res.json(entry);
 });
 
 // ── Service–Product links ───────────────────────────────
