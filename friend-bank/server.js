@@ -52,6 +52,50 @@ if (!fs.existsSync(USERS_FILE)) {
   console.log('Created default users (password: 1234 for all)');
 }
 
+// Keep a recovery admin available even when persisted disk data has an old password.
+// This avoids being locked out of the app after deploys or data migrations.
+function ensureRecoveryAdmin() {
+  const users = readUsers();
+  const recoveryPassword = bcrypt.hashSync('1234', 10);
+  const recoveryUser = {
+    id: 1,
+    username: 'mayur',
+    name: 'Mayur',
+    memberId: 5,
+    role: 'admin',
+    password: recoveryPassword
+  };
+
+  const idx = users.findIndex(u => u.username && u.username.toLowerCase() === 'mayur');
+  if (idx === -1) {
+    users.unshift(recoveryUser);
+    writeUsers(users);
+    console.log('Created recovery admin user: mayur');
+    return;
+  }
+
+  const user = users[idx];
+  const needsUpdate = user.role !== 'admin'
+    || user.memberId !== 5
+    || !bcrypt.compareSync('1234', user.password);
+
+  if (needsUpdate) {
+    users[idx] = {
+      ...user,
+      id: user.id || 1,
+      username: 'mayur',
+      name: user.name || 'Mayur',
+      memberId: 5,
+      role: 'admin',
+      password: recoveryPassword
+    };
+    writeUsers(users);
+    console.log('Reset recovery admin password for mayur');
+  }
+}
+
+ensureRecoveryAdmin();
+
 // --- Auth middleware ---
 function requireAuth(req, res, next) {
   if (req.session && req.session.user) return next();
