@@ -34,6 +34,7 @@ const IC = {
   appointments: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
   prescriptions:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6"/><path d="M12 9v6"/><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>',
   billing:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  expense:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 17V5a2 2 0 0 0-2-2H6"/><path d="M6 12h4"/></svg>',
   reports:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
   users:        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   calendar:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
@@ -84,6 +85,7 @@ const NAV_ALL = [
   { id: 'prescriptions',     label: 'Prescriptions',       icon: IC.prescriptions,  perm: 'prescriptions.view',      roles: ['admin','doctor','receptionist'] },
   { section: 'Finance' },
   { id: 'billing',           label: 'Billing',             icon: IC.billing,        perm: 'billing.view',            roles: ['admin','receptionist'] },
+  { id: 'expenses',          label: 'Expenses',            icon: IC.expense,        perm: 'expenses.view',           roles: ['admin','receptionist'] },
   { id: 'discount-master',   label: 'Discounts',           icon: IC.discount,       perm: 'billing.discount.view',   roles: ['admin','receptionist'] },
   { section: 'Reports' },
   { id: 'reports',           label: 'Reports',             icon: IC.reports,        perm: 'reports.view',            roles: ['admin','doctor','receptionist'] },
@@ -100,7 +102,8 @@ const NAV_ALL = [
   { id: 'store-suppliers',   label: 'Suppliers',            icon: IC.supplier,       perm: 'store.manage',            roles: ['admin'] },
   { id: 'store-purchase',    label: 'Purchase Orders',      icon: IC.billing,        perm: 'store.purchase',          roles: ['admin','receptionist'] },
   { id: 'store-transfers',   label: 'Stock Transfers',      icon: IC.transfer,       perm: 'store.transfer',          roles: ['admin','receptionist'] },
-  { id: 'store-consumption', label: 'Manual Consumption',   icon: IC.product,        perm: 'store.consume',           roles: ['admin','receptionist'] },
+  { id: 'store-adjustments', label: 'Stock Adjustment',     icon: IC.transfer,       perm: 'store.adjust',            roles: ['admin','receptionist'] },
+  { id: 'store-consumption', label: 'Manual Consumption',   icon: IC.product,        perm: 'store.consume',           roles: ['admin','doctor','receptionist'] },
   { id: 'store-sub-stores',  label: 'Sub-Stores',           icon: IC.store,          perm: 'store.manage',            roles: ['admin'] },
 ];
 
@@ -109,11 +112,11 @@ const PAGE_PERM = {
   dashboard: 'dashboard.view', patients: 'patients.view',
   appointments: 'appointments.view', 'follow-ups': 'appointments.view', scheduler: 'scheduler.view',
   'patient-packages': 'patient_packages.view', prescriptions: 'prescriptions.view',
-  billing: 'billing.view', 'discount-master': 'billing.discount.view', reports: 'reports.view',
+  billing: 'billing.view', expenses: 'expenses.view', 'discount-master': 'billing.discount.view', reports: 'reports.view',
   users: 'users.view', 'role-permissions': 'role_permissions.view',
   setup: 'setup.view', services: 'services.view', packages: 'packages.view',
   store: 'store.view', 'store-products': 'store.view', 'store-suppliers': 'store.manage',
-  'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-consumption': 'store.consume', 'store-sub-stores': 'store.manage',
+  'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-adjustments': 'store.adjust', 'store-consumption': 'store.consume', 'store-sub-stores': 'store.manage',
 };
 
 // --- API helper ------------------------------------------
@@ -352,6 +355,7 @@ function updateThemeIcons() {
 function _resetAppState() {
   // Clear all module-level state so stale data from a previous user session never bleeds through
   try { _billingAll = []; } catch(e) {}
+  try { _expenseRows = []; _expenseMeta = { categories: [], payment_methods: [] }; } catch(e) {}
   try { _billLineItems = []; _billPkgSessions = []; } catch(e) {}
   try { _reportView = 'daily'; } catch(e) {}
   try { _allRolesList = []; } catch(e) {}
@@ -490,6 +494,7 @@ function navigate(page) {
     scheduler: ['Doctor Scheduler', 'Daily schedule view by doctor'],
     prescriptions: ['Prescriptions', 'View and create prescriptions'],
     billing: ['Billing', 'Manage bills and payments'],
+    expenses: ['Expenses', 'Track day-to-day clinic expenses'],
     reports: ['Reports', 'View clinic reports and analytics'],
     users: ['Manage Users', 'Add and manage system users'],
     services: ['Services', 'Manage clinic services and pricing'],
@@ -502,6 +507,7 @@ function navigate(page) {
     'store-suppliers': ['Suppliers', 'Manage product suppliers'],
     'store-purchase': ['Purchase Orders', 'Buy products from suppliers'],
     'store-transfers': ['Stock Transfers', 'Move stock between stores'],
+    'store-adjustments': ['Stock Adjustment', 'Adjust stock in and out with reason tracking'],
     'store-consumption': ['Manual Consumption', 'Consume stock manually with cost tracking'],
     'store-sub-stores': ['Sub-Stores', 'Manage store locations'],
   };
@@ -517,8 +523,8 @@ function navigate(page) {
 
   const renderSeq = beginPageRender(page);
 
-  const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, reports, users, services, packages, setup, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
-    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster };
+  const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, expenses, reports, users, services, packages, setup, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
+    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-adjustments': storeAdjustments, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster };
   if (pages[page]) {
     if (page === 'scheduler' || page === 'patient-packages') {
       pages[page](renderSeq);
@@ -587,7 +593,97 @@ function applyViewPref(page, wrapSelector) {
   wrap.setAttribute('data-vpage', page);
   wrap.classList.toggle('view-grid', getViewPref(page) === 'grid');
 }
-function confirmDialog(msg) { return Promise.resolve(confirm(msg)); }
+function confirmDialog(msg, title = 'Confirm') {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('confirmOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay modal-overlay-stack';
+    overlay.id = 'confirmOverlay';
+    overlay.innerHTML = `
+      <div class="modal modal-compact">
+        <div class="modal-header">
+          <h3>${escHtml(title)}</h3>
+        </div>
+        <div class="modal-body">${escHtml(msg || '').replace(/\r?\n/g, '<br/>')}</div>
+        <div class="modal-footer">
+          <button class="btn" id="confirmCancelBtn">Cancel</button>
+          <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+        </div>
+      </div>`;
+
+    const done = (result) => {
+      if (overlay.parentNode) overlay.remove();
+      resolve(!!result);
+    };
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) e.stopPropagation();
+    });
+
+    document.body.appendChild(overlay);
+    const cancelBtn = overlay.querySelector('#confirmCancelBtn');
+    const okBtn = overlay.querySelector('#confirmOkBtn');
+    if (cancelBtn) cancelBtn.onclick = () => done(false);
+    if (okBtn) okBtn.onclick = () => done(true);
+
+    setTimeout(() => { if (okBtn) okBtn.focus(); }, 30);
+  });
+}
+
+function confirmWithReasonDialog(msg, title = 'Confirm', reasonLabel = 'Reason (optional)', defaultReason = '') {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('confirmReasonOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay modal-overlay-stack';
+    overlay.id = 'confirmReasonOverlay';
+    overlay.innerHTML = `
+      <div class="modal modal-compact">
+        <div class="modal-header">
+          <h3>${escHtml(title)}</h3>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom:10px">${escHtml(msg || '').replace(/\r?\n/g, '<br/>')}</div>
+          <div class="form-group" style="margin:0">
+            <label>${escHtml(reasonLabel)}</label>
+            <textarea id="confirmReasonInput" rows="3" placeholder="Enter reason">${escHtml(defaultReason || '')}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="confirmReasonCancelBtn">Cancel</button>
+          <button class="btn btn-danger" id="confirmReasonOkBtn">Confirm</button>
+        </div>
+      </div>`;
+
+    const done = (confirmed) => {
+      const reason = String(overlay.querySelector('#confirmReasonInput')?.value || '').trim();
+      if (overlay.parentNode) overlay.remove();
+      resolve({ confirmed: !!confirmed, reason });
+    };
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) e.stopPropagation();
+    });
+
+    document.body.appendChild(overlay);
+    const cancelBtn = overlay.querySelector('#confirmReasonCancelBtn');
+    const okBtn = overlay.querySelector('#confirmReasonOkBtn');
+    const reasonEl = overlay.querySelector('#confirmReasonInput');
+
+    if (cancelBtn) cancelBtn.onclick = () => done(false);
+    if (okBtn) okBtn.onclick = () => done(true);
+    if (reasonEl) {
+      reasonEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) done(true);
+      });
+    }
+
+    setTimeout(() => { if (reasonEl) reasonEl.focus(); }, 30);
+  });
+}
 
 function statusBadge(s) {
   const map = { Booked:'badge-scheduled', Confirmed:'badge-confirmed', Arrived:'badge-arrived', Completed:'badge-completed', Cancelled:'badge-cancelled', 'No-Show':'badge-no-show', Paid:'badge-paid', Pending:'badge-unpaid', Scheduled:'badge-scheduled', Active:'badge-confirmed' };
@@ -2229,14 +2325,14 @@ function openPatientModal(id = null) {
 }
 
 async function deletePatient(id, name) {
-  if (!confirm(`Delete patient "${name}"? This cannot be undone.`)) return;
+  if (!await confirmDialog(`Delete patient "${name}"? This cannot be undone.`)) return;
   try { await apiFetch(`/api/patients/${id}`, { method: 'DELETE' }); toast('Patient deleted', 'success'); patients(); }
   catch(e) { toast(e.message, 'error'); }
 }
 
 async function togglePatientBlocked(id, shouldBlock, name) {
   const actionLabel = shouldBlock ? 'block' : 'unblock';
-  if (!confirm(`${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} patient "${name}"?`)) return;
+  if (!await confirmDialog(`${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} patient "${name}"?`)) return;
   try {
     await apiFetch(`/api/patients/${id}`, {
       method: 'PUT',
@@ -2483,7 +2579,7 @@ async function startConsultation(aptId, patientId) {
 }
 
 async function cancelAptAndRefresh(id) {
-  if (!confirm('Cancel this appointment?')) return;
+  if (!await confirmDialog('Cancel this appointment?')) return;
   try {
     await apiFetch(`/api/appointments/${id}`, { method:'PUT', body:JSON.stringify({ status:'Cancelled' }) });
     toast('Appointment cancelled', 'success');
@@ -2800,7 +2896,7 @@ async function openEditAppointmentModal(id) {
 }
 
 async function cancelAppointment(id) {
-  if (!confirm('Cancel this appointment?')) return;
+  if (!await confirmDialog('Cancel this appointment?')) return;
   try {
     await apiFetch(`/api/appointments/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'Cancelled' }) });
     toast('Appointment cancelled', 'success');
@@ -3137,7 +3233,7 @@ async function autoCreateFollowUpFromContext(patientId, doctorId = null, appoint
 }
 
 async function deleteFollowUp(id) {
-  if (!confirm('Delete this follow-up?')) return;
+  if (!await confirmDialog('Delete this follow-up?')) return;
   try {
     await apiFetch(`/api/follow-ups/${id}`, { method:'DELETE' });
     toast('Follow-up deleted', 'success');
@@ -4557,9 +4653,407 @@ async function openDiscountModal(id = null) {
     });
 }
 async function deleteDiscount(id) {
-  if (!confirm('Delete this discount?')) return;
+  if (!await confirmDialog('Delete this discount?')) return;
   try { await apiFetch(`/api/discounts/${id}`, { method:'DELETE' }); toast('Deleted','success'); _discountAll = await apiFetch('/api/discounts'); renderDiscountTable(); }
   catch(e) { toast(e.message,'error'); }
+}
+
+// --------------------------------------------------------
+//  EXPENSES
+// --------------------------------------------------------
+let _expenseRows = [];
+let _expenseMeta = { categories: [], payment_methods: [] };
+let _supplierInvoiceCandidates = [];
+
+function expenseTodayISO() {
+  return new Date().toLocaleDateString('sv');
+}
+
+function expenseMonthStartISO() {
+  const dt = new Date();
+  dt.setDate(1);
+  return dt.toLocaleDateString('sv');
+}
+
+function expenseMoney(value) {
+  return `KD ${(parseFloat(value || 0) || 0).toFixed(3)}`;
+}
+
+function expenseCategoryOptions(selected = '') {
+  const current = String(selected || '');
+  const items = Array.from(new Set([...(Array.isArray(_expenseMeta.categories) ? _expenseMeta.categories : []), ...(current ? [current] : [])].filter(Boolean)));
+  return ['<option value="">All Categories</option>']
+    .concat(items.sort((a, b) => a.localeCompare(b)).map((cat) => `<option value="${escHtml(cat)}"${cat === current ? ' selected' : ''}>${escHtml(cat)}</option>`))
+    .join('');
+}
+
+function expenseCategorySelectOptions(selected = '', placeholder = 'Select Category') {
+  const current = String(selected || '');
+  const items = Array.from(new Set((Array.isArray(_expenseMeta.categories) ? _expenseMeta.categories : []).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  return [`<option value="">${escHtml(placeholder)}</option>`]
+    .concat(items.map((cat) => `<option value="${escHtml(cat)}"${cat === current ? ' selected' : ''}>${escHtml(cat)}</option>`))
+    .join('');
+}
+
+function expensePaymentDatalistOptions() {
+  return Array.from(new Set((Array.isArray(_expenseMeta.payment_methods) ? _expenseMeta.payment_methods : []).filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => `<option value="${escHtml(name)}"></option>`)
+    .join('');
+}
+
+function setExpensePreset(mode) {
+  const fromEl = document.getElementById('expenseDateFrom');
+  const toEl = document.getElementById('expenseDateTo');
+  if (!fromEl || !toEl) return;
+  if (mode === 'today') {
+    const today = expenseTodayISO();
+    fromEl.value = today;
+    toEl.value = today;
+  } else {
+    fromEl.value = expenseMonthStartISO();
+    toEl.value = expenseTodayISO();
+  }
+  loadExpenses();
+}
+
+function selectedSupplierInvoiceForPayment() {
+  const id = parseInt(document.getElementById('sipInvoiceId')?.value || 0, 10);
+  if (!id) return null;
+  return _supplierInvoiceCandidates.find((row) => parseInt(row.po_id, 10) === id) || null;
+}
+
+function refreshSupplierInvoicePaymentMeta() {
+  const inv = selectedSupplierInvoiceForPayment();
+  const metaEl = document.getElementById('sipInvoiceMeta');
+  if (!metaEl) return;
+  if (!inv) {
+    metaEl.innerHTML = `<div class="text-muted text-sm">Select an invoice to view due details.</div>`;
+    return;
+  }
+
+  metaEl.innerHTML = `
+    <div class="form-row" style="margin:0">
+      <div class="form-group" style="margin:0"><label>Supplier</label><div><strong>${escHtml(inv.supplier_name || '—')}</strong></div></div>
+      <div class="form-group" style="margin:0"><label>Invoice #</label><div><strong>${escHtml(inv.invoice_number || `PO-${inv.po_id}`)}</strong></div></div>
+    </div>
+    <div class="form-row" style="margin-top:8px">
+      <div class="form-group" style="margin:0"><label>Total</label><div>${expenseMoney(inv.total_amount || 0)}</div></div>
+      <div class="form-group" style="margin:0"><label>Paid</label><div>${expenseMoney(inv.paid_amount || 0)}</div></div>
+      <div class="form-group" style="margin:0"><label>Due</label><div><strong style="color:var(--c-danger)">${expenseMoney(inv.due_amount || 0)}</strong></div></div>
+    </div>`;
+
+  const amountEl = document.getElementById('sipAmount');
+  if (amountEl) {
+    const currentAmount = parseFloat(amountEl.value || 0);
+    const due = parseFloat(inv.due_amount || 0) || 0;
+    if (!(currentAmount > 0) || currentAmount > due) amountEl.value = due.toFixed(3);
+    amountEl.max = String(due.toFixed(3));
+  }
+}
+
+async function openSupplierInvoicePaymentModal(preselectPoId = null) {
+  if (!can('expenses.create')) { toast('No permission to record supplier invoice payments', 'error'); return; }
+
+  try {
+    const [invoicesResp, methodsResp, poResp] = await Promise.all([
+      apiFetch('/api/store/supplier-invoices'),
+      apiFetch('/api/payment-methods').catch(() => []),
+      apiFetch('/api/store/purchase-orders').catch(() => [])
+    ]);
+
+    let allInvoices = Array.isArray(invoicesResp) ? invoicesResp : [];
+    if (!allInvoices.length && Array.isArray(poResp) && poResp.length) {
+      allInvoices = poResp
+        .filter((po) => parseInt(po.supplier_id, 10) > 0)
+        .map((po) => {
+          const total = parseFloat(po.total_cost || 0) || 0;
+          const paid = parseFloat(po.paid_amount || 0) || 0;
+          const due = parseFloat((po.due_amount !== undefined ? po.due_amount : Math.max(0, total - paid)) || 0) || 0;
+          const paymentStatus = due <= 0.0005 ? 'Paid' : (paid > 0 ? 'Partially Paid' : 'Unpaid');
+          return {
+            po_id: po.id,
+            supplier_id: po.supplier_id,
+            supplier_name: po.supplier_name || '—',
+            invoice_number: String(po.invoice_number || '').trim() || `PO-${po.id}`,
+            order_date: po.order_date || String(po.created_at || '').slice(0, 10),
+            purchase_status: po.status || 'Pending',
+            total_amount: parseFloat(total.toFixed(3)),
+            paid_amount: parseFloat(paid.toFixed(3)),
+            due_amount: parseFloat(due.toFixed(3)),
+            payment_status: paymentStatus
+          };
+        });
+    }
+
+    const preferredId = preselectPoId ? parseInt(preselectPoId, 10) : 0;
+    _supplierInvoiceCandidates = allInvoices.filter((inv) => {
+      const due = parseFloat(inv && inv.due_amount || 0) || 0;
+      if (due > 0.0005) return true;
+      return preferredId > 0 && parseInt(inv && inv.po_id, 10) === preferredId;
+    });
+    if (!_supplierInvoiceCandidates.length) {
+      toast('No unpaid supplier invoices found', 'error');
+      return;
+    }
+
+    const paymentMethods = (Array.isArray(_expenseMeta.payment_methods) && _expenseMeta.payment_methods.length)
+      ? _expenseMeta.payment_methods
+      : (Array.isArray(methodsResp) ? methodsResp.filter((m) => m.active !== false).map((m) => m.name) : []);
+
+    const invoiceOpts = _supplierInvoiceCandidates.map((inv) => `
+      <option value="${inv.po_id}">${escHtml(`${inv.supplier_name || 'Supplier'} · ${inv.invoice_number || `PO-${inv.po_id}`} · Due ${expenseMoney(inv.due_amount || 0)}`)}</option>`).join('');
+    const methodOpts = (paymentMethods.length ? paymentMethods : ['Cash']).map((name) => `<option value="${escHtml(name)}">${escHtml(name)}</option>`).join('');
+
+    showModal('Pay Supplier Invoice', `
+      <form id="sipForm">
+        <div class="form-group">
+          <label>Supplier Invoice *</label>
+          <select id="sipInvoiceId" name="invoice_id" onchange="refreshSupplierInvoicePaymentMeta()" required>
+            <option value="">— Select Invoice —</option>
+            ${invoiceOpts}
+          </select>
+        </div>
+        <div id="sipInvoiceMeta" class="alert" style="margin-bottom:10px"><div class="text-muted text-sm">Select an invoice to view due details.</div></div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Amount (KD) *</label><input id="sipAmount" name="amount" type="number" min="0.001" step="0.001" required/></div>
+          <div class="form-group"><label>Payment Date *</label><input name="payment_date" type="date" value="${expenseTodayISO()}" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Method</label><select name="payment_method">${methodOpts}</select></div>
+          <div class="form-group"><label>Reference No</label><input name="reference_no" maxlength="80" placeholder="Receipt / transfer ref"/></div>
+        </div>
+        <div class="form-group"><label>Notes</label><input name="notes" maxlength="240" placeholder="Optional note"/></div>
+      </form>`,
+      async () => {
+        const inv = selectedSupplierInvoiceForPayment();
+        if (!inv) { toast('Select a supplier invoice', 'error'); return false; }
+
+        const body = Object.fromEntries(new FormData(document.getElementById('sipForm')));
+        body.amount = parseFloat(body.amount || 0);
+        if (!(body.amount > 0)) { toast('Enter a valid payment amount', 'error'); return false; }
+        const due = parseFloat(inv.due_amount || 0) || 0;
+        if (body.amount - due > 0.0005) { toast(`Amount exceeds due (${expenseMoney(due)})`, 'error'); return false; }
+
+        try {
+          const result = await apiFetch(`/api/store/supplier-invoices/${inv.po_id}/payments`, {
+            method: 'POST',
+            body: JSON.stringify(body)
+          });
+          const dueAfter = parseFloat(result?.summary?.due_amount || 0) || 0;
+          toast(`Payment recorded. Remaining due: ${expenseMoney(dueAfter)}`, 'success');
+          closeModal();
+          await loadExpenses();
+          if (currentPageId === 'store-purchase') storePurchase();
+        } catch (e) {
+          toast(e.message || 'Failed to record payment', 'error');
+          return false;
+        }
+      }
+    );
+
+    const selectEl = document.getElementById('sipInvoiceId');
+    if (selectEl) {
+      const preferred = preselectPoId && _supplierInvoiceCandidates.some((row) => parseInt(row.po_id, 10) === parseInt(preselectPoId, 10))
+        ? String(preselectPoId)
+        : String((_supplierInvoiceCandidates[0] || {}).po_id || '');
+      selectEl.value = preferred;
+      refreshSupplierInvoicePaymentMeta();
+    }
+  } catch (e) {
+    toast(e.message || 'Failed to load supplier invoices', 'error');
+  }
+}
+
+async function expenses() {
+  const ca = document.getElementById('contentArea');
+  ca.innerHTML = `
+    <div class="action-bar bill-action-bar">
+      <div class="search-box">
+        <input id="expenseSearch" placeholder="Search title, category, vendor, notes, ref..." onkeydown="if(event.key==='Enter') loadExpenses()" />
+      </div>
+      <div class="bill-filter-group">
+        <input id="expenseDateFrom" type="date" value="${expenseMonthStartISO()}" onchange="loadExpenses()" title="From date"/>
+        <input id="expenseDateTo" type="date" value="${expenseTodayISO()}" onchange="loadExpenses()" title="To date"/>
+        <select id="expenseCategoryFilter" class="form-select" onchange="loadExpenses()">
+          <option value="">All Categories</option>
+        </select>
+        <button class="btn" onclick="setExpensePreset('today')">Today</button>
+        <button class="btn" onclick="setExpensePreset('month')">This Month</button>
+        <button class="btn report-apply-btn" onclick="loadExpenses()">${IC.search} Apply</button>
+      </div>
+      <div class="bill-action-spacer"></div>
+      ${can('expenses.create') ? `<button class="btn" onclick="openSupplierInvoicePaymentModal()">${IC.billing} Pay Supplier Invoice</button>` : ''}
+      ${can('expenses.create') ? `<button class="btn btn-primary" onclick="openExpenseModal()">${IC.plus} New Expense</button>` : ''}
+    </div>
+    <div id="expenseSummary">${skeletonStats(4)}</div>
+    <div id="expenseWrap">${skeletonTable(4)}</div>`;
+  await loadExpenses();
+}
+
+async function loadExpenses() {
+  const wrap = document.getElementById('expenseWrap');
+  const summaryWrap = document.getElementById('expenseSummary');
+  const search = document.getElementById('expenseSearch')?.value.trim() || '';
+  const dateFrom = document.getElementById('expenseDateFrom')?.value || '';
+  const dateTo = document.getElementById('expenseDateTo')?.value || '';
+  const category = document.getElementById('expenseCategoryFilter')?.value || '';
+  if (wrap) wrap.innerHTML = skeletonTable(4);
+  if (summaryWrap) summaryWrap.innerHTML = skeletonStats(4);
+
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (dateFrom) params.set('date_from', dateFrom);
+  if (dateTo) params.set('date_to', dateTo);
+  if (category) params.set('category', category);
+
+  try {
+    const data = await apiFetch(`/api/expenses${params.toString() ? `?${params.toString()}` : ''}`);
+    _expenseRows = Array.isArray(data.rows) ? data.rows : [];
+    _expenseMeta = {
+      categories: Array.isArray(data.filters?.categories) ? data.filters.categories : [],
+      payment_methods: Array.isArray(data.filters?.payment_methods) ? data.filters.payment_methods : []
+    };
+
+    const categoryEl = document.getElementById('expenseCategoryFilter');
+    if (categoryEl) categoryEl.innerHTML = expenseCategoryOptions(category);
+
+    renderExpenseSummary(data.summary || {});
+    renderExpenseTable();
+  } catch (e) {
+    if (summaryWrap) summaryWrap.innerHTML = '';
+    if (wrap) wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message || 'Failed to load expenses')}</div>`;
+  }
+}
+
+function renderExpenseSummary(summary = {}) {
+  const wrap = document.getElementById('expenseSummary');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">${IC.expense}</div>
+        <div class="stat-content"><div class="stat-label">Filtered Expense</div><div class="stat-value">${expenseMoney(summary.total_amount || 0)}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">${IC.calendar}</div>
+        <div class="stat-content"><div class="stat-label">Today</div><div class="stat-value">${expenseMoney(summary.today_amount || 0)}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">${IC.list}</div>
+        <div class="stat-content"><div class="stat-label">Entries</div><div class="stat-value">${parseInt(summary.rows_count || 0, 10)}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">${IC.services}</div>
+        <div class="stat-content"><div class="stat-label">Categories</div><div class="stat-value">${parseInt(summary.categories_count || 0, 10)}</div></div>
+      </div>
+    </div>`;
+}
+
+function renderExpenseTable() {
+  const wrap = document.getElementById('expenseWrap');
+  if (!wrap) return;
+  if (!_expenseRows.length) {
+    wrap.innerHTML = emptyState(IC.expense, 'No expenses found', 'Create your first day-to-day expense or change the filters.');
+    return;
+  }
+
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Amount</th><th>Paid Via</th><th>Vendor / Ref</th><th>Updated By</th><th>Actions</th></tr></thead>
+    <tbody>${_expenseRows.map((row) => {
+      const vendorBits = [row.vendor, row.reference_no ? `Ref: ${row.reference_no}` : ''].filter(Boolean);
+      const canEditRow = can('expenses.edit');
+      const canDeleteRow = can('expenses.delete');
+      return `<tr>
+        <td><strong>${escHtml(row.expense_date || '—')}</strong><div class="text-muted text-sm">${escHtml(formatDateTime(row.created_at || ''))}</div></td>
+        <td><strong>${escHtml(row.title || '—')}</strong>${row.notes ? `<div class="text-muted text-sm expense-notes-cell">${escHtml(row.notes)}</div>` : ''}</td>
+        <td><span class="badge badge-secondary">${escHtml(row.category || '—')}</span></td>
+        <td><strong class="expense-amount">${expenseMoney(row.amount || 0)}</strong></td>
+        <td>${escHtml(row.payment_method || '—')}</td>
+        <td>${vendorBits.length ? vendorBits.map((item) => `<div>${escHtml(item)}</div>`).join('') : '—'}</td>
+        <td>${escHtml(row.updated_by_name || row.created_by_name || '—')}<div class="text-muted text-sm">${escHtml(formatDateTime(row.updated_at || row.created_at || ''))}</div></td>
+        <td class="td-actions">
+          ${canEditRow ? `<button class="btn btn-sm" onclick="openExpenseModal(${row.id})">${IC.edit}</button>` : ''}
+          ${canDeleteRow ? `<button class="btn btn-sm" style="color:#e57373" onclick="deleteExpense(${row.id})">${IC.trash}</button>` : ''}
+          ${!canEditRow && !canDeleteRow ? '—' : ''}
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+async function openExpenseModal(id = null) {
+  if (!_expenseMeta.categories.length) {
+    toast('Add expense categories first in Setup master', 'error');
+    return;
+  }
+  let entry = {
+    title: '',
+    category: '',
+    amount: '',
+    expense_date: expenseTodayISO(),
+    payment_method: '',
+    vendor: '',
+    reference_no: '',
+    notes: ''
+  };
+  if (id != null) {
+    const found = _expenseRows.find((row) => parseInt(row.id, 10) === parseInt(id, 10));
+    if (!found) { toast('Expense not found', 'error'); return; }
+    entry = { ...entry, ...found };
+  }
+
+  showModal(id != null ? `Edit Expense · ${escHtml(entry.title || '')}` : 'New Expense', `
+    <form id="expenseForm">
+      <div class="form-row">
+        <div class="form-group"><label>Expense Title *</label><input name="title" maxlength="120" value="${escHtml(entry.title || '')}" placeholder="e.g. Tea for staff, Courier, Petrol" required /></div>
+        <div class="form-group"><label>Category *</label><select name="category" required>${expenseCategorySelectOptions(entry.category || '', 'Select Category')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Amount (KD) *</label><input name="amount" type="number" min="0.001" step="0.001" value="${escHtml(String(entry.amount || ''))}" required /></div>
+        <div class="form-group"><label>Expense Date *</label><input name="expense_date" type="date" value="${escHtml(entry.expense_date || expenseTodayISO())}" required /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Paid Via</label><input name="payment_method" list="expensePaymentMethodList" maxlength="60" value="${escHtml(entry.payment_method || '')}" placeholder="Cash, Card, Bank Transfer" /></div>
+        <div class="form-group"><label>Vendor / Payee</label><input name="vendor" maxlength="120" value="${escHtml(entry.vendor || '')}" placeholder="Optional" /></div>
+      </div>
+      <datalist id="expensePaymentMethodList">${expensePaymentDatalistOptions()}</datalist>
+      <div class="form-row">
+        <div class="form-group"><label>Reference No</label><input name="reference_no" maxlength="80" value="${escHtml(entry.reference_no || '')}" placeholder="Invoice / receipt no" /></div>
+        <div class="form-group"><label>Notes</label><input name="notes" maxlength="240" value="${escHtml(entry.notes || '')}" placeholder="Optional note" /></div>
+      </div>
+    </form>`,
+    async () => {
+      const form = document.getElementById('expenseForm');
+      const body = Object.fromEntries(new FormData(form));
+      body.amount = parseFloat(body.amount || 0);
+      if (!String(body.title || '').trim()) { toast('Expense title is required', 'error'); return false; }
+      if (!String(body.category || '').trim()) { toast('Expense category is required', 'error'); return false; }
+      if (!(body.amount > 0)) { toast('Amount must be greater than 0', 'error'); return false; }
+      try {
+        if (id != null) await apiFetch(`/api/expenses/${id}`, { method:'PUT', body: JSON.stringify(body) });
+        else await apiFetch('/api/expenses', { method:'POST', body: JSON.stringify(body) });
+        toast(id != null ? 'Expense updated' : 'Expense recorded', 'success');
+        closeModal();
+        await loadExpenses();
+      } catch (e) {
+        toast(e.message || 'Failed to save expense', 'error');
+        return false;
+      }
+    });
+}
+
+async function deleteExpense(id) {
+  const row = _expenseRows.find((item) => parseInt(item.id, 10) === parseInt(id, 10));
+  const title = row && row.title ? row.title : `#${id}`;
+  if (!await confirmDialog(`Delete expense "${title}"?`)) return;
+  try {
+    await apiFetch(`/api/expenses/${id}`, { method:'DELETE' });
+    toast('Expense deleted', 'success');
+    await loadExpenses();
+  } catch (e) {
+    toast(e.message || 'Failed to delete expense', 'error');
+  }
 }
 
 // --------------------------------------------------------
@@ -4762,6 +5256,7 @@ function filterBills() {
       b.bill_number,
       b.visit_id,
       b.patient_name,
+      b.doctor_name,
       b.mr_number,
       b.patient_phone,
       b.payment_method,
@@ -4780,7 +5275,7 @@ function renderBillingRows(list) {
   if (!wrap) return;
   if (!list.length) { wrap.innerHTML = emptyState(IC.billing, 'No bills found', 'Try a different search or create a new bill'); return; }
   wrap.innerHTML = `<div class="table-wrap billing-table-wrap"><table class="billing-table">
-      <thead><tr><th>#</th><th>Bill No.</th><th>Visit ID</th><th>MR #</th><th>Patient</th><th>Items</th><th>Total</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <thead><tr><th>#</th><th>Bill No.</th><th>Visit ID</th><th>MR #</th><th>Patient</th><th>Doctor</th><th>Items</th><th>Total</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody>${list.map((b,i) => {
         const itemLabel = (l) => {
           const pkg = l.package_name && !String(l.name || '').includes(String(l.package_name)) ? ` [${l.package_name}]` : '';
@@ -4808,6 +5303,7 @@ function renderBillingRows(list) {
               </div>
             </div>
           </td>
+          <td>${escHtml(b.doctor_name || '—')}</td>
           <td class="text-muted text-sm billing-items-cell" title="${itemsFullSummary}">${itemsSummary}</td>
           <td><strong class="billing-total">KD ${b.total}</strong></td>
           <td>${(b.payment_splits && b.payment_splits.length > 1)
@@ -7022,6 +7518,7 @@ function renderSelectedReport() {
               <option value="">All Types</option>
               <option value="purchase">Purchase</option>
               <option value="transfer">Transfer</option>
+              <option value="adjustment">Adjustment</option>
               <option value="consumption">Consumption</option>
               <option value="manual-consumption">Manual Consumption</option>
             </select>
@@ -8646,7 +9143,7 @@ async function users() {
     });
     const wrap = document.getElementById('usersWrap');
     wrap.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Department</th><th>Slot Duration</th><th>Actions</th></tr></thead>
+      <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Department</th><th>Store Access</th><th>Slot Duration</th><th>Actions</th></tr></thead>
       <tbody>${filtered.map((u,i) => `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(u.name)}</strong></td>
@@ -8654,6 +9151,7 @@ async function users() {
         <td>${roleBadge(u.role)}</td>
         <td>${u.active === false ? '<span class="badge badge-cancelled">Inactive</span>' : '<span class="badge badge-completed">Active</span>'}</td>
         <td>${(u.role==='doctor'||u.role==='receptionist') ? escHtml(u.department_name || '—') : '—'}</td>
+        <td>${u.role === 'admin' ? 'All Stores' : escHtml((u.store_names || []).length ? u.store_names.join(', ') : 'All Stores')}</td>
         <td>${u.role==='doctor' ? `<span class="badge badge-scheduled">${u.slot_duration||30} min</span>` : '—'}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="openEditUserModal(${u.id})">${IC.edit} Edit</button>
@@ -8669,13 +9167,33 @@ async function users() {
   }
 }
 
+
+function userStoreChecklistHtml(stores, selectedIds = [], inputName = 'store_ids') {
+  const normalizedSelected = new Set((selectedIds || []).map((id) => String(id)));
+  const activeStores = (stores || []).filter((store) => store.active !== false);
+  if (!activeStores.length) {
+    return '<div class="text-sm text-muted">No stores available.</div>';
+  }
+  return activeStores.map((store) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border)">
+      <input type="checkbox" name="${inputName}" value="${store.id}" ${normalizedSelected.has(String(store.id)) ? 'checked' : ''}/>
+      <span>${escHtml(store.name || `Store #${store.id}`)}</span>
+    </label>`).join('');
+}
+
+function collectCheckedValues(formEl, inputName) {
+  return Array.from(formEl.querySelectorAll(`input[name="${inputName}"]:checked`)).map((input) => parseInt(input.value, 10)).filter((value) => value > 0);
+}
+
 async function openAddUserModal() {
   let departments = [];
   let allRoles = [];
+  let stores = [];
   try {
-    [departments, allRoles] = await Promise.all([
+    [departments, allRoles, stores] = await Promise.all([
       apiFetch('/api/doctor-departments'),
-      apiFetch('/api/roles')
+      apiFetch('/api/roles'),
+      apiFetch('/api/store/sub-stores')
     ]);
   } catch(e) {
     toast(e.message, 'error');
@@ -8694,7 +9212,7 @@ async function openAddUserModal() {
       </div>
       <div class="form-row">
         <div class="form-group"><label>Role *</label>
-          <select name="role" required onchange="const isDoc=this.value==='doctor';const needsDept=isDoc||this.value==='receptionist';document.getElementById('slotDurGroup').style.display=isDoc?'':'none';document.getElementById('depGroup').style.display=needsDept?'':'none'">
+          <select name="role" required onchange="const isDoc=this.value==='doctor';const needsDept=isDoc||this.value==='receptionist';const limitStores=this.value!==''&&this.value!=='admin';document.getElementById('slotDurGroup').style.display=isDoc?'':'none';document.getElementById('depGroup').style.display=needsDept?'':'none';document.getElementById('storeAccessGroup').style.display=limitStores?'':'none'">
             <option value="">Select Role</option>
             ${roleOptions}
           </select>
@@ -8724,9 +9242,18 @@ async function openAddUserModal() {
           </select>
         </div>
       </div>
+      <div class="form-group" id="storeAccessGroup" style="display:none">
+        <label>Store Access</label>
+        <div style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg-card)">
+          ${userStoreChecklistHtml(stores)}
+        </div>
+        <div class="text-sm text-muted" style="margin-top:6px">Leave all unchecked to allow all stores. Select one or more stores to restrict access.</div>
+      </div>
     </form>`,
     async () => {
-      const body = Object.fromEntries(new FormData(document.getElementById('addUserForm')));
+      const form = document.getElementById('addUserForm');
+      const body = Object.fromEntries(new FormData(form));
+      body.store_ids = collectCheckedValues(form, 'store_ids');
       if (!body.name || !body.username || !body.password || !body.role) { toast('All fields required', 'error'); return false; }
       if ((body.role === 'doctor' || body.role === 'receptionist') && !body.department_id) { toast('Department is required for ' + body.role, 'error'); return false; }
       try {
@@ -8738,9 +9265,10 @@ async function openAddUserModal() {
 }
 async function openEditUserModal(id) {
   try {
-    const [list, departments] = await Promise.all([
+    const [list, departments, stores] = await Promise.all([
       apiFetch('/api/users'),
-      apiFetch('/api/doctor-departments')
+      apiFetch('/api/doctor-departments'),
+      apiFetch('/api/store/sub-stores')
     ]);
     const u = list.find(x => x.id === id);
     if (!u) { toast('User not found', 'error'); return; }
@@ -8766,6 +9294,14 @@ async function openEditUserModal(id) {
           </select>
           ${u.id === currentUser.id ? '<div class="text-sm text-muted" style="margin-top:6px">You cannot deactivate your own account.</div>' : ''}
         </div>
+        ${u.role !== 'admin' ? `
+        <div class="form-group">
+          <label>Store Access</label>
+          <div style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg-card)">
+            ${userStoreChecklistHtml(stores, u.store_ids || [])}
+          </div>
+          <div class="text-sm text-muted" style="margin-top:6px">Leave all unchecked to allow all stores. Select one or more stores to restrict access.</div>
+        </div>` : ''}
         ${u.role==='doctor' ? `
         <div class="form-group">
           <label>Slot Duration</label>
@@ -8779,7 +9315,9 @@ async function openEditUserModal(id) {
         </div>` : ''}
       </form>`,
       async () => {
-        const body = Object.fromEntries(new FormData(document.getElementById('editUserForm')));
+        const form = document.getElementById('editUserForm');
+        const body = Object.fromEntries(new FormData(form));
+        if (u.role !== 'admin') body.store_ids = collectCheckedValues(form, 'store_ids');
         try {
           await apiFetch(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
           toast('User updated', 'success');
@@ -8790,7 +9328,7 @@ async function openEditUserModal(id) {
 }
 
 async function deleteUser(id, name) {
-  if (!confirm(`Delete user "${name}"?`)) return;
+  if (!await confirmDialog(`Delete user "${name}"?`)) return;
   try {
     await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
     toast('User deleted', 'success');
@@ -8883,6 +9421,75 @@ document.addEventListener('keydown', e => {
 //  SERVICES
 // -----------------------------------------------
 let SERVICE_CATEGORIES = ['Consultation','Diagnostic','Procedure','Therapy','Other'];
+const SERVICES_BATCH_SIZE = 100;
+let _filteredServices = [];
+let _servicesRenderedCount = 0;
+let _servicesInfiniteObserver = null;
+
+function renderServiceRow(s, index, isAdmin) {
+  return `<tr>
+    <td>${index + 1}</td>
+    <td><strong>${escHtml(s.name)}</strong></td>
+    <td>${serviceCategoryBadgeHtml(s.category)}</td>
+    <td>${escHtml(s.description||'—')}</td>
+    <td><strong>KD ${s.price.toFixed(3)}</strong></td>
+    <td>${s.duration_min ? s.duration_min+' min' : '—'}</td>
+    <td>${s.active ? '<span class="badge badge-completed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
+    ${isAdmin?`<td class="action-btns">
+      <button class="btn btn-sm" onclick="openServiceProductModal(${s.id})" title="Assign Products">${IC.product || IC.store}</button>
+      <button class="btn btn-sm btn-ghost" onclick="openEditServiceModal(${s.id})" title="Edit">${IC.edit}</button>
+      ${can('services.delete') ? `<button class="btn btn-sm btn-danger-ghost" onclick="deleteService(${s.id},'${escHtml(s.name)}')" title="Delete">${IC.trash}</button>` : ''}
+    </td>`:''}
+  </tr>`;
+}
+
+function disconnectServicesInfiniteScroll() {
+  if (_servicesInfiniteObserver) {
+    _servicesInfiniteObserver.disconnect();
+    _servicesInfiniteObserver = null;
+  }
+}
+
+function updateServicesLoadState() {
+  const info = document.getElementById('svcLoadState');
+  if (!info) return;
+  const total = Array.isArray(_filteredServices) ? _filteredServices.length : 0;
+  const rendered = Math.min(_servicesRenderedCount, total);
+  info.textContent = total > SERVICES_BATCH_SIZE
+    ? `Showing ${rendered} of ${total} services`
+    : `${total} service${total !== 1 ? 's' : ''}`;
+}
+
+function appendMoreServices(isAdmin) {
+  const tbody = document.getElementById('svcTableBody');
+  if (!tbody) return;
+  const start = _servicesRenderedCount;
+  const nextRows = (_filteredServices || []).slice(start, start + SERVICES_BATCH_SIZE);
+  if (!nextRows.length) {
+    disconnectServicesInfiniteScroll();
+    return;
+  }
+  tbody.insertAdjacentHTML('beforeend', nextRows.map((service, offset) => renderServiceRow(service, start + offset, isAdmin)).join(''));
+  _servicesRenderedCount += nextRows.length;
+  updateServicesLoadState();
+  if (_servicesRenderedCount >= (_filteredServices || []).length) {
+    disconnectServicesInfiniteScroll();
+  }
+}
+
+function attachServicesInfiniteScroll(isAdmin) {
+  disconnectServicesInfiniteScroll();
+  const sentinel = document.getElementById('svcLoadMoreSentinel');
+  if (!sentinel) return;
+  if (_servicesRenderedCount >= (_filteredServices || []).length) return;
+  _servicesInfiniteObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) appendMoreServices(isAdmin);
+    });
+  }, { root: null, rootMargin: '0px 0px 240px 0px', threshold: 0.01 });
+  _servicesInfiniteObserver.observe(sentinel);
+}
+
 async function loadServiceCategories() {
   try {
     const cats = await apiFetch('/api/service-categories');
@@ -8913,6 +9520,7 @@ async function services() {
   try {
     const list = await apiFetch('/api/services');
     window._allServices = list;
+    _filteredServices = list.slice();
     renderServicesTable(list, isAdmin);
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -8925,35 +9533,63 @@ function filterServices() {
     (!q || s.name.toLowerCase().includes(q) || (s.description||'').toLowerCase().includes(q)) &&
     (!cat || s.category === cat)
   );
+  _filteredServices = filtered;
   renderServicesTable(filtered, isAdmin);
 }
 
 function renderServicesTable(list, isAdmin) {
   const wrap = document.getElementById('svcWrap');
   if (!wrap) return;
+  disconnectServicesInfiniteScroll();
   if (!list.length) { wrap.innerHTML = `<div class="empty-state">${IC.empty}<p>No services found</p></div>`; return; }
+  _filteredServices = Array.isArray(list) ? list.slice() : [];
+  _servicesRenderedCount = 0;
   wrap.innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>#</th><th>Name</th><th>Category</th><th>Description</th><th>Price (KD)</th><th>Duration</th><th>Status</th>${isAdmin?'<th>Actions</th>':''}</tr></thead>
-    <tbody>${list.map((s,i)=>`<tr>
-      <td>${i+1}</td>
-      <td><strong>${escHtml(s.name)}</strong></td>
-      <td><span class="badge badge-${catBadgeClass(s.category)}">${escHtml(s.category)}</span></td>
-      <td>${escHtml(s.description||'—')}</td>
-      <td><strong>KD ${s.price.toFixed(3)}</strong></td>
-      <td>${s.duration_min ? s.duration_min+' min' : '—'}</td>
-      <td>${s.active ? '<span class="badge badge-completed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
-      ${isAdmin?`<td class="action-btns">
-        <button class="btn btn-sm" onclick="openServiceProductModal(${s.id})" title="Assign Products">${IC.product || IC.store}</button>
-        <button class="btn btn-sm btn-ghost" onclick="openEditServiceModal(${s.id})" title="Edit">${IC.edit}</button>
-        ${can('services.delete') ? `<button class="btn btn-sm btn-danger-ghost" onclick="deleteService(${s.id},'${escHtml(s.name)}')" title="Delete">${IC.trash}</button>` : ''}
-      </td>`:''}
-    </tr>`).join('')}</tbody>
-  </table></div>`;
+    <tbody id="svcTableBody"></tbody>
+  </table></div>
+  <div class="svc-load-state" id="svcLoadState"></div>
+  <div class="svc-load-more-sentinel" id="svcLoadMoreSentinel" aria-hidden="true"></div>`;
+  appendMoreServices(isAdmin);
+  attachServicesInfiniteScroll(isAdmin);
   applyViewPref('services', '#svcWrap');
 }
 
-function catBadgeClass(cat) {
-  return {Consultation:'scheduled',Diagnostic:'confirmed',Procedure:'arrived',Therapy:'completed',Other:'secondary'}[cat]||'secondary';
+function serviceCategoryBadgeStyle(cat) {
+  const presets = {
+    consultation: { bg: 'rgba(14, 165, 233, .14)', color: '#0369a1' },
+    diagnostic: { bg: 'rgba(79, 70, 229, .12)', color: '#4338ca' },
+    procedure: { bg: 'rgba(249, 115, 22, .14)', color: '#c2410c' },
+    therapy: { bg: 'rgba(34, 197, 94, .14)', color: '#15803d' },
+    other: { bg: 'rgba(100, 116, 139, .14)', color: '#475569' }
+  };
+  const raw = String(cat || 'Other').trim();
+  const key = raw.toLowerCase();
+  if (presets[key]) return presets[key];
+
+  const palette = [
+    { bg: 'rgba(190, 24, 93, .14)', color: '#be185d' },
+    { bg: 'rgba(124, 58, 237, .14)', color: '#7c3aed' },
+    { bg: 'rgba(8, 145, 178, .14)', color: '#0e7490' },
+    { bg: 'rgba(22, 163, 74, .14)', color: '#15803d' },
+    { bg: 'rgba(202, 138, 4, .18)', color: '#a16207' },
+    { bg: 'rgba(234, 88, 12, .14)', color: '#c2410c' },
+    { bg: 'rgba(37, 99, 235, .14)', color: '#1d4ed8' },
+    { bg: 'rgba(217, 70, 239, .14)', color: '#a21caf' },
+    { bg: 'rgba(15, 118, 110, .14)', color: '#0f766e' },
+    { bg: 'rgba(220, 38, 38, .14)', color: '#b91c1c' }
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) hash = ((hash << 5) - hash) + key.charCodeAt(i);
+  const picked = palette[Math.abs(hash) % palette.length];
+  return picked;
+}
+
+function serviceCategoryBadgeHtml(cat) {
+  const label = String(cat || 'Other').trim() || 'Other';
+  const style = serviceCategoryBadgeStyle(label);
+  return `<span class="badge" style="background:${style.bg};color:${style.color}">${escHtml(label)}</span>`;
 }
 
 function openAddServiceModal() {
@@ -9021,7 +9657,7 @@ async function openEditServiceModal(id) {
 }
 
 async function deleteService(id, name) {
-  if (!confirm(`Delete service "${name}"? This cannot be undone.`)) return;
+  if (!await confirmDialog(`Delete service "${name}"? This cannot be undone.`)) return;
   try {
     await apiFetch(`/api/services/${id}`, { method:'DELETE' });
     toast('Service deleted','success'); services();
@@ -9399,7 +10035,7 @@ function renderServiceProductList(links) {
 }
 
 async function deleteServiceProductLink(id, serviceId) {
-  if (!confirm('Remove this product from service?')) return;
+  if (!await confirmDialog('Remove this product from service?')) return;
   try {
     await apiFetch(`/api/store/service-products/${id}`, { method:'DELETE' });
     const modal = document.getElementById('modalOverlay');
@@ -9686,7 +10322,7 @@ async function openEditPackageModal(id) {
 }
 
 async function deletePackage(id, name) {
-  if (!confirm(`Delete package "${name}"? This cannot be undone.`)) return;
+  if (!await confirmDialog(`Delete package "${name}"? This cannot be undone.`)) return;
   try {
     await apiFetch(`/api/packages/${id}`, { method:'DELETE' });
     toast('Package deleted','success'); packages();
@@ -9826,6 +10462,15 @@ async function setup() {
               <div id="scWrap">${skeletonTable(4)}</div>
             </div>
           </div>
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.expense} Expense Categories</div>
+              ${can('setup.edit') ? `<button class="btn btn-primary btn-sm" onclick="openAddExpenseCategoryModal()">${IC.plus} Add</button>` : ''}
+            </div>
+            <div class="card-body">
+              <div id="ecWrap">${skeletonTable(4)}</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -9882,6 +10527,7 @@ async function setup() {
     </div>`;
   loadPaymentMethods();
   loadServiceCategoriesTable();
+  loadExpenseCategoriesTable();
   loadDoctorDepartmentsTable();
   loadDoctorSchedulesTable();
   loadUomsTable();
@@ -10378,12 +11024,87 @@ async function togglePaymentMethod(id, active) {
 }
 
 async function deletePaymentMethod(id, name) {
-  if (!confirm(`Delete payment method "${name}"?`)) return;
+  if (!await confirmDialog(`Delete payment method "${name}"?`)) return;
   try {
     await apiFetch(`/api/payment-methods/${id}`, { method:'DELETE' });
     toast('Payment method deleted', 'success');
     loadPaymentMethods();
   } catch(e) { toast(e.message, 'error'); }
+}
+
+// --- Expense Categories (Setup) --------------------------
+async function loadExpenseCategoriesTable() {
+  const wrap = document.getElementById('ecWrap');
+  if (!wrap) return;
+  try {
+    const list = await apiFetch('/api/expense-categories');
+    _expenseMeta.categories = list.map(c => c.name);
+    if (!list.length) {
+      wrap.innerHTML = emptyState(IC.expense, 'No Expense Categories', 'Add predefined categories for daily expense entry.');
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Category Name</th>${can('setup.edit') ? '<th>Actions</th>' : ''}</tr></thead>
+      <tbody>${list.map((c, i) => `<tr>
+        <td>${i + 1}</td>
+        <td><strong>${escHtml(c.name)}</strong></td>
+        ${can('setup.edit') ? `<td class="td-actions">
+          <button class="btn btn-sm" onclick='openEditExpenseCategoryModal(${c.id}, ${JSON.stringify(String(c.name || ''))})'>${IC.edit}</button>
+          <button class="btn btn-danger btn-sm" onclick='deleteExpenseCategory(${c.id}, ${JSON.stringify(String(c.name || ''))})'>${IC.trash}</button>
+        </td>` : ''}
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
+}
+
+function openAddExpenseCategoryModal() {
+  showModal('Add Expense Category', `
+    <div class="form-group">
+      <label>Category Name <span style="color:var(--c-danger)">*</span></label>
+      <input id="ecName" class="form-control" placeholder="e.g. Utilities, Rent, Travel" autofocus/>
+    </div>`,
+    async () => {
+      const name = document.getElementById('ecName')?.value?.trim();
+      if (!name) { toast('Name is required', 'error'); return false; }
+      try {
+        await apiFetch('/api/expense-categories', { method:'POST', body: JSON.stringify({ name }) });
+        toast('Expense category added', 'success');
+        closeModal();
+        loadExpenseCategoriesTable();
+        if (currentPageId === 'expenses') loadExpenses();
+      } catch (e) { toast(e.message, 'error'); return false; }
+    });
+}
+
+function openEditExpenseCategoryModal(id, currentName) {
+  showModal('Edit Expense Category', `
+    <div class="form-group">
+      <label>Category Name <span style="color:var(--c-danger)">*</span></label>
+      <input id="ecEditName" class="form-control" value="${escHtml(currentName)}" autofocus/>
+    </div>`,
+    async () => {
+      const name = document.getElementById('ecEditName')?.value?.trim();
+      if (!name) { toast('Name is required', 'error'); return false; }
+      try {
+        await apiFetch(`/api/expense-categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
+        toast('Expense category updated', 'success');
+        closeModal();
+        loadExpenseCategoriesTable();
+        if (currentPageId === 'expenses') loadExpenses();
+      } catch (e) { toast(e.message, 'error'); return false; }
+    });
+}
+
+async function deleteExpenseCategory(id, name) {
+  if (!await confirmDialog(`Delete expense category "${name}"?`)) return;
+  try {
+    await apiFetch(`/api/expense-categories/${id}`, { method:'DELETE' });
+    toast('Expense category deleted', 'success');
+    loadExpenseCategoriesTable();
+    if (currentPageId === 'expenses') loadExpenses();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // --- Service Categories (Setup) --------------------------
@@ -10450,7 +11171,7 @@ function openEditServiceCategoryModal(id, currentName) {
 }
 
 async function deleteServiceCategory(id, name) {
-  if (!confirm(`Delete category "${name}"?\n\nExisting services using this category will keep their current value.`)) return;
+  if (!await confirmDialog(`Delete category "${name}"?\n\nExisting services using this category will keep their current value.`)) return;
   try {
     await apiFetch(`/api/service-categories/${id}`, { method:'DELETE' });
     toast('Category deleted', 'success');
@@ -10539,7 +11260,7 @@ async function openEditDoctorDepartmentModal(id) {
 }
 
 async function deleteDoctorDepartment(id, name) {
-  if (!confirm(`Delete department "${name}"?`)) return;
+  if (!await confirmDialog(`Delete department "${name}"?`)) return;
   try {
     await apiFetch(`/api/doctor-departments/${id}`, { method:'DELETE' });
     toast('Department deleted', 'success');
@@ -10629,7 +11350,7 @@ function openEditUomModal(id) {
 }
 
 async function deleteUom(id, symbol) {
-  if (!confirm(`Delete UOM "${symbol}"?`)) return;
+  if (!await confirmDialog(`Delete UOM "${symbol}"?`)) return;
   try {
     await apiFetch(`/api/uoms/${id}`, { method:'DELETE' });
     toast('UOM deleted', 'success');
@@ -10711,7 +11432,7 @@ function openEditProductCategoryModal(id) {
 }
 
 async function deleteProductCategory(id, name) {
-  if (!confirm(`Delete product category "${name}"?`)) return;
+  if (!await confirmDialog(`Delete product category "${name}"?`)) return;
   try {
     await apiFetch(`/api/store/product-categories/${id}`, { method:'DELETE' });
     toast('Product category deleted', 'success');
@@ -11033,13 +11754,14 @@ const PERM_GROUPS = [
     'billing.discount.view','billing.discount.apply','billing.discount.open','billing.discount.override',
     'billing.refund.view','billing.refund.initiate'
   ] },
+  { label: 'Expenses',          perms: ['expenses.view','expenses.create','expenses.edit','expenses.delete'] },
   { label: 'Reports',           perms: ['reports.view'] },
   { label: 'Users',             perms: ['users.view','users.create','users.edit','users.delete'] },
   { label: 'Services',          perms: ['services.view','services.create','services.edit','services.delete','services.import','services.export'] },
   { label: 'Packages',          perms: ['packages.view','packages.create','packages.edit','packages.delete'] },
   { label: 'Setup',             perms: ['setup.view','setup.edit'] },
   { label: 'Role Permissions',  perms: ['role_permissions.view','role_permissions.edit'] },
-  { label: 'Store',             perms: ['store.view','store.manage','store.purchase','store.transfer','store.consume'] },
+  { label: 'Store',             perms: ['store.view','store.manage','store.purchase','store.transfer','store.adjust','store.consume','store.consume.cost'] },
 ];
 
 // Roles list is now loaded dynamically from the API
@@ -11048,6 +11770,11 @@ let _allRolesList = [];
 function formatPermissionActionLabel(permissionKey) {
   const p = String(permissionKey || '').trim();
   if (!p) return '';
+
+  const explicitLabels = {
+    'store.consume.cost': 'Manual Consumption Cost'
+  };
+  if (explicitLabels[p]) return explicitLabels[p];
 
   const parts = p.split('.').filter(Boolean);
   if (!parts.length) return p;
@@ -11197,7 +11924,7 @@ async function openEditRoleModal(id, currentLabel) {
 }
 
 async function deleteCustomRole(id, name, label) {
-  if (!confirm(`Delete role "${label}"?\n\nThis will fail if any users are still assigned this role.`)) return;
+  if (!await confirmDialog(`Delete role "${label}"?\n\nThis will fail if any users are still assigned this role.`)) return;
   try {
     await apiFetch(`/api/roles/${id}`, { method:'DELETE' });
     toast(`Role "${label}" deleted`, 'success');
@@ -11241,6 +11968,59 @@ async function toggleRolePerm(checkbox, role, perm) {
 // --------------------------------------------------------
 
 // -- Store Overview --------------------------------------
+const STORE_OVERVIEW_ITEMS_PER_VIEW = 6;
+let _storeOverviewCache = { storesById: new Map(), rowsByStore: new Map() };
+
+function renderStoreOverviewCard(storeId) {
+  const sid = parseInt(storeId, 10);
+  const st = _storeOverviewCache.storesById.get(sid);
+  const visibleRows = (_storeOverviewCache.rowsByStore.get(sid) || []).slice();
+  if (!st) return '';
+
+  const storeLowCount = visibleRows.filter((s) => (parseFloat(s.qty || 0) || 0) <= (parseFloat(s.reorder_level || 0) || 0)).length;
+  const storeQty = visibleRows.reduce((sum, s) => sum + (parseFloat(s.qty || 0) || 0), 0);
+  const storeValue = visibleRows.reduce((sum, s) => sum + ((parseFloat(s.qty || 0) || 0) * (parseFloat(s.avg_cost || 0) || 0)), 0);
+  const healthPct = visibleRows.length ? Math.max(0, Math.min(100, Math.round(((visibleRows.length - storeLowCount) / visibleRows.length) * 100))) : 100;
+
+  const fillerCount = Math.max(0, STORE_OVERVIEW_ITEMS_PER_VIEW - Math.min(visibleRows.length, STORE_OVERVIEW_ITEMS_PER_VIEW));
+
+  return `<article class="card store-store-card new-look" id="storeCard-${sid}">
+    <div class="store-store-head">
+      <div>
+        <div class="card-title">${IC.store} ${escHtml(st.name)} ${st.is_main ? '<span class="badge badge-admin" style="font-size:10px;margin-left:4px">Main</span>' : ''}</div>
+        <div class="text-muted text-sm">${visibleRows.length} product${visibleRows.length !== 1 ? 's' : ''} · KD ${storeValue.toFixed(3)}</div>
+      </div>
+      <span class="badge ${storeLowCount ? 'badge-unpaid' : 'badge-paid'}">${storeLowCount} low</span>
+    </div>
+    <div class="store-health-row">
+      <div class="store-health-track"><span style="width:${healthPct}%"></span></div>
+      <div class="text-muted text-sm">Health ${healthPct}%</div>
+    </div>
+    <div class="store-mini-metrics">
+      <span><strong>${storeQty.toFixed(3)}</strong> units</span>
+      <span><strong>${visibleRows.length}</strong> total items</span>
+      <span>${expiryChipHtml(visibleRows[0]?.next_expiry, visibleRows[0]?.missing_expiry_count)}</span>
+    </div>
+    ${visibleRows.length ? `<div class="store-product-stack" title="Use mouse wheel to scroll">${visibleRows.map((row) => {
+      const isLow = (parseFloat(row.qty || 0) || 0) <= (parseFloat(row.reorder_level || 0) || 0);
+      return `<div class="store-product-item ${isLow ? 'is-low' : ''}">
+        <div class="store-product-main">
+          <strong>${escHtml(row.product_name || '—')}</strong>
+          <div class="text-muted text-sm">${escHtml(row.product_sku || 'No SKU')}</div>
+        </div>
+        <div class="store-product-meta">
+          <span class="badge ${isLow ? 'badge-unpaid' : 'badge-paid'}">${parseFloat(row.qty || 0).toFixed(3)} ${escHtml(row.product_unit || '')}</span>
+          <span class="store-product-cost">KD ${parseFloat(row.avg_cost || 0).toFixed(3)}</span>
+          <span>${expiryChipHtml(row.next_expiry, row.missing_expiry_count)}</span>
+        </div>
+      </div>`;
+    }).join('')}
+    ${fillerCount > 0 ? Array.from({ length: fillerCount }).map(() => `<div class="store-product-item store-product-item-placeholder"></div>`).join('') : ''}
+    </div>
+    ` : `<div class="store-spotlight-empty">No stock in this location.</div>`}
+  </article>`;
+}
+
 async function storeOverview() {
   const ca = document.getElementById('contentArea');
   ca.innerHTML = `<div class="store-loading">${skeletonStats(4)}</div>`;
@@ -11251,39 +12031,135 @@ async function storeOverview() {
       apiFetch('/api/store/sub-stores'),
       apiFetch('/api/store/purchase-orders'),
     ]);
-    const totalProducts  = products.length;
-    const lowStock       = products.filter(p => p.total_stock <= p.reorder_level).length;
-    const pendingOrders  = orders.filter(o => o.status === 'Pending').length;
-    const totalStoresCnt = subStores.length;
+    const safeStock = Array.isArray(stock) ? stock : [];
+    const safeStores = Array.isArray(subStores) ? subStores : [];
+    const safeOrders = Array.isArray(orders) ? orders : [];
+
+    _storeOverviewCache = {
+      storesById: new Map(safeStores.map((s) => [parseInt(s.id, 10), s])),
+      rowsByStore: new Map()
+    };
+
+    const totalProducts = Array.isArray(products) ? products.length : 0;
+    const pendingOrders = safeOrders.filter(o => String(o.status || '') === 'Pending').length;
+    const totalStoresCnt = safeStores.length;
+    const lowRows = safeStock.filter((s) => (parseFloat(s.qty || 0) || 0) <= (parseFloat(s.reorder_level || 0) || 0));
+    const lowStock = lowRows.length;
+    const totalQty = safeStock.reduce((sum, row) => sum + (parseFloat(row.qty || 0) || 0), 0);
+    const totalValue = safeStock.reduce((sum, row) => sum + ((parseFloat(row.qty || 0) || 0) * (parseFloat(row.avg_cost || 0) || 0)), 0);
+    const activeStores = safeStores.filter((s) => s.active !== false).length;
+
+    const urgentLow = lowRows
+      .map((row) => {
+        const qty = parseFloat(row.qty || 0) || 0;
+        const reorder = parseFloat(row.reorder_level || 0) || 0;
+        return { ...row, shortage: Math.max(0, reorder - qty) };
+      })
+      .sort((a, b) => b.shortage - a.shortage)
+      .slice(0, 6);
+
+    const recentOrders = safeOrders
+      .slice()
+      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
+      .slice(0, 5);
 
     ca.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:var(--c-primary-bg);color:var(--c-primary)">${IC.product}</div><div class="stat-info"><div class="stat-label">Total Products</div><div class="stat-value">${totalProducts}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fff3cd;color:#b45309">${IC.product}</div><div class="stat-info"><div class="stat-label">Low Stock</div><div class="stat-value" style="color:#b45309">${lowStock}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:var(--c-success-bg);color:var(--c-success)">${IC.store}</div><div class="stat-info"><div class="stat-label">Sub-Stores</div><div class="stat-value">${totalStoresCnt}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:var(--c-danger-bg);color:var(--c-danger)">${IC.billing}</div><div class="stat-info"><div class="stat-label">Pending Orders</div><div class="stat-value">${pendingOrders}</div></div></div>
-    </div>
-    <div class="store-overview-grid">
-      ${subStores.map(st => {
-        const storeStock = stock.filter(s => s.store_id === st.id);
-        const rows = storeStock.map(s => {
-          const isLow = s.qty <= (s.reorder_level || 0);
-          return `<tr>
-            <td><strong>${escHtml(s.product_name||'—')}</strong></td>
-            <td><span class="badge ${isLow?'badge-unpaid':'badge-paid'}">${s.qty} ${escHtml(s.product_unit||'')}</span></td>
-            <td>KD ${parseFloat(s.avg_cost || 0).toFixed(3)}</td>
-            <td>${expiryChipHtml(s.next_expiry, s.missing_expiry_count)}</td>
-          </tr>`;
-        }).join('');
-        return `<div class="card store-store-card">
-          <div class="card-header-row">
-            <div class="card-title">${IC.store} ${escHtml(st.name)} ${st.is_main?'<span class="badge badge-admin" style="font-size:10px;margin-left:4px">Main</span>':''}</div>
-            <span class="text-muted text-sm">${storeStock.length} product${storeStock.length!==1?'s':''}</span>
+      <div class="store-overview-shell">
+        <section class="store-overview-hero">
+          <div>
+            <div class="store-overview-eyebrow">Inventory Command Center</div>
+            <h2 class="store-overview-title">Store Overview</h2>
+            <p class="store-overview-subtitle">Track stock health, pending purchase pressure, and store-level value at a glance.</p>
+            <div class="store-overview-meta">
+              <span>${activeStores} active store${activeStores !== 1 ? 's' : ''}</span>
+              <span>${totalQty.toFixed(3)} units on hand</span>
+              <span>KD ${totalValue.toFixed(3)} estimated value</span>
+            </div>
           </div>
-          ${storeStock.length ? `<div class="table-wrap"><table><thead><tr><th>Product</th><th>Qty</th><th>WAC</th><th>Expiry</th></tr></thead><tbody>${rows}</tbody></table></div>` : emptyState(IC.product,'No stock','No items in this store')}
-        </div>`;
-      }).join('')}
-    </div>`;
+          <div class="store-overview-actions">
+            <button class="btn btn-primary" onclick="navigate('store-products')">${IC.product} Manage Products</button>
+            <button class="btn" onclick="navigate('store-purchase')">${IC.billing} Purchase Orders</button>
+            <button class="btn" onclick="navigate('store-adjustments')">${IC.transfer} Stock Adjustments</button>
+          </div>
+        </section>
+
+        <section class="store-overview-kpis">
+          <article class="store-kpi-card accent-products">
+            <div class="store-kpi-label">Total Products</div>
+            <div class="store-kpi-value">${totalProducts}</div>
+            <div class="store-kpi-note">Across all store locations</div>
+          </article>
+          <article class="store-kpi-card accent-alert">
+            <div class="store-kpi-label">Low Stock Alerts</div>
+            <div class="store-kpi-value">${lowStock}</div>
+            <div class="store-kpi-note">Needs replenishment soon</div>
+          </article>
+          <article class="store-kpi-card accent-stores">
+            <div class="store-kpi-label">Store Locations</div>
+            <div class="store-kpi-value">${totalStoresCnt}</div>
+            <div class="store-kpi-note">${activeStores} currently active</div>
+          </article>
+          <article class="store-kpi-card accent-orders">
+            <div class="store-kpi-label">Pending Orders</div>
+            <div class="store-kpi-value">${pendingOrders}</div>
+            <div class="store-kpi-note">Waiting for receipt update</div>
+          </article>
+        </section>
+
+        <section class="store-overview-panels">
+          <article class="card store-spotlight-card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.pending} Low Stock Spotlight</div>
+              <span class="text-muted text-sm">Top ${urgentLow.length || 0}</span>
+            </div>
+            ${urgentLow.length ? `<div class="store-spotlight-list">${urgentLow.map((row) => `
+              <div class="store-spotlight-item">
+                <div>
+                  <div class="store-spotlight-name">${escHtml(row.product_name || 'Product')}</div>
+                  <div class="text-muted text-sm">${escHtml(row.store_name || 'Unknown Store')} · ${escHtml(row.product_sku || '')}</div>
+                </div>
+                <div class="store-spotlight-metrics">
+                  <span class="badge badge-unpaid">${parseFloat(row.qty || 0).toFixed(3)} ${escHtml(row.product_unit || '')}</span>
+                  <span class="store-spotlight-gap">Gap ${parseFloat(row.shortage || 0).toFixed(3)}</span>
+                </div>
+              </div>`).join('')}</div>` : `<div class="store-spotlight-empty">All good. No low-stock alerts right now.</div>`}
+          </article>
+
+          <article class="card store-orders-card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.billing} Recent Purchase Orders</div>
+              <button class="btn btn-sm" onclick="navigate('store-purchase')">Open</button>
+            </div>
+            ${recentOrders.length ? `<div class="store-order-list">${recentOrders.map((po) => `<div class="store-order-item">
+              <div>
+                <div><strong>PO#${parseInt(po.id || 0, 10)}</strong></div>
+                <div class="text-muted text-sm">${escHtml(formatDateTime(po.created_at || ''))}</div>
+              </div>
+              <div class="store-order-right">
+                <div>${statusBadge(po.status || 'Pending')}</div>
+                <div class="text-muted text-sm">${(po.items || []).length} item${(po.items || []).length !== 1 ? 's' : ''}</div>
+              </div>
+            </div>`).join('')}</div>` : `<div class="store-spotlight-empty">No purchase orders found.</div>`}
+          </article>
+        </section>
+
+        <section class="store-overview-grid">
+          ${safeStores.map((st) => {
+            const sid = parseInt(st.id, 10);
+            const visibleRows = safeStock
+              .filter((s) => parseInt(s.store_id, 10) === sid)
+              .slice()
+              .sort((a, b) => {
+                const aLow = (parseFloat(a.qty || 0) || 0) <= (parseFloat(a.reorder_level || 0) || 0) ? 1 : 0;
+                const bLow = (parseFloat(b.qty || 0) || 0) <= (parseFloat(b.reorder_level || 0) || 0) ? 1 : 0;
+                if (aLow !== bLow) return bLow - aLow;
+                return String(a.product_name || '').localeCompare(String(b.product_name || ''));
+              });
+            _storeOverviewCache.rowsByStore.set(sid, visibleRows);
+            return renderStoreOverviewCard(sid);
+          }).join('')}
+        </section>
+      </div>`;
   } catch(e) { toast(e.message,'error'); }
 }
 
@@ -11603,7 +12479,7 @@ function filterStorePOs() {
   const to = document.getElementById('poDateTo')?.value || '';
   renderPOs(_storePOs.filter(o => {
     const status = o.status === 'Received' ? 'received' : 'pending';
-    const textMatch = !q || [o.supplier_name, o.invoice_number, o.order_date, o.notes, status]
+    const textMatch = !q || [o.supplier_name, o.invoice_number, o.order_date, o.notes, status, o.payment_status]
       .map(v => String(v || '').toLowerCase()).some(v => v.includes(q));
     const d = String(o.order_date || o.created_at || '').slice(0,10);
     const fromOk = !from || (d && d >= from);
@@ -11615,20 +12491,27 @@ function renderPOs(list) {
   const wrap = document.getElementById('poWrap'); if (!wrap) return;
   if (!list.length) { wrap.innerHTML = emptyState(IC.billing,'No purchase orders','Create your first purchase order'); return; }
   wrap.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>#</th><th>Supplier</th><th>Invoice #</th><th>Items</th><th>Total Cost</th><th>Status</th><th>Order Date</th><th>Actions</th></tr></thead>
+    <thead><tr><th>#</th><th>Supplier</th><th>Invoice #</th><th>Items</th><th>Total Cost</th><th>Payment</th><th>Status</th><th>Order Date</th><th>Actions</th></tr></thead>
     <tbody>${list.map((o,i)=>{
       const missingExpiry = (o.items||[]).some(x => !String(x.expiry_date || x.expiry || x.exp_date || '').slice(0,10));
+      const payStatus = String(o.payment_status || 'Unpaid');
+      const payBadge = payStatus === 'Paid'
+        ? '<span class="badge badge-paid">Paid</span>'
+        : (payStatus === 'Partially Paid' ? '<span class="badge badge-arrived">Partially Paid</span>' : '<span class="badge badge-unpaid">Unpaid</span>');
+      const dueAmount = parseFloat(o.due_amount || o.total_cost || 0) || 0;
       return `<tr>
       <td>${i+1}</td>
       <td><strong>${escHtml(o.supplier_name||'—')}</strong></td>
       <td class="text-muted text-sm">${escHtml(o.invoice_number||'—')}</td>
       <td>${(o.items||[]).length} item(s)${missingExpiry ? ` <span class="expiry-chip missing">Expiry Missing</span>` : ''}</td>
       <td><strong>KD ${(o.total_cost||0).toFixed(3)}</strong></td>
+      <td>${payBadge}<div class="text-muted text-sm">Due KD ${dueAmount.toFixed(3)}</div></td>
       <td>${o.status==='Received'?'<span class="badge badge-paid">Received</span>':'<span class="badge badge-scheduled">Pending</span>'}</td>
       <td class="text-muted text-sm">${escHtml(o.order_date||'—')}</td>
       <td class="td-actions">
         <div class="apt-actions po-actions">
           <button class="btn btn-sm" onclick="viewPODetails(${o.id})">${IC.eye} View</button>
+          ${can('expenses.create') && dueAmount > 0.0005 ? `<button class="btn btn-sm" onclick="openSupplierInvoicePaymentModal(${o.id})">${IC.billing} Pay</button>` : ''}
           ${can('store.purchase')?`<button class="btn btn-sm" onclick="openPOExpiryEditor(${o.id})">Expiry</button>`:''}
           ${o.status==='Pending'&&can('store.manage')?`<button class="btn btn-sm btn-success" onclick="receivePO(${o.id})">${IC.check} Receive</button>`:''}
           ${o.status==='Pending'&&can('store.manage')?`<button class="btn btn-sm btn-danger" onclick="deletePO(${o.id})">${IC.trash}</button>`:''}
@@ -12192,6 +13075,227 @@ function transOnProductChange(sel) {
   if (p && p.uom_id) uomSel.value = String(p.uom_id);
 }
 
+// -- Stock Adjustments ----------------------------------
+let _storeAdjustments = [];
+let _saStores = [];
+let _saProducts = [];
+
+async function storeAdjustments() {
+  const ca = document.getElementById('contentArea');
+  ca.innerHTML = `
+    <div class="action-bar store-action-bar">
+      <div class="search-box"><input id="saSearch" type="text" placeholder="Search adjustments..." oninput="filterStoreAdjustments()"/></div>
+      <button class="btn" onclick="exportStoreAdjustmentsCSV()">${IC.download || 'CSV'} Export CSV</button>
+      <div class="store-action-spacer"></div>
+      ${can('store.adjust') ? `<button class="btn btn-primary" onclick="openNewStockAdjustmentModal()">${IC.plus} New Adjustment</button>` : ''}
+    </div>
+    <div id="saWrap">${skeletonTable(5)}</div>`;
+  try {
+    _storeAdjustments = await apiFetch('/api/store/adjustments');
+    renderStoreAdjustments(_storeAdjustments);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function filterStoreAdjustments() {
+  renderStoreAdjustments(getFilteredStoreAdjustments());
+}
+
+function getFilteredStoreAdjustments() {
+  const q = (document.getElementById('saSearch')?.value || '').toLowerCase().trim();
+  return (_storeAdjustments || []).filter((row) => {
+    if (!q) return true;
+    return [
+      row.adjustment_no,
+      row.adjustment_type,
+      row.store_name,
+      row.product_name,
+      row.product_sku,
+      row.reason,
+      row.remarks,
+      row.created_by_name,
+      row.created_at
+    ].map((v) => String(v || '').toLowerCase()).some((v) => v.includes(q));
+  });
+}
+
+function renderStoreAdjustments(list) {
+  const wrap = document.getElementById('saWrap');
+  if (!wrap) return;
+  if (!list.length) {
+    wrap.innerHTML = emptyState(IC.transfer, 'No adjustments', 'Create stock adjustments for IN or OUT movements');
+    return;
+  }
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Adj No</th><th>Type</th><th>Store</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Stock (Before → After)</th><th>Reason</th><th>Status</th><th>Date</th><th>By</th>${isAdmin ? '<th>Action</th>' : ''}</tr></thead>
+    <tbody>${list.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td><span class="code-id code-id-primary">${escHtml(r.adjustment_no || ('ADJ#' + r.id))}</span></td>
+      <td>${String(r.adjustment_type || '').toUpperCase() === 'IN' ? '<span class="badge badge-paid">IN</span>' : '<span class="badge badge-unpaid">OUT</span>'}</td>
+      <td><strong>${escHtml(r.store_name || '—')}</strong></td>
+      <td>${escHtml(r.product_name || '—')}<br><span class="text-muted text-sm">${escHtml(r.product_sku || '')}</span></td>
+      <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
+      <td>KD ${parseFloat(r.unit_cost || 0).toFixed(3)}</td>
+      <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
+      <td>${parseFloat(r.stock_before || 0).toFixed(3)} → ${parseFloat(r.stock_after || 0).toFixed(3)}</td>
+      <td>${escHtml(r.reason || '—')}<br><span class="text-muted text-sm">${escHtml(r.remarks || '')}</span></td>
+      <td>${r.reversal_of_id ? `<span class="badge badge-secondary">Reversal</span>${r.reversal_of_adjustment_no ? `<div class="text-muted text-sm">of ${escHtml(r.reversal_of_adjustment_no)}</div>` : ''}` : (r.reversed_by_adjustment_id ? `<span class="badge badge-cancelled">Reversed</span>${r.reversed_by_adjustment_no ? `<div class="text-muted text-sm">by ${escHtml(r.reversed_by_adjustment_no)}</div>` : ''}` : '<span class="badge badge-completed">Active</span>')}</td>
+      <td class="text-muted text-sm">${escHtml(formatDateTime(r.date || r.created_at || ''))}</td>
+      <td class="text-muted text-sm">${escHtml(r.created_by_name || '—')}</td>
+      ${isAdmin ? `<td>${(!r.reversal_of_id && !r.reversed_by_adjustment_id) ? `<button class="btn btn-sm" onclick="reverseStoreAdjustment(${parseInt(r.id, 10)}, '${escHtml(r.adjustment_no || ('ADJ#' + r.id))}')">${IC.transfer || '↺'} Reverse</button>` : '<span class="text-muted text-sm">—</span>'}</td>` : ''}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function exportStoreAdjustmentsCSV() {
+  const rows = getFilteredStoreAdjustments();
+  if (!rows.length) { toast('No rows to export', 'error'); return; }
+  const header = ['Adjustment No', 'Type', 'Store', 'Product', 'SKU', 'Qty', 'Unit Cost', 'Total Cost', 'Stock Before', 'Stock After', 'Reason', 'Remarks', 'Status', 'Reversal Ref', 'Date', 'Created By'];
+  const csvRows = rows.map((r) => {
+    const status = r.reversal_of_id ? 'Reversal' : (r.reversed_by_adjustment_id ? 'Reversed' : 'Active');
+    const reversalRef = r.reversal_of_adjustment_no || r.reversed_by_adjustment_no || '';
+    return [
+      r.adjustment_no || ('ADJ#' + r.id),
+      r.adjustment_type || '',
+      r.store_name || '',
+      r.product_name || '',
+      r.product_sku || '',
+      parseFloat(r.qty || 0).toFixed(3),
+      parseFloat(r.unit_cost || 0).toFixed(3),
+      parseFloat(r.total_cost || 0).toFixed(3),
+      parseFloat(r.stock_before || 0).toFixed(3),
+      parseFloat(r.stock_after || 0).toFixed(3),
+      r.reason || '',
+      r.remarks || '',
+      status,
+      reversalRef,
+      r.date || r.created_at || '',
+      r.created_by_name || ''
+    ];
+  });
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [header, ...csvRows].map((row) => row.map(esc).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stock_adjustments_${new Date().toLocaleDateString('sv')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV exported', 'success');
+}
+
+async function reverseStoreAdjustment(id, adjustmentNo) {
+  const label = String(adjustmentNo || ('ADJ#' + id));
+  const result = await confirmWithReasonDialog(
+    `Reverse adjustment ${label}? This creates an opposite entry.`,
+    'Reverse Adjustment',
+    'Reversal Reason (optional)',
+    'Correction'
+  );
+  if (!result.confirmed) return;
+  try {
+    await apiFetch(`/api/store/adjustments/${id}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason: result.reason })
+    });
+    toast('Adjustment reversed successfully', 'success');
+    storeAdjustments();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function openNewStockAdjustmentModal() {
+  try {
+    const [stores, products] = await Promise.all([
+      apiFetch('/api/store/sub-stores'),
+      apiFetch('/api/store/products')
+    ]);
+    _saStores = (stores || []).filter((s) => s.active !== false);
+    _saProducts = (products || []).filter((p) => p.active !== false);
+    if (!_saStores.length) { toast('No active stores available', 'error'); return; }
+    if (!_saProducts.length) { toast('No active products available', 'error'); return; }
+
+    const storeOpts = _saStores.map((s) => `<option value="${s.id}">${escHtml(s.name)}</option>`).join('');
+    const productOpts = _saProducts.map((p) => `<option value="${p.id}">${escHtml(p.name)}${p.sku ? ` (${escHtml(p.sku)})` : ''}</option>`).join('');
+    const todayStr = new Date().toLocaleDateString('sv');
+
+    showModal('New Stock Adjustment', `
+      <form id="saForm">
+        <div class="form-row">
+          <div class="form-group"><label>Store *</label><select id="saStoreId" name="store_id" onchange="saRefreshStockHint()" required>${storeOpts}</select></div>
+          <div class="form-group"><label>Date *</label><input id="saDate" name="date" type="date" value="${todayStr}" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Product *</label><select id="saProductId" name="product_id" onchange="saRefreshStockHint()" required>${productOpts}</select></div>
+          <div class="form-group"><label>Type *</label><select id="saType" name="adjustment_type" onchange="saRefreshStockHint()" required><option value="IN">IN</option><option value="OUT">OUT</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Quantity *</label><input id="saQty" name="qty" type="number" min="0.001" step="0.001" value="1" required/></div>
+          <div class="form-group"><label>Unit Cost (optional)</label><input id="saUnitCost" name="unit_cost" type="number" min="0" step="0.001" value="0"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Reason *</label><input id="saReason" name="reason" value="Adjustment" required/></div>
+          <div class="form-group"><label>Remarks</label><input id="saRemarks" name="remarks" placeholder="Optional"/></div>
+        </div>
+        <div id="saStockHint" class="text-sm text-muted">Loading stock...</div>
+      </form>
+    `, [{
+      label: 'Save Adjustment',
+      class: 'btn-primary',
+      async onclick(modal) {
+        const form = modal.querySelector('#saForm');
+        const body = Object.fromEntries(new FormData(form));
+        body.store_id = parseInt(body.store_id, 10);
+        body.product_id = parseInt(body.product_id, 10);
+        body.qty = parseFloat(body.qty || 0);
+        body.unit_cost = parseFloat(body.unit_cost || 0);
+        if (!body.store_id || !body.product_id || !body.adjustment_type || !(body.qty > 0)) {
+          toast('Fill all required fields', 'error');
+          return false;
+        }
+        try {
+          await apiFetch('/api/store/adjustments', { method: 'POST', body: JSON.stringify(body) });
+          toast('Stock adjustment saved', 'success');
+          closeModal();
+          storeAdjustments();
+        } catch (e) {
+          toast(e.message, 'error');
+          return false;
+        }
+      }
+    }]);
+
+    saRefreshStockHint();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function saRefreshStockHint() {
+  const hint = document.getElementById('saStockHint');
+  const storeId = document.getElementById('saStoreId')?.value;
+  const productId = parseInt(document.getElementById('saProductId')?.value || 0, 10);
+  const type = (document.getElementById('saType')?.value || 'IN').toUpperCase();
+  if (!hint || !storeId || !productId) return;
+  try {
+    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}`);
+    const row = (stockRows || []).find((s) => parseInt(s.product_id, 10) === productId);
+    const avail = parseFloat(row?.qty || 0) || 0;
+    const avgCost = parseFloat(row?.avg_cost || 0) || 0;
+    hint.textContent = `${type === 'OUT' ? 'Available' : 'Current'} stock: ${avail.toFixed(3)}${type === 'OUT' ? ' (OUT cannot exceed available)' : ''} · Avg Cost: KD ${avgCost.toFixed(3)}`;
+    const costInput = document.getElementById('saUnitCost');
+    if (costInput && !(parseFloat(costInput.value || 0) > 0)) costInput.value = avgCost.toFixed(3);
+  } catch (e) {
+    hint.textContent = `Unable to load stock: ${e.message}`;
+  }
+}
+
 // -- Sub-Stores ------------------------------------------
 let _storeSubStoresList = [];
 let _storeBillingStoreId = '';
@@ -12312,14 +13416,26 @@ let _manualConsumptionProducts = [];
 let _manualConsumptionStores = [];
 let _manualConsumptionStockMap = new Map();
 
+function mcCanViewCost() {
+  return can('store.consume.cost');
+}
+
 function mcReasonOptions(selected = '') {
   const reasons = ['Treatment Usage', 'Wastage', 'Expired', 'Internal Use', 'Sample', 'Adjustment'];
   return reasons.map(r => `<option value="${r}" ${r === selected ? 'selected' : ''}>${r}</option>`).join('');
 }
 
+function mcAvailableProducts() {
+  return _manualConsumptionProducts.filter((product) => {
+    if (product.active === false) return false;
+    const productId = parseInt(product.id, 10);
+    const availableQty = _manualConsumptionStockMap.get(productId)?.qty || 0;
+    return availableQty > 0;
+  });
+}
+
 function mcProductOptions(selectedId = '') {
-  return _manualConsumptionProducts
-    .filter(p => p.active !== false)
+  return mcAvailableProducts()
     .map(p => `<option value="${p.id}" ${String(selectedId) === String(p.id) ? 'selected' : ''}>${escHtml(p.name)}${p.sku ? ` (${escHtml(p.sku)})` : ''}</option>`)
     .join('');
 }
@@ -12334,11 +13450,12 @@ function mcStoreOptions(selectedId = '') {
 async function storeManualConsumption() {
   const ca = document.getElementById('contentArea');
   const todayStr = new Date().toLocaleDateString('sv');
+  const canViewCost = mcCanViewCost();
   ca.innerHTML = `${skeletonTable(6)}`;
   try {
     const [stores, products] = await Promise.all([
       apiFetch('/api/store/sub-stores'),
-      apiFetch('/api/store/products')
+      apiFetch('/api/store/products?context=manual-consumption')
     ]);
     _manualConsumptionStores = Array.isArray(stores) ? stores : [];
     _manualConsumptionProducts = Array.isArray(products) ? products : [];
@@ -12352,16 +13469,16 @@ async function storeManualConsumption() {
           <div class="form-group"><label>Date</label><input id="mcDate" type="date" value="${todayStr}"/></div>
         </div>
         <div class="table-wrap"><table class="mc-grid-table">
-          <thead><tr><th style="width:24%">Item *</th><th style="width:9%">Qty *</th><th style="width:10%">Cost</th><th style="width:11%">Total Cost</th><th style="width:16%">Reason</th><th style="width:17%">Remarks</th><th style="width:11%">Stock</th><th style="width:2%"></th></tr></thead>
+          <thead><tr><th style="width:24%">Item *</th><th style="width:9%">Qty *</th>${canViewCost ? '<th style="width:10%">Cost</th><th style="width:11%">Total Cost</th>' : ''}<th style="width:16%">Reason</th><th style="width:17%">Remarks</th><th style="width:11%">Stock</th><th style="width:2%"></th></tr></thead>
           <tbody id="mcRows"></tbody>
         </table></div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm btn-primary" onclick="mcAddRow()">${IC.plus} Add Item</button>
-            <span class="text-muted text-sm">Cost auto-fills from store average cost and can be edited.</span>
+            <span class="text-muted text-sm">${canViewCost ? 'Cost auto-fills from store average cost and can be edited.' : 'Cost is applied automatically based on store average cost.'}</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <strong>Total Entry Cost: <span id="mcEntryTotal">KD 0.000</span></strong>
+            ${canViewCost ? '<strong>Total Entry Cost: <span id="mcEntryTotal">KD 0.000</span></strong>' : ''}
             <button class="btn btn-success" onclick="saveManualConsumptionEntry()">${IC.check} Save Consumption</button>
           </div>
         </div>
@@ -12384,33 +13501,45 @@ async function mcOnStoreChange(recalcRows = true) {
   const storeId = document.getElementById('mcStore')?.value;
   _manualConsumptionStockMap = new Map();
   if (!storeId) {
+    mcRefreshProductDropdowns();
     if (recalcRows) mcRecalcAllRows();
     return;
   }
   try {
-    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}`);
+    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}&context=manual-consumption`);
     for (const s of (stockRows || [])) {
       _manualConsumptionStockMap.set(parseInt(s.product_id, 10), {
         qty: parseFloat(s.qty || 0) || 0,
         cost: parseFloat(s.avg_cost || 0) || 0
       });
     }
+    mcRefreshProductDropdowns();
     if (recalcRows) mcRecalcAllRows();
   } catch (e) {
     toast(e.message, 'error');
   }
 }
 
+function mcRefreshProductDropdowns() {
+  document.querySelectorAll('#mcRows .mc-item').forEach((selectEl) => {
+    const selectedValue = selectEl.value;
+    const hasSelectedOption = mcAvailableProducts().some((product) => String(product.id) === String(selectedValue));
+    selectEl.innerHTML = `<option value="">— Select Item —</option>${mcProductOptions(hasSelectedOption ? selectedValue : '')}`;
+    if (!hasSelectedOption) selectEl.value = '';
+  });
+}
+
 function mcAddRow(seed = {}) {
   const rows = document.getElementById('mcRows');
   if (!rows) return;
+  const canViewCost = mcCanViewCost();
   const row = document.createElement('tr');
   row.className = 'mc-row';
   row.innerHTML = `
     <td><select class="mc-item" onchange="mcOnProductChange(this)"><option value="">— Select Item —</option>${mcProductOptions(seed.product_id || '')}</select></td>
     <td><input class="mc-qty" type="number" min="0.001" step="0.001" value="${seed.qty != null ? escHtml(String(seed.qty)) : '1'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
-    <td><input class="mc-cost" type="number" min="0" step="0.001" value="${seed.cost != null ? escHtml(String(seed.cost)) : '0.000'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
-    <td><strong class="mc-total">KD 0.000</strong></td>
+    ${canViewCost ? `<td><input class="mc-cost" type="number" min="0" step="0.001" value="${seed.cost != null ? escHtml(String(seed.cost)) : '0.000'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
+    <td><strong class="mc-total">KD 0.000</strong></td>` : ''}
     <td><select class="mc-reason" onchange="mcRecalcRow(this.closest('tr'))">${mcReasonOptions(seed.reason || 'Treatment Usage')}</select></td>
     <td><input class="mc-remarks" placeholder="Optional" value="${escHtml(seed.remarks || '')}"/></td>
     <td><span class="mc-stock-note text-muted text-sm">—</span></td>
@@ -12426,6 +13555,10 @@ function mcAddRow(seed = {}) {
 function mcOnProductChange(sel) {
   const row = sel.closest('tr');
   if (!row) return;
+  if (!mcCanViewCost()) {
+    mcRecalcRow(row);
+    return;
+  }
   const productId = parseInt(sel.value, 10);
   const product = _manualConsumptionProducts.find(p => parseInt(p.id, 10) === productId) || null;
   const stockInfo = _manualConsumptionStockMap.get(productId) || null;
@@ -12439,13 +13572,14 @@ function mcOnProductChange(sel) {
 
 function mcRecalcRow(row) {
   if (!row) return;
+  const canViewCost = mcCanViewCost();
   const productId = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
   const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
-  const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+  const cost = canViewCost ? (parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0) : 0;
   const total = qty * cost;
   const totalEl = row.querySelector('.mc-total');
   const stockEl = row.querySelector('.mc-stock-note');
-  if (totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
+  if (canViewCost && totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
 
   if (!productId || !stockEl) {
     if (stockEl) {
@@ -12474,14 +13608,14 @@ function mcRecalcEntryTotal() {
   let lowCount = 0;
   rows.forEach(row => {
     const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
-    const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+    const cost = mcCanViewCost() ? (parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0) : 0;
     total += (qty * cost);
     const productId = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
     const available = (_manualConsumptionStockMap.get(productId)?.qty) || 0;
     if (productId && qty > available) lowCount += 1;
   });
   const totalEl = document.getElementById('mcEntryTotal');
-  if (totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
+  if (totalEl && mcCanViewCost()) totalEl.textContent = `KD ${total.toFixed(3)}`;
 
   const warn = document.getElementById('mcWarningBox');
   if (warn) warn.textContent = lowCount ? `${lowCount} row(s) have insufficient stock.` : '';
@@ -12490,7 +13624,7 @@ function mcRecalcEntryTotal() {
 function mcRecalcAllRows() {
   document.querySelectorAll('#mcRows .mc-row').forEach(row => {
     const productSel = row.querySelector('.mc-item');
-    if (productSel && productSel.value) {
+    if (mcCanViewCost() && productSel && productSel.value) {
       const pid = parseInt(productSel.value, 10);
       const product = _manualConsumptionProducts.find(p => parseInt(p.id, 10) === pid) || null;
       const stockInfo = _manualConsumptionStockMap.get(pid) || null;
@@ -12507,6 +13641,7 @@ function mcRecalcAllRows() {
 }
 
 function mcCollectPayload() {
+  const canViewCost = mcCanViewCost();
   const storeId = document.getElementById('mcStore')?.value;
   const date = document.getElementById('mcDate')?.value || new Date().toLocaleDateString('sv');
   if (!storeId) throw new Error('Store is required');
@@ -12516,12 +13651,12 @@ function mcCollectPayload() {
   const items = rows.map((row, idx) => {
     const product_id = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
     const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
-    const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+    const cost = canViewCost ? (parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0) : undefined;
     const reason = row.querySelector('.mc-reason')?.value || 'Adjustment';
     const remarks = row.querySelector('.mc-remarks')?.value || '';
     if (!product_id) throw new Error(`Item is required on row ${idx + 1}`);
     if (!(qty > 0)) throw new Error(`Quantity must be greater than 0 on row ${idx + 1}`);
-    return { product_id, qty, cost, reason, remarks };
+    return { product_id, qty, ...(canViewCost ? { cost } : {}), reason, remarks };
   });
 
   return { store_id: parseInt(storeId, 10), date, items };
@@ -12541,6 +13676,7 @@ async function saveManualConsumptionEntry() {
 async function mcLoadRecent() {
   const wrap = document.getElementById('mcRecentWrap');
   if (!wrap) return;
+  const canViewCost = mcCanViewCost();
   try {
     const todayStr = new Date().toLocaleDateString('sv');
     const rows = await apiFetch(`/api/store/manual-consumptions?date_from=${todayStr}&date_to=${todayStr}`);
@@ -12549,13 +13685,13 @@ async function mcLoadRecent() {
       return;
     }
     wrap.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Date</th><th>Entry</th><th>Store</th><th>Lines</th><th>Total Cost</th><th>Remarks</th></tr></thead>
+      <thead><tr><th>Date</th><th>Entry</th><th>Store</th><th>Lines</th>${canViewCost ? '<th>Total Cost</th>' : ''}<th>Remarks</th></tr></thead>
       <tbody>${rows.slice(0, 20).map(r => `<tr>
         <td>${escHtml(String(r.date || '').slice(0,10) || '—')}</td>
         <td>${escHtml(r.entry_no || ('MC#' + r.id))}</td>
         <td>${escHtml(r.store_name || '—')}</td>
         <td>${(r.items || []).length}</td>
-        <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
+        ${canViewCost ? `<td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>` : ''}
         <td class="text-muted text-sm">${escHtml(r.remarks || '—')}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
