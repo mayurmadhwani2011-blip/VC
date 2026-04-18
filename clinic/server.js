@@ -47,6 +47,7 @@ const ALL_PERMISSIONS = [
   'setup.view','setup.edit',
   'role_permissions.view','role_permissions.edit',
   'store.view','store.manage','store.purchase','store.transfer'
+  ,'store.consume'
 ];
 const DEFAULT_PERMISSIONS = {
   admin: ALL_PERMISSIONS,
@@ -70,7 +71,7 @@ const DEFAULT_PERMISSIONS = {
     'patient_packages.view','patient_packages.create','patient_packages.edit',
     'billing.view','billing.create','billing.edit',
     'services.view','services.import','services.export','packages.view',
-    'store.view'
+    'store.view','store.consume'
   ]
 };
 
@@ -92,7 +93,7 @@ function blankDB() {
     payment_methods:[], patient_packages:[], service_categories:[], doctor_departments:[], role_permissions:{}, custom_roles:[], _seq:{},
     discounts:[], refunds:[],
     store_products:[], store_suppliers:[], store_sub_stores:[], store_stock:[],
-    store_purchase_orders:[], store_transfers:[], store_service_products:[], store_service_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
+    store_purchase_orders:[], store_transfers:[], store_service_products:[], store_service_consumptions:[], store_manual_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
     activity_logs:[], doctor_schedules:[], clinic_profile:null, follow_ups:[]
   };
 }
@@ -680,6 +681,21 @@ function collectServiceUsageFromBillItems(lineItems = []) {
   return [...usageByService.entries()].map(([service_id, service_qty]) => ({ service_id, service_qty }));
 }
 
+const MANUAL_CONSUMPTION_REASONS = [
+  'Treatment Usage',
+  'Wastage',
+  'Expired',
+  'Internal Use',
+  'Sample',
+  'Adjustment'
+];
+
+function normalizeManualConsumptionReason(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  const picked = MANUAL_CONSUMPTION_REASONS.find(r => r.toLowerCase() === raw);
+  return picked || 'Adjustment';
+}
+
 function recordServiceProductConsumption(db, req, payload = {}) {
   ensureStore(db);
   if (!db.store_service_consumptions) db.store_service_consumptions = [];
@@ -1011,6 +1027,7 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
   ensureRolePerms('receptionist', DEFAULT_PERMISSIONS.receptionist);
   if (!db.activity_logs) db.activity_logs = [];
   if (!db.store_service_consumptions) db.store_service_consumptions = [];
+  if (!db.store_manual_consumptions) db.store_manual_consumptions = [];
   if (!db.custom_roles) db.custom_roles = [];
   writeDB(db);
   if (didSeed) console.log('Sample data initialized.');
@@ -4457,6 +4474,141 @@ app.get('/api/reports/service-consumption-products', requireRole('admin','doctor
   });
 });
 
+app.get('/api/reports/manual-consumption-cost', requireRole('admin','doctor','receptionist'), (req, res) => {
+  const db = readDB();
+  ensureStore(db);
+
+  const dateFrom = String(req.query.date_from || req.query.date || today()).slice(0, 10);
+  const dateTo = String(req.query.date_to || req.query.date || dateFrom).slice(0, 10);
+  const safePage = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+  const storeFilter = req.query.store_id ? parseInt(req.query.store_id, 10) : null;
+  const reasonFilter = String(req.query.reason || '').trim().toLowerCase();
+  const q = String(req.query.search || '').trim().toLowerCase();
+
+  const storesById = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id, 10), s]));
+  const productsById = new Map((db.store_products || []).map(p => [parseInt(p.id, 10), p]));
+  const usersById = new Map((db.users || []).map(u => [parseInt(u.id, 10), u]));
+
+  const rows = [];
+  for (const entry of (db.store_manual_consumptions || [])) {
+    const day = String(entry.date || entry.created_at || '').slice(0, 10);
+    if (!day) continue;
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo && day > dateTo) continue;
+
+    const sid = parseInt(entry.store_id, 10);
+    if (storeFilter && sid !== storeFilter) continue;
+    const store = storesById.get(sid) || {};
+    const createdBy = usersById.get(parseInt(entry.created_by, 10)) || {};
+
+    for (const item of (entry.items || [])) {
+      const pid = parseInt(item.product_id, 10);
+      const p = productsById.get(pid) || {};
+      const reason = normalizeManualConsumptionReason(item.reason);
+      if (reasonFilter && reason.toLowerCase() !== reasonFilter) continue;
+
+      const qty = parseFloat(item.qty || 0) || 0;
+      const cost = parseFloat(item.cost || 0) || 0;
+      const totalCost = parseFloat(item.total_cost != null ? item.total_cost : (qty * cost)) || 0;
+
+      const blob = [
+        day,
+        entry.entry_no,
+        store.name,
+        p.name,
+        p.sku,
+        reason,
+        item.remarks,
+        entry.remarks
+      ].map(v => String(v || '').toLowerCase()).join(' ');
+      if (q && !blob.includes(q)) continue;
+
+      rows.push({
+        date: day,
+        at: String(entry.created_at || ''),
+        entry_id: parseInt(entry.id, 10),
+        entry_no: entry.entry_no || `MC-${entry.id}`,
+        store_id: sid,
+        store_name: store.name || 'Unknown',
+        product_id: pid,
+        item_name: p.name || `Product #${pid}`,
+        item_sku: p.sku || '',
+        qty: parseFloat(qty.toFixed(3)),
+        unit: p.unit || '',
+        cost: parseFloat(cost.toFixed(3)),
+        total_cost: parseFloat(totalCost.toFixed(3)),
+        reason,
+        remarks: String(item.remarks || '').trim(),
+        entry_remarks: String(entry.remarks || '').trim(),
+        created_by: parseInt(entry.created_by, 10) || null,
+        created_by_name: createdBy.name || createdBy.username || ''
+      });
+    }
+  }
+
+  rows.sort((a, b) => {
+    if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+    const atCmp = String(a.at || '').localeCompare(String(b.at || ''));
+    if (atCmp !== 0) return -atCmp;
+    return parseInt(b.entry_id || 0, 10) - parseInt(a.entry_id || 0, 10);
+  });
+
+  const storeTotalsMap = new Map();
+  for (const r of rows) {
+    const key = parseInt(r.store_id, 10);
+    if (!storeTotalsMap.has(key)) {
+      storeTotalsMap.set(key, {
+        store_id: key,
+        store_name: r.store_name || 'Unknown',
+        total_qty: 0,
+        total_cost: 0,
+        rows_count: 0
+      });
+    }
+    const x = storeTotalsMap.get(key);
+    x.total_qty += parseFloat(r.qty || 0) || 0;
+    x.total_cost += parseFloat(r.total_cost || 0) || 0;
+    x.rows_count += 1;
+  }
+
+  const storeTotals = [...storeTotalsMap.values()]
+    .map(x => ({
+      ...x,
+      total_qty: parseFloat(x.total_qty.toFixed(3)),
+      total_cost: parseFloat(x.total_cost.toFixed(3))
+    }))
+    .sort((a, b) => (b.total_cost || 0) - (a.total_cost || 0));
+
+  const total = rows.length;
+  const pages = Math.max(1, Math.ceil(total / limit));
+  const page = Math.min(safePage, pages);
+  const start = (page - 1) * limit;
+  const pagedRows = rows.slice(start, start + limit);
+
+  const entryIds = new Set(rows.map(r => parseInt(r.entry_id, 10)).filter(Boolean));
+  res.json({
+    rows: pagedRows,
+    page,
+    pages,
+    total,
+    limit,
+    summary: {
+      date_from: dateFrom,
+      date_to: dateTo,
+      rows_count: total,
+      entries_count: entryIds.size,
+      total_qty: parseFloat(rows.reduce((s, r) => s + (parseFloat(r.qty || 0) || 0), 0).toFixed(3)),
+      total_cost: parseFloat(rows.reduce((s, r) => s + (parseFloat(r.total_cost || 0) || 0), 0).toFixed(3))
+    },
+    store_totals: storeTotals,
+    filters: {
+      stores: (db.store_sub_stores || []).map(s => ({ id: parseInt(s.id, 10), name: s.name || '' })),
+      reasons: MANUAL_CONSUMPTION_REASONS
+    }
+  });
+});
+
 app.get('/api/reports/stock-movement', requireRole('admin','doctor','receptionist'), (req, res) => {
   const db = readDB();
   ensureStore(db);
@@ -4636,6 +4788,50 @@ app.get('/api/reports/stock-movement', requireRole('admin','doctor','receptionis
       reference: c.bill_id ? `BILL#${c.bill_id}` : '—',
       note: svc.name ? `Service: ${svc.name}` : (c.visit_id ? `Visit: ${c.visit_id}` : '')
     });
+  }
+
+  for (const mc of (db.store_manual_consumptions || [])) {
+    const at = String(mc.created_at || `${mc.date || ''} 00:00:00`);
+    const day = String(mc.date || at).slice(0,10);
+    if (!day) continue;
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo && day > dateTo) continue;
+    if (typeFilter && !['consumption', 'manual-consumption'].includes(typeFilter)) continue;
+
+    const sid = parseInt(mc.store_id || 0) || null;
+    if (storeFilter && sid !== storeFilter) continue;
+    const store = storesById.get(sid) || {};
+
+    for (const item of (mc.items || [])) {
+      const pid = parseInt(item.product_id);
+      const p = productsById.get(pid) || {};
+      const qty = parseFloat(item.qty || 0) || 0;
+      const unitCost = parseFloat(item.cost || 0) || 0;
+      const totalCost = parseFloat(item.total_cost != null ? item.total_cost : (qty * unitCost)) || 0;
+      const reason = normalizeManualConsumptionReason(item.reason);
+
+      const blob = [day, 'Manual Consumption', 'OUT', store.name, p.name, p.sku, `MC#${mc.id}`, reason, item.remarks, mc.remarks]
+        .map(v => String(v || '').toLowerCase()).join(' ');
+      if (q && !blob.includes(q)) continue;
+
+      rows.push({
+        at,
+        date: day,
+        movement_type: 'Manual Consumption',
+        direction: 'OUT',
+        store_id: sid,
+        store_name: store.name || 'Unknown',
+        product_id: pid,
+        product_name: p.name || `Product #${pid}`,
+        product_sku: p.sku || '',
+        qty: parseFloat(qty.toFixed(3)),
+        unit: p.unit || '',
+        unit_cost: parseFloat(unitCost.toFixed(3)),
+        total_cost: parseFloat(totalCost.toFixed(3)),
+        reference: mc.entry_no || `MC#${mc.id}`,
+        note: [reason, String(item.remarks || '').trim(), String(mc.remarks || '').trim()].filter(Boolean).join(' | ')
+      });
+    }
   }
 
   rows.sort((a, b) => {
@@ -5259,6 +5455,7 @@ function ensureStore(db) {
   db.store_transfers       = db.store_transfers       || [];
   db.store_service_products= db.store_service_products|| [];
   db.store_service_consumptions = db.store_service_consumptions || [];
+  db.store_manual_consumptions = db.store_manual_consumptions || [];
   db.uoms                  = db.uoms                  || [];
   db.store_product_categories = db.store_product_categories || [];
   db.store_product_uoms    = db.store_product_uoms    || [];
@@ -5635,6 +5832,167 @@ app.post('/api/store/transfers', requireRole('admin','receptionist'), (req,res) 
   }
   const t = { id:nextId(db,'store_transfers'), from_store_id:parseInt(from_store_id), to_store_id:parseInt(to_store_id), items:mappedItems, notes:notes||'', created_by:(req.session && req.session.user && req.session.user.id) || req.session.userId || null, created_at:now() };
   db.store_transfers.push(t); writeDB(db); res.json(t);
+});
+
+// ── Manual Consumption ─────────────────────────────────
+app.get('/api/store/manual-consumptions', requireLogin, (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo = String(req.query.date_to || '').slice(0, 10);
+  const storeFilter = req.query.store_id ? parseInt(req.query.store_id, 10) : null;
+  const q = String(req.query.search || '').trim().toLowerCase();
+
+  const storesById = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id, 10), s]));
+  const productsById = new Map((db.store_products || []).map(p => [parseInt(p.id, 10), p]));
+
+  let rows = (db.store_manual_consumptions || []).map((entry) => {
+    const sid = parseInt(entry.store_id, 10);
+    const store = storesById.get(sid) || {};
+    const items = (entry.items || []).map((it) => {
+      const pid = parseInt(it.product_id, 10);
+      const p = productsById.get(pid) || {};
+      return {
+        ...it,
+        product_name: p.name || `Product #${pid}`,
+        product_sku: p.sku || '',
+        unit: p.unit || ''
+      };
+    });
+    return {
+      ...entry,
+      store_id: sid,
+      store_name: store.name || 'Unknown',
+      items
+    };
+  });
+
+  if (dateFrom) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0, 10) >= dateFrom);
+  if (dateTo) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0, 10) <= dateTo);
+  if (storeFilter) rows = rows.filter(r => parseInt(r.store_id, 10) === storeFilter);
+  if (q) {
+    rows = rows.filter(r => {
+      const blob = [
+        r.entry_no,
+        r.store_name,
+        r.remarks,
+        ...(r.items || []).flatMap(it => [it.product_name, it.product_sku, it.reason, it.remarks])
+      ].map(v => String(v || '').toLowerCase()).join(' ');
+      return blob.includes(q);
+    });
+  }
+
+  rows.sort((a, b) => {
+    const ad = String(a.date || a.created_at || '');
+    const bd = String(b.date || b.created_at || '');
+    if (ad !== bd) return ad < bd ? 1 : -1;
+    return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
+  });
+
+  res.json(rows);
+});
+
+app.post('/api/store/manual-consumptions', requireRole('admin','receptionist'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const { store_id, date, remarks, items } = req.body || {};
+  const sid = parseInt(store_id, 10);
+  const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
+  if (!sid || !store) return res.status(400).json({ error:'Store is required' });
+  if (store.active === false) return res.status(400).json({ error:'Selected store is inactive' });
+  if (!Array.isArray(items) || !items.length) return res.status(400).json({ error:'At least one item is required' });
+
+  const normalizedDate = String(date || today()).slice(0, 10);
+  const normalizedItems = [];
+  const insufficient = [];
+
+  for (let i = 0; i < items.length; i += 1) {
+    const row = items[i] || {};
+    const productId = parseInt(row.product_id, 10);
+    const qty = parseFloat(row.qty || 0);
+    const providedCost = row.cost !== undefined && row.cost !== null && String(row.cost).trim() !== '';
+    const cost = providedCost ? parseFloat(row.cost || 0) : null;
+    const reason = normalizeManualConsumptionReason(row.reason);
+    const lineRemarks = String(row.remarks || '').trim();
+
+    if (!productId) return res.status(400).json({ error:`Item is required on row ${i + 1}` });
+    if (!(qty > 0)) return res.status(400).json({ error:`Quantity must be greater than 0 on row ${i + 1}` });
+    if (providedCost && !(cost >= 0)) return res.status(400).json({ error:`Cost cannot be negative on row ${i + 1}` });
+
+    const product = (db.store_products || []).find(p => parseInt(p.id, 10) === productId);
+    if (!product) return res.status(400).json({ error:`Invalid item on row ${i + 1}` });
+
+    const stock = getStock(db, productId, sid);
+    const availableQty = parseFloat(stock.qty || 0) || 0;
+    if (availableQty < qty) {
+      insufficient.push({
+        row: i + 1,
+        product_id: productId,
+        product_name: product.name || `Product #${productId}`,
+        requested_qty: qty,
+        available_qty: parseFloat(availableQty.toFixed(3))
+      });
+    }
+
+    normalizedItems.push({
+      product_id: productId,
+      qty: parseFloat(qty.toFixed(3)),
+      cost,
+      reason,
+      remarks: lineRemarks
+    });
+  }
+
+  if (insufficient.length) {
+    return res.status(400).json({
+      error: 'Insufficient stock for one or more items',
+      insufficient
+    });
+  }
+
+  const createdBy = (req.session && req.session.user && req.session.user.id) || req.session.userId || null;
+  const lines = [];
+  let totalEntryCost = 0;
+
+  for (const row of normalizedItems) {
+    const product = (db.store_products || []).find(p => parseInt(p.id, 10) === parseInt(row.product_id, 10)) || {};
+    const stock = getStock(db, parseInt(row.product_id, 10), sid);
+    const stockBefore = parseFloat(stock.qty || 0) || 0;
+    const unitCost = row.cost != null
+      ? parseFloat(row.cost || 0)
+      : (parseFloat(stock.avg_cost || product.cost_price || 0) || 0);
+    const lineTotal = parseFloat((row.qty * unitCost).toFixed(3));
+    stock.qty = parseFloat((stock.qty - row.qty).toFixed(3));
+    const stockAfter = parseFloat(stock.qty || 0) || 0;
+
+    totalEntryCost += lineTotal;
+    lines.push({
+      product_id: parseInt(row.product_id, 10),
+      qty: parseFloat(row.qty.toFixed(3)),
+      cost: parseFloat(unitCost.toFixed(3)),
+      total_cost: lineTotal,
+      reason: row.reason,
+      remarks: row.remarks || '',
+      stock_before: parseFloat(stockBefore.toFixed(3)),
+      stock_after: parseFloat(stockAfter.toFixed(3))
+    });
+  }
+
+  const id = nextId(db, 'store_manual_consumptions');
+  const entry = {
+    id,
+    entry_no: `MC-${String(id).padStart(6, '0')}`,
+    movement_type: 'Manual Consumption',
+    store_id: sid,
+    date: normalizedDate,
+    items: lines,
+    total_cost: parseFloat(totalEntryCost.toFixed(3)),
+    remarks: String(remarks || '').trim(),
+    created_by: createdBy,
+    created_at: now()
+  };
+
+  db.store_manual_consumptions.push(entry);
+  writeDB(db);
+  res.json(entry);
 });
 
 // ── Service–Product links ───────────────────────────────

@@ -100,6 +100,7 @@ const NAV_ALL = [
   { id: 'store-suppliers',   label: 'Suppliers',            icon: IC.supplier,       perm: 'store.manage',            roles: ['admin'] },
   { id: 'store-purchase',    label: 'Purchase Orders',      icon: IC.billing,        perm: 'store.purchase',          roles: ['admin','receptionist'] },
   { id: 'store-transfers',   label: 'Stock Transfers',      icon: IC.transfer,       perm: 'store.transfer',          roles: ['admin','receptionist'] },
+  { id: 'store-consumption', label: 'Manual Consumption',   icon: IC.product,        perm: 'store.consume',           roles: ['admin','receptionist'] },
   { id: 'store-sub-stores',  label: 'Sub-Stores',           icon: IC.store,          perm: 'store.manage',            roles: ['admin'] },
 ];
 
@@ -112,7 +113,7 @@ const PAGE_PERM = {
   users: 'users.view', 'role-permissions': 'role_permissions.view',
   setup: 'setup.view', services: 'services.view', packages: 'packages.view',
   store: 'store.view', 'store-products': 'store.view', 'store-suppliers': 'store.manage',
-  'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-sub-stores': 'store.manage',
+  'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-consumption': 'store.consume', 'store-sub-stores': 'store.manage',
 };
 
 // --- API helper ------------------------------------------
@@ -501,6 +502,7 @@ function navigate(page) {
     'store-suppliers': ['Suppliers', 'Manage product suppliers'],
     'store-purchase': ['Purchase Orders', 'Buy products from suppliers'],
     'store-transfers': ['Stock Transfers', 'Move stock between stores'],
+    'store-consumption': ['Manual Consumption', 'Consume stock manually with cost tracking'],
     'store-sub-stores': ['Sub-Stores', 'Manage store locations'],
   };
   const [title, sub] = titles[page] || [page, ''];
@@ -516,7 +518,7 @@ function navigate(page) {
   const renderSeq = beginPageRender(page);
 
   const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, reports, users, services, packages, setup, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
-    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster };
+    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster };
   if (pages[page]) {
     if (page === 'scheduler' || page === 'patient-packages') {
       pages[page](renderSeq);
@@ -6540,6 +6542,7 @@ let _userCollectionReportPage = 1;
 let _serviceConsumptionReportPage = 1;
 let _billedServicesReportPage = 1;
 let _productConsumptionReportPage = 1;
+let _manualConsumptionCostReportPage = 1;
 let _stockMovementReportPage = 1;
 let _stockStatusReportPage = 1;
 const REPORT_PAGE_SIZE = 50;
@@ -6621,6 +6624,7 @@ async function reports() {
     { value: 'activity', label: 'Activity Logs', desc: 'Track who booked, confirmed, arrived and paid', icon: IC.users },
     { value: 'service-consumption', label: 'Service Consumption', desc: 'Product consumption by each billed service', icon: IC.product || IC.store },
     { value: 'product-consumption', label: 'Product Cost Summary', desc: 'Grand total consumption and cost by product', icon: IC.store },
+    { value: 'manual-consumption-cost', label: 'Manual Consumption Cost', desc: 'Manual stock consumption with cost and reasons', icon: IC.store },
     { value: 'stock-movement', label: 'Stock Movement', desc: 'Incoming and outgoing stock transactions', icon: IC.transfer || IC.store },
     { value: 'stock-status', label: 'Stock Status', desc: 'Current stock levels with low-stock highlights', icon: IC.store }
   ];
@@ -6963,6 +6967,41 @@ function renderSelectedReport() {
     return;
   }
 
+  if (_reportView === 'manual-consumption-cost') {
+    panel.innerHTML = `
+      <div class="card" style="margin:0;border:1px solid var(--border-light)">
+        <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
+          <div class="card-title">${IC.store} Manual Consumption Cost</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="exportTableToCSV('#manualConsumptionCostBody table', 'manual_consumption_cost_${today}.csv')">📥 CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#manualConsumptionCostBody', 'manual_consumption_cost')">📄 PDF</button>
+          </div>
+        </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="search-box"><input id="mccSearch" type="text" placeholder="Search store, item, reason, remarks..." oninput="loadManualConsumptionCostReport()"/></div>
+          <div class="bill-filter-group report-filter-group">
+            <input id="mccFrom" type="date" value="${today}" onchange="loadManualConsumptionCostReport()" title="From date"/>
+            <input id="mccTo" type="date" value="${today}" onchange="loadManualConsumptionCostReport()" title="To date"/>
+            <select id="mccStore" onchange="loadManualConsumptionCostReport()"><option value="">All Stores</option></select>
+            <select id="mccReason" onchange="loadManualConsumptionCostReport()">
+              <option value="">All Reasons</option>
+              <option value="Treatment Usage">Treatment Usage</option>
+              <option value="Wastage">Wastage</option>
+              <option value="Expired">Expired</option>
+              <option value="Internal Use">Internal Use</option>
+              <option value="Sample">Sample</option>
+              <option value="Adjustment">Adjustment</option>
+            </select>
+            <button class="btn btn-sm report-apply-btn" onclick="loadManualConsumptionCostReport()">Apply Filter</button>
+            <button class="btn btn-sm report-clear-btn" onclick="clearManualConsumptionCostFilters()">Clear</button>
+          </div>
+        </div>
+        <div id="manualConsumptionCostBody">${skeletonTable(8)}</div>
+      </div>`;
+    loadManualConsumptionCostReport();
+    return;
+  }
+
   if (_reportView === 'stock-movement') {
     panel.innerHTML = `
       <div class="card" style="margin:0;border:1px solid var(--border-light)">
@@ -6984,6 +7023,7 @@ function renderSelectedReport() {
               <option value="purchase">Purchase</option>
               <option value="transfer">Transfer</option>
               <option value="consumption">Consumption</option>
+              <option value="manual-consumption">Manual Consumption</option>
             </select>
             <button class="btn btn-sm report-apply-btn" onclick="loadStockMovementReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="clearStockMovementFilters()">Clear</button>
@@ -7114,6 +7154,21 @@ function clearProductConsumptionFilters() {
   if (from) from.value = today;
   if (to) to.value = today;
   loadProductConsumptionReport();
+}
+
+function clearManualConsumptionCostFilters() {
+  const today = new Date().toLocaleDateString('sv');
+  const search = document.getElementById('mccSearch');
+  const from = document.getElementById('mccFrom');
+  const to = document.getElementById('mccTo');
+  const store = document.getElementById('mccStore');
+  const reason = document.getElementById('mccReason');
+  if (search) search.value = '';
+  if (from) from.value = today;
+  if (to) to.value = today;
+  if (store) store.value = '';
+  if (reason) reason.value = '';
+  loadManualConsumptionCostReport();
 }
 
 function clearActivityLogFilters() {
@@ -8143,6 +8198,86 @@ async function loadProductConsumptionReport(page) {
           <button class="btn btn-sm" onclick="loadProductConsumptionReport(${safePage - 1})" ${safePage <= 1 ? 'disabled' : ''}>Prev</button>
           <span class="text-muted text-sm" style="padding:4px 8px">${safePage} / ${pages}</span>
           <button class="btn btn-sm" onclick="loadProductConsumptionReport(${safePage + 1})" ${safePage >= pages ? 'disabled' : ''}>Next</button>
+        </div>
+      </div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
+}
+
+async function loadManualConsumptionCostReport(page) {
+  const wrap = document.getElementById('manualConsumptionCostBody');
+  if (!wrap) return;
+  _manualConsumptionCostReportPage = page != null ? Math.max(1, parseInt(page, 10) || 1) : 1;
+  try {
+    const params = new URLSearchParams();
+    const from = document.getElementById('mccFrom')?.value || '';
+    const to = document.getElementById('mccTo')?.value || '';
+    const q = document.getElementById('mccSearch')?.value || '';
+    const storeId = document.getElementById('mccStore')?.value || '';
+    const reason = document.getElementById('mccReason')?.value || '';
+    if (from) params.set('date_from', from);
+    if (to) params.set('date_to', to);
+    if (q.trim()) params.set('search', q.trim());
+    if (storeId) params.set('store_id', storeId);
+    if (reason) params.set('reason', reason);
+    params.set('page', String(_manualConsumptionCostReportPage));
+    params.set('limit', String(REPORT_PAGE_SIZE));
+
+    const rep = await apiFetch(`/api/reports/manual-consumption-cost?${params.toString()}`);
+    const rows = rep.rows || [];
+    const summary = rep.summary || {};
+    const storeTotals = rep.store_totals || [];
+    const filters = rep.filters || { stores: [] };
+    window._lastManualConsumptionCostRows = rows;
+
+    const total = Math.max(0, parseInt(rep.total, 10) || parseInt(summary.rows_count, 10) || 0);
+    const pages = Math.max(1, parseInt(rep.pages, 10) || Math.ceil(Math.max(1, total) / REPORT_PAGE_SIZE));
+    const safePage = Math.min(Math.max(1, parseInt(rep.page, 10) || _manualConsumptionCostReportPage), pages);
+    _manualConsumptionCostReportPage = safePage;
+
+    const storeSel = document.getElementById('mccStore');
+    if (storeSel) {
+      const selected = storeSel.value || '';
+      storeSel.innerHTML = `<option value="">All Stores</option>${(filters.stores || []).map(s => `<option value="${s.id}"${String(s.id)===selected?' selected':''}>${escHtml(s.name || 'Store')}</option>`).join('')}`;
+    }
+
+    if (!rows.length) {
+      wrap.innerHTML = emptyState(IC.store || IC.empty, 'No manual consumption data', 'No manual stock consumption found for selected filters');
+      return;
+    }
+
+    wrap.innerHTML = `
+      <div class="stats-grid" style="margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="stat-card"><div class="stat-content"><div class="stat-label">Rows</div><div class="stat-value">${parseInt(summary.rows_count || 0, 10)}</div></div></div>
+        <div class="stat-card"><div class="stat-content"><div class="stat-label">Entries</div><div class="stat-value">${parseInt(summary.entries_count || 0, 10)}</div></div></div>
+        <div class="stat-card"><div class="stat-content"><div class="stat-label">Total Qty</div><div class="stat-value">${parseFloat(summary.total_qty || 0).toFixed(3)}</div></div></div>
+        <div class="stat-card"><div class="stat-content"><div class="stat-label">Total Cost</div><div class="stat-value">KD ${parseFloat(summary.total_cost || 0).toFixed(3)}</div></div></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        ${storeTotals.map(s => `<span style="padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover);font-size:12px"><strong>${escHtml(s.store_name || 'Store')}</strong>: KD ${parseFloat(s.total_cost || 0).toFixed(3)}</span>`).join('')}
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Store</th><th>Entry #</th><th>Item</th><th>Qty</th><th>Unit</th><th>Cost</th><th>Total Cost</th><th>Reason</th><th>Remarks</th></tr></thead>
+        <tbody>${rows.map(r => `<tr>
+          <td>${escHtml(r.date || '—')}</td>
+          <td><strong>${escHtml(r.store_name || '—')}</strong></td>
+          <td>${escHtml(r.entry_no || ('MC#' + r.entry_id))}</td>
+          <td><strong>${escHtml(r.item_name || '—')}</strong>${r.item_sku ? `<div class="text-muted text-sm">${escHtml(r.item_sku)}</div>` : ''}</td>
+          <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
+          <td>${escHtml(r.unit || '—')}</td>
+          <td>KD ${parseFloat(r.cost || 0).toFixed(3)}</td>
+          <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
+          <td>${escHtml(r.reason || '—')}</td>
+          <td class="text-sm text-muted">${escHtml(r.remarks || r.entry_remarks || '—')}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span class="text-muted text-sm">Showing ${total ? ((safePage - 1) * REPORT_PAGE_SIZE) + 1 : 0}-${Math.min(safePage * REPORT_PAGE_SIZE, total)} of ${total}</span>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="btn btn-sm" onclick="loadManualConsumptionCostReport(${safePage - 1})" ${safePage <= 1 ? 'disabled' : ''}>Prev</button>
+          <span class="text-muted text-sm" style="padding:4px 8px">${safePage} / ${pages}</span>
+          <button class="btn btn-sm" onclick="loadManualConsumptionCostReport(${safePage + 1})" ${safePage >= pages ? 'disabled' : ''}>Next</button>
         </div>
       </div>`;
   } catch (e) {
@@ -10904,7 +11039,7 @@ const PERM_GROUPS = [
   { label: 'Packages',          perms: ['packages.view','packages.create','packages.edit','packages.delete'] },
   { label: 'Setup',             perms: ['setup.view','setup.edit'] },
   { label: 'Role Permissions',  perms: ['role_permissions.view','role_permissions.edit'] },
-  { label: 'Store',             perms: ['store.view','store.manage','store.purchase','store.transfer'] },
+  { label: 'Store',             perms: ['store.view','store.manage','store.purchase','store.transfer','store.consume'] },
 ];
 
 // Roles list is now loaded dynamically from the API
@@ -12170,4 +12305,261 @@ async function openEditSubStoreModal(id) {
 async function deleteSubStore(id, name) {
   if (!await confirmDialog(`Delete sub-store "${name}"?`)) return;
   try { await apiFetch(`/api/store/sub-stores/${id}`,{method:'DELETE'}); toast('Deleted','success'); storeSubStores(); } catch(e){toast(e.message,'error');}
+}
+
+// -- Manual Consumption ----------------------------------
+let _manualConsumptionProducts = [];
+let _manualConsumptionStores = [];
+let _manualConsumptionStockMap = new Map();
+
+function mcReasonOptions(selected = '') {
+  const reasons = ['Treatment Usage', 'Wastage', 'Expired', 'Internal Use', 'Sample', 'Adjustment'];
+  return reasons.map(r => `<option value="${r}" ${r === selected ? 'selected' : ''}>${r}</option>`).join('');
+}
+
+function mcProductOptions(selectedId = '') {
+  return _manualConsumptionProducts
+    .filter(p => p.active !== false)
+    .map(p => `<option value="${p.id}" ${String(selectedId) === String(p.id) ? 'selected' : ''}>${escHtml(p.name)}${p.sku ? ` (${escHtml(p.sku)})` : ''}</option>`)
+    .join('');
+}
+
+function mcStoreOptions(selectedId = '') {
+  return _manualConsumptionStores
+    .filter(s => s.active !== false)
+    .map(s => `<option value="${s.id}" ${String(selectedId) === String(s.id) ? 'selected' : ''}>${escHtml(s.name)}</option>`)
+    .join('');
+}
+
+async function storeManualConsumption() {
+  const ca = document.getElementById('contentArea');
+  const todayStr = new Date().toLocaleDateString('sv');
+  ca.innerHTML = `${skeletonTable(6)}`;
+  try {
+    const [stores, products] = await Promise.all([
+      apiFetch('/api/store/sub-stores'),
+      apiFetch('/api/store/products')
+    ]);
+    _manualConsumptionStores = Array.isArray(stores) ? stores : [];
+    _manualConsumptionProducts = Array.isArray(products) ? products : [];
+    const defaultStore = _manualConsumptionStores.find(s => s.active !== false && s.is_main) || _manualConsumptionStores.find(s => s.active !== false) || null;
+
+    ca.innerHTML = `
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title" style="margin-bottom:10px">${IC.store} Manual Consumption Entry</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Store *</label><select id="mcStore" onchange="mcOnStoreChange()"><option value="">— Select Store —</option>${mcStoreOptions(defaultStore ? defaultStore.id : '')}</select></div>
+          <div class="form-group"><label>Date</label><input id="mcDate" type="date" value="${todayStr}"/></div>
+        </div>
+        <div class="table-wrap"><table class="mc-grid-table">
+          <thead><tr><th style="width:24%">Item *</th><th style="width:9%">Qty *</th><th style="width:10%">Cost</th><th style="width:11%">Total Cost</th><th style="width:16%">Reason</th><th style="width:17%">Remarks</th><th style="width:11%">Stock</th><th style="width:2%"></th></tr></thead>
+          <tbody id="mcRows"></tbody>
+        </table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm btn-primary" onclick="mcAddRow()">${IC.plus} Add Item</button>
+            <span class="text-muted text-sm">Cost auto-fills from store average cost and can be edited.</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <strong>Total Entry Cost: <span id="mcEntryTotal">KD 0.000</span></strong>
+            <button class="btn btn-success" onclick="saveManualConsumptionEntry()">${IC.check} Save Consumption</button>
+          </div>
+        </div>
+        <div id="mcWarningBox" class="text-sm" style="margin-top:8px;color:var(--c-danger)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px">Recent Manual Consumption</div>
+        <div id="mcRecentWrap">${skeletonTable(3)}</div>
+      </div>`;
+
+    await mcOnStoreChange(false);
+    mcAddRow();
+    mcLoadRecent();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function mcOnStoreChange(recalcRows = true) {
+  const storeId = document.getElementById('mcStore')?.value;
+  _manualConsumptionStockMap = new Map();
+  if (!storeId) {
+    if (recalcRows) mcRecalcAllRows();
+    return;
+  }
+  try {
+    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}`);
+    for (const s of (stockRows || [])) {
+      _manualConsumptionStockMap.set(parseInt(s.product_id, 10), {
+        qty: parseFloat(s.qty || 0) || 0,
+        cost: parseFloat(s.avg_cost || 0) || 0
+      });
+    }
+    if (recalcRows) mcRecalcAllRows();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function mcAddRow(seed = {}) {
+  const rows = document.getElementById('mcRows');
+  if (!rows) return;
+  const row = document.createElement('tr');
+  row.className = 'mc-row';
+  row.innerHTML = `
+    <td><select class="mc-item" onchange="mcOnProductChange(this)"><option value="">— Select Item —</option>${mcProductOptions(seed.product_id || '')}</select></td>
+    <td><input class="mc-qty" type="number" min="0.001" step="0.001" value="${seed.qty != null ? escHtml(String(seed.qty)) : '1'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
+    <td><input class="mc-cost" type="number" min="0" step="0.001" value="${seed.cost != null ? escHtml(String(seed.cost)) : '0.000'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
+    <td><strong class="mc-total">KD 0.000</strong></td>
+    <td><select class="mc-reason" onchange="mcRecalcRow(this.closest('tr'))">${mcReasonOptions(seed.reason || 'Treatment Usage')}</select></td>
+    <td><input class="mc-remarks" placeholder="Optional" value="${escHtml(seed.remarks || '')}"/></td>
+    <td><span class="mc-stock-note text-muted text-sm">—</span></td>
+    <td><button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove();mcRecalcAllRows()">${IC.trash}</button></td>`;
+  rows.appendChild(row);
+  if (seed.product_id) {
+    const sel = row.querySelector('.mc-item');
+    if (sel) sel.value = String(seed.product_id);
+  }
+  mcRecalcRow(row);
+}
+
+function mcOnProductChange(sel) {
+  const row = sel.closest('tr');
+  if (!row) return;
+  const productId = parseInt(sel.value, 10);
+  const product = _manualConsumptionProducts.find(p => parseInt(p.id, 10) === productId) || null;
+  const stockInfo = _manualConsumptionStockMap.get(productId) || null;
+  const costInput = row.querySelector('.mc-cost');
+  if (costInput) {
+    const cost = stockInfo ? stockInfo.cost : (parseFloat(product?.cost_price || 0) || 0);
+    costInput.value = cost.toFixed(3);
+  }
+  mcRecalcRow(row);
+}
+
+function mcRecalcRow(row) {
+  if (!row) return;
+  const productId = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
+  const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
+  const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+  const total = qty * cost;
+  const totalEl = row.querySelector('.mc-total');
+  const stockEl = row.querySelector('.mc-stock-note');
+  if (totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
+
+  if (!productId || !stockEl) {
+    if (stockEl) {
+      stockEl.textContent = '—';
+      stockEl.classList.remove('mc-stock-low');
+    }
+    mcRecalcEntryTotal();
+    return;
+  }
+
+  const stockInfo = _manualConsumptionStockMap.get(productId);
+  const available = stockInfo ? stockInfo.qty : 0;
+  if (qty > available) {
+    stockEl.innerHTML = `<span class="mc-stock-low">Low: ${available.toFixed(3)}</span>`;
+    stockEl.classList.add('mc-stock-low');
+  } else {
+    stockEl.textContent = `Avail: ${available.toFixed(3)}`;
+    stockEl.classList.remove('mc-stock-low');
+  }
+  mcRecalcEntryTotal();
+}
+
+function mcRecalcEntryTotal() {
+  const rows = [...document.querySelectorAll('#mcRows .mc-row')];
+  let total = 0;
+  let lowCount = 0;
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
+    const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+    total += (qty * cost);
+    const productId = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
+    const available = (_manualConsumptionStockMap.get(productId)?.qty) || 0;
+    if (productId && qty > available) lowCount += 1;
+  });
+  const totalEl = document.getElementById('mcEntryTotal');
+  if (totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
+
+  const warn = document.getElementById('mcWarningBox');
+  if (warn) warn.textContent = lowCount ? `${lowCount} row(s) have insufficient stock.` : '';
+}
+
+function mcRecalcAllRows() {
+  document.querySelectorAll('#mcRows .mc-row').forEach(row => {
+    const productSel = row.querySelector('.mc-item');
+    if (productSel && productSel.value) {
+      const pid = parseInt(productSel.value, 10);
+      const product = _manualConsumptionProducts.find(p => parseInt(p.id, 10) === pid) || null;
+      const stockInfo = _manualConsumptionStockMap.get(pid) || null;
+      const costInput = row.querySelector('.mc-cost');
+      if (costInput && !document.activeElement?.isSameNode(costInput)) {
+        const fallbackCost = parseFloat(costInput.value || 0) || 0;
+        const nextCost = stockInfo ? stockInfo.cost : (product ? parseFloat(product.cost_price || 0) || 0 : fallbackCost);
+        costInput.value = nextCost.toFixed(3);
+      }
+    }
+    mcRecalcRow(row);
+  });
+  mcRecalcEntryTotal();
+}
+
+function mcCollectPayload() {
+  const storeId = document.getElementById('mcStore')?.value;
+  const date = document.getElementById('mcDate')?.value || new Date().toLocaleDateString('sv');
+  if (!storeId) throw new Error('Store is required');
+  const rows = [...document.querySelectorAll('#mcRows .mc-row')];
+  if (!rows.length) throw new Error('Add at least one item');
+
+  const items = rows.map((row, idx) => {
+    const product_id = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
+    const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
+    const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+    const reason = row.querySelector('.mc-reason')?.value || 'Adjustment';
+    const remarks = row.querySelector('.mc-remarks')?.value || '';
+    if (!product_id) throw new Error(`Item is required on row ${idx + 1}`);
+    if (!(qty > 0)) throw new Error(`Quantity must be greater than 0 on row ${idx + 1}`);
+    return { product_id, qty, cost, reason, remarks };
+  });
+
+  return { store_id: parseInt(storeId, 10), date, items };
+}
+
+async function saveManualConsumptionEntry() {
+  try {
+    const payload = mcCollectPayload();
+    await apiFetch('/api/store/manual-consumptions', { method:'POST', body: JSON.stringify(payload) });
+    toast('Manual consumption saved', 'success');
+    storeManualConsumption();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function mcLoadRecent() {
+  const wrap = document.getElementById('mcRecentWrap');
+  if (!wrap) return;
+  try {
+    const todayStr = new Date().toLocaleDateString('sv');
+    const rows = await apiFetch(`/api/store/manual-consumptions?date_from=${todayStr}&date_to=${todayStr}`);
+    if (!rows.length) {
+      wrap.innerHTML = '<div class="text-muted">No manual consumption entries today.</div>';
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Entry</th><th>Store</th><th>Lines</th><th>Total Cost</th><th>Remarks</th></tr></thead>
+      <tbody>${rows.slice(0, 20).map(r => `<tr>
+        <td>${escHtml(String(r.date || '').slice(0,10) || '—')}</td>
+        <td>${escHtml(r.entry_no || ('MC#' + r.id))}</td>
+        <td>${escHtml(r.store_name || '—')}</td>
+        <td>${(r.items || []).length}</td>
+        <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
+        <td class="text-muted text-sm">${escHtml(r.remarks || '—')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
 }
