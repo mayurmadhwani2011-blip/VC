@@ -10566,8 +10566,10 @@ async function users() {
         </div>
         <div style="flex:1"></div>
         ${can('users.create') ? `<button class="btn btn-primary" onclick="openAddUserModal()">${IC.plus} Add User</button>` : ''}
+        ${currentUser && currentUser.role === 'admin' ? `<button id="ownerSystemUpdateBtn" class="btn btn-warning" onclick="triggerSystemUpdate()" title="Download and apply latest update from GitHub">${IC.clock || '&#x21bb;'} System Update</button>` : ''}
         ${viewToggleHTML('users')}
       </div>
+      ${currentUser && currentUser.role === 'admin' ? `<div id="ownerSystemUpdateState" class="text-muted text-sm" style="padding:4px 0 0 4px"></div>` : ''}
       <div id="usersWrap"></div>`;
     renderUsersTable(window._usersCache);
   } catch(e) {
