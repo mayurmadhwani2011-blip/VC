@@ -8006,15 +8006,17 @@ function renderBillAttachList(attachments, billId) {
     return '<div style="color:#aaa;font-size:13px;padding:6px 0">No attachments yet.</div>';
   }
   return attachments.map(a => {
-    const icon = (a.type || '').startsWith('image/') ? '🖼' : ((a.type || '').includes('pdf') ? '📄' : (a.type || '').includes('spreadsheet') || (a.type || '').includes('excel') || /\.(xlsx?|csv)$/i.test(a.name) ? '📊' : (a.type || '').includes('word') || (a.type || '').includes('document') || /\.(docx?)$/i.test(a.name) ? '📝' : '📎');
+    const t = String(a.type || '').toLowerCase();
+    const n = String(a.name || '');
+    const icon = t.startsWith('image/') ? 'IMG' : (t.includes('pdf') || /\.pdf$/i.test(n)) ? 'PDF' : (t.includes('spreadsheet') || t.includes('excel') || /\.(xlsx?|csv)$/i.test(n)) ? 'XLS' : (t.includes('word') || t.includes('document') || /\.(docx?)$/i.test(n)) ? 'DOC' : 'FILE';
     const date = a.uploaded_at ? formatDateTime(a.uploaded_at) : '';
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0">
-      <span style="font-size:18px">${icon}</span>
+      <span style="font-size:10px;font-weight:700;min-width:34px;text-align:center;background:#eef2ff;color:#374151;border:1px solid #d1d5db;border-radius:4px;padding:2px 4px">${icon}</span>
       <div style="flex:1;min-width:0">
         <a href="/api/bills/${billId}/attachments/${a.id}" target="_blank" style="font-size:13px;font-weight:500;color:#2563eb;word-break:break-all">${escHtml(a.name)}</a>
-        <div style="font-size:11px;color:#888">${escHtml(date)}${a.uploaded_by ? ' � ' + escHtml(a.uploaded_by) : ''}</div>
+        <div style="font-size:11px;color:#888">${escHtml(date)}${a.uploaded_by ? ' | ' + escHtml(a.uploaded_by) : ''}</div>
       </div>
-      <button type="button" onclick="billDeleteAttachment(${billId}, ${a.id}, '${escHtml(a.name).replace(/'/g,"\\'")}', this)" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:16px;line-height:1;padding:2px 6px" title="Delete">�</button>
+      <button type="button" onclick="billDeleteAttachment(${billId}, ${a.id}, '${escHtml(a.name).replace(/'/g,"\\'")}', this)" style="background:none;border:1px solid #fecaca;cursor:pointer;color:#e53935;font-size:11px;line-height:1;padding:4px 6px;border-radius:4px" title="Delete">DEL</button>
     </div>`;
   }).join('');
 }
