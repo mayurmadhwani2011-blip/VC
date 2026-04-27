@@ -2,12 +2,8 @@
 let _whatsappWin = null;
 function openWhatsApp(phone) {
   const url = 'https://web.whatsapp.com/send?phone=' + String(phone).replace(/[^0-9]/g, '');
-  if (_whatsappWin && !_whatsappWin.closed) {
-    _whatsappWin.location.href = url;
-    _whatsappWin.focus();
-  } else {
-    _whatsappWin = window.open(url, 'whatsapp_web');
-  }
+  _whatsappWin = window.open(url, 'whatsapp_web');
+  if (_whatsappWin) _whatsappWin.focus();
 }
 const API = (() => {
   try {
