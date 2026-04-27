@@ -7548,7 +7548,7 @@ async function printBill(id) {
       const qty = parseFloat(item.qty || item.quantity || 1) || 1;
       const unit = item.type === 'product'
         ? (item.unit || 'pcs')
-        : (item.type === 'pkg_session' ? 'session' : (item.type === 'package' ? 'package' : 'service'));
+        : (item.type === 'pkg_session' ? 'sess' : (item.type === 'package' ? 'pkg' : 'svc'));
       const rate = qty > 0 ? (amount / qty) : amount;
       const svcStatus = item.service_status || 'Completed';
       const serviceNames = Array.isArray(item.selected_service_names) ? item.selected_service_names.filter(Boolean) : [];
@@ -7585,9 +7585,9 @@ async function printBill(id) {
       </tr>`;
     }).join('');
   } else {
-    if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1</td><td style="text-align:center">service</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td></tr>`;
-    if (b.medicine_charge)  itemRows += `<tr><td>Medicine Charges</td><td style="text-align:right">1</td><td style="text-align:center">item</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td></tr>`;
-    if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1</td><td style="text-align:center">item</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td></tr>`;
+    if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1</td><td style="text-align:center">svc</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td></tr>`;
+    if (b.medicine_charge)  itemRows += `<tr><td>Medicine Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td></tr>`;
+    if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td></tr>`;
   }
   const paymentSection = (b.payment_splits && b.payment_splits.length > 1)
     ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
