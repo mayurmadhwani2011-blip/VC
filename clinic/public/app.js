@@ -1,13 +1,40 @@
-﻿/* -------------------------------------------------------
-   Clinic Management System · Frontend SPA (app.js)
-   Modern UI with dark mode, skeleton loaders, toasts
-   ------------------------------------------------------- */
+﻿let currentSystem = null;
+const API = (() => {
+  try {
+    if (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:') {
+      return 'http://127.0.0.1:5000';
+    }
+  } catch (_) {}
+  return '';
+})();
 
-const API = '';
-let currentUser = null;
-let currentSystem = null;
+function getTerminalId() {
+  const key = 'clinic-terminal-id';
+  let id = '';
+  try { id = String(localStorage.getItem(key) || '').trim(); } catch (_) { id = ''; }
+  if (!id) {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      id = crypto.randomUUID();
+    } else {
+      id = `term-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    }
+    try { localStorage.setItem(key, id); } catch (_) {}
+  }
+  return id;
+}
+
+/* -------------------------------------------------------
+  Clinic Management System · Frontend SPA (app.js)
+  Modern UI with dark mode, skeleton loaders, toasts
+  ------------------------------------------------------- */
 let currentPageId = '';
 let _pageRenderSeq = 0;
+let _navOpenSection = localStorage.getItem('navOpenSection') || '';
+let _navBadgeData = {};
+let _navBadgeTimer = null;
+let _openPageTabs = [];
+let _activePageTab = '';
+let _tabDragIndex = -1;
 
 function beginPageRender(page) {
   currentPageId = page;
@@ -34,6 +61,7 @@ const IC = {
   appointments: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
   prescriptions:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6"/><path d="M12 9v6"/><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>',
   billing:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+  expense:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 17V5a2 2 0 0 0-2-2H6"/><path d="M6 12h4"/></svg>',
   reports:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
   users:        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
   calendar:     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
@@ -67,11 +95,13 @@ const IC = {
   product:      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
   discount:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M21 3h-4"/><path d="M21 21h-4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><line x1="17" y1="3" x2="21" y2="3"/><line x1="17" y1="21" x2="21" y2="21"/><path d="m15 9-6 6"/><circle cx="9.5" cy="9.5" r="0.5" fill="currentColor"/><circle cx="14.5" cy="14.5" r="0.5" fill="currentColor"/></svg>',
   refund:       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+  supreturn:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
 };
 
 // --- Nav config · unified list filtered by permission ----
 const NAV_ALL = [
   { section: 'Overview' },
+  // WhatsApp Campaign nav item will be added after NAV_ALL declaration
   { id: 'dashboard',         label: 'Dashboard',          icon: IC.dashboard,      perm: 'dashboard.view',          roles: ['admin','doctor','receptionist'] },
   { section: 'Patients' },
   { id: 'patients',          label: 'Active Patient List', icon: IC.patients,       perm: 'patients.view',           roles: ['admin','doctor','receptionist'] },
@@ -84,12 +114,14 @@ const NAV_ALL = [
   { id: 'prescriptions',     label: 'Prescriptions',       icon: IC.prescriptions,  perm: 'prescriptions.view',      roles: ['admin','doctor','receptionist'] },
   { section: 'Finance' },
   { id: 'billing',           label: 'Billing',             icon: IC.billing,        perm: 'billing.view',            roles: ['admin','receptionist'] },
+  { id: 'expenses',          label: 'Expenses',            icon: IC.expense,        perm: 'expenses.view',           roles: ['admin','receptionist'] },
   { id: 'discount-master',   label: 'Discounts',           icon: IC.discount,       perm: 'billing.discount.view',   roles: ['admin','receptionist'] },
   { section: 'Reports' },
   { id: 'reports',           label: 'Reports',             icon: IC.reports,        perm: 'reports.view',            roles: ['admin','doctor','receptionist'] },
   { section: 'Settings' },
   { id: 'users',             label: 'Manage Users',        icon: IC.users,          perm: 'users.view',              roles: ['admin'] },
   { id: 'role-permissions',  label: 'Role Permissions',    icon: IC.setup,          perm: 'role_permissions.view',   roles: ['admin'] },
+  { id: 'owner-control',     label: 'Owner Control',       icon: IC.hospital,       perm: 'setup.view',              roles: ['admin'] },
   { id: 'setup',             label: 'Setup',               icon: IC.setup,          perm: 'setup.view',              roles: ['admin'] },
   { section: 'Catalog' },
   { id: 'services',          label: 'Services',             icon: IC.services,       perm: 'services.view',           roles: ['admin','receptionist'] },
@@ -100,30 +132,297 @@ const NAV_ALL = [
   { id: 'store-suppliers',   label: 'Suppliers',            icon: IC.supplier,       perm: 'store.manage',            roles: ['admin'] },
   { id: 'store-purchase',    label: 'Purchase Orders',      icon: IC.billing,        perm: 'store.purchase',          roles: ['admin','receptionist'] },
   { id: 'store-transfers',   label: 'Stock Transfers',      icon: IC.transfer,       perm: 'store.transfer',          roles: ['admin','receptionist'] },
-  { id: 'store-consumption', label: 'Manual Consumption',   icon: IC.product,        perm: 'store.consume',           roles: ['admin','receptionist'] },
+  { id: 'store-adjustments', label: 'Stock Adjustment',     icon: IC.transfer,       perm: 'store.adjust',            roles: ['admin','receptionist'] },
+  { id: 'store-consumption', label: 'Manual Consumption',   icon: IC.product,        perm: 'store.consume',           roles: ['admin','doctor','receptionist'] },
   { id: 'store-sub-stores',  label: 'Sub-Stores',           icon: IC.store,          perm: 'store.manage',            roles: ['admin'] },
+  { id: 'store-supplier-returns', label: 'Supplier Returns', icon: IC.supreturn,      perm: 'store.purchase',          roles: ['admin','receptionist'] },
 ];
+// Add WhatsApp Campaign to admin nav (after NAV_ALL is declared)
+
 
 // Page id ? required view permission
 const PAGE_PERM = {
   dashboard: 'dashboard.view', patients: 'patients.view',
   appointments: 'appointments.view', 'follow-ups': 'appointments.view', scheduler: 'scheduler.view',
   'patient-packages': 'patient_packages.view', prescriptions: 'prescriptions.view',
-  billing: 'billing.view', 'discount-master': 'billing.discount.view', reports: 'reports.view',
+  billing: 'billing.view', expenses: 'expenses.view', 'discount-master': 'billing.discount.view', reports: 'reports.view',
   users: 'users.view', 'role-permissions': 'role_permissions.view',
-  setup: 'setup.view', services: 'services.view', packages: 'packages.view',
+  'owner-control': 'setup.view', setup: 'setup.view', services: 'services.view', packages: 'packages.view',
   store: 'store.view', 'store-products': 'store.view', 'store-suppliers': 'store.manage',
-  'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-consumption': 'store.consume', 'store-sub-stores': 'store.manage',
+  'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-adjustments': 'store.adjust', 'store-consumption': 'store.consume', 'store-sub-stores': 'store.manage',
+  'store-supplier-returns': 'store.purchase',
 };
+
+const PAGE_TITLES = {
+  dashboard: ['Dashboard', 'Overview of today\'s activity'],
+  patients: ['Active Patient List', 'Today\'s patients and old-patient search'],
+  appointments: ['Appointments', 'Schedule and manage appointments'],
+  'follow-ups': ['Follow Ups', 'Track patient return visits and reminders'],
+  scheduler: ['Doctor Scheduler', 'Daily schedule view by doctor'],
+  prescriptions: ['Prescriptions', 'View and create prescriptions'],
+  billing: ['Billing', 'Manage bills and payments'],
+  expenses: ['Expenses', 'Track day-to-day clinic expenses'],
+  reports: ['Reports', 'View clinic reports and analytics'],
+  users: ['Manage Users', 'Add and manage system users'],
+  services: ['Services', 'Manage clinic services and pricing'],
+  packages: ['Packages', 'Manage service bundles and packages'],
+  'owner-control': ['Owner Control', 'Clinic profile, subscription, backup, restore, and reset controls'],
+  setup: ['Setup', 'Clinic configuration, payment methods, and printer settings'],
+  'patient-packages': ['Patient Packages', 'All patient package subscriptions'],
+  'role-permissions': ['Role Permissions', 'Configure access control per role'],
+  store: ['Store Overview', 'Stock levels across all stores'],
+  'store-products': ['Products', 'Manage product catalog'],
+  'store-suppliers': ['Suppliers', 'Manage product suppliers'],
+  'store-purchase': ['Purchase Orders', 'Buy products from suppliers'],
+  'store-transfers': ['Stock Transfers', 'Move stock between stores'],
+  'store-adjustments': ['Stock Adjustment', 'Adjust stock in and out with reason tracking'],
+  'store-consumption': ['Manual Consumption', 'Consume stock manually with cost tracking'],
+  'store-sub-stores': ['Sub-Stores', 'Manage store locations'],
+  'store-supplier-returns': ['Supplier Returns', 'Return items to suppliers from received purchase orders'],
+};
+
+function getAccessibleNavPages() {
+  if (!currentUser) return [];
+  const isCustomRole = !['admin','doctor','receptionist'].includes(currentUser.role);
+  const seen = new Set();
+  const pages = [];
+  NAV_ALL.forEach(item => {
+    if (!item || item.section || !item.id) return;
+    if (!isCustomRole && item.roles && !item.roles.includes(currentUser.role)) return;
+    if (item.perm && !can(item.perm)) return;
+    if (seen.has(item.id)) return;
+    seen.add(item.id);
+    pages.push(item.id);
+  });
+  return pages;
+}
+
+function getPageDisplayLabel(pageId) {
+  if (PAGE_TITLES[pageId] && PAGE_TITLES[pageId][0]) return PAGE_TITLES[pageId][0];
+  const fromNav = NAV_ALL.find(i => i && i.id === pageId && i.label);
+  return fromNav ? fromNav.label : pageId;
+}
+
+function _normalizeTab(item) {
+  if (typeof item === 'string') return { id: item, pinned: false };
+  if (item && typeof item === 'object' && item.id) return { id: item.id, pinned: !!item.pinned };
+  return null;
+}
+
+function _canCloseTab(pageId) {
+  const tab = _openPageTabs.find(t => t.id === pageId);
+  if (!tab) return false;
+  if (tab.pinned) return false;
+  return _openPageTabs.length > 1;
+}
+
+function _sortPinnedTabsFirst() {
+  const indexed = _openPageTabs.map((tab, idx) => ({ tab, idx }));
+  indexed.sort((a, b) => {
+    if (!!a.tab.pinned === !!b.tab.pinned) return a.idx - b.idx;
+    return a.tab.pinned ? -1 : 1;
+  });
+  _openPageTabs = indexed.map(x => x.tab);
+}
+
+function persistPageTabsState() {
+  try {
+    localStorage.setItem('openPageTabs', JSON.stringify(_openPageTabs));
+    localStorage.setItem('activePageTab', _activePageTab || '');
+  } catch (_) {}
+}
+
+function loadPageTabsState(defaultPage = '') {
+  const allowed = new Set(getAccessibleNavPages());
+  let saved = [];
+  try { saved = JSON.parse(localStorage.getItem('openPageTabs') || '[]'); } catch (_) { saved = []; }
+  _openPageTabs = Array.isArray(saved)
+    ? saved.map(_normalizeTab).filter(Boolean).filter(t => allowed.has(t.id))
+    : [];
+  if (defaultPage && allowed.has(defaultPage) && !_openPageTabs.some(t => t.id === defaultPage)) {
+    _openPageTabs.push({ id: defaultPage, pinned: false });
+  }
+  if (!_openPageTabs.length) {
+    const firstAllowed = [...allowed][0];
+    if (firstAllowed) _openPageTabs = [{ id: firstAllowed, pinned: false }];
+  }
+  _sortPinnedTabsFirst();
+  _activePageTab = localStorage.getItem('activePageTab') || defaultPage || (_openPageTabs[0]?.id || '');
+  if (_activePageTab && !_openPageTabs.some(t => t.id === _activePageTab)) _activePageTab = _openPageTabs[_openPageTabs.length - 1]?.id || '';
+  persistPageTabsState();
+}
+
+function ensurePageTab(pageId) {
+  if (!pageId) return;
+  if (!_openPageTabs.some(t => t.id === pageId)) _openPageTabs.push({ id: pageId, pinned: false });
+  _sortPinnedTabsFirst();
+  _activePageTab = pageId;
+  persistPageTabsState();
+}
+
+function togglePinPageTab(pageId, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const idx = _openPageTabs.findIndex(t => t.id === pageId);
+  if (idx < 0) return;
+  _openPageTabs[idx].pinned = !_openPageTabs[idx].pinned;
+  _sortPinnedTabsFirst();
+  persistPageTabsState();
+  renderPageTabs();
+}
+
+function handleTabAuxClick(event, pageId) {
+  if (!event || event.button !== 1) return;
+  event.preventDefault();
+  closePageTab(pageId, event, { middleClick: true });
+}
+
+function onTabDragStart(index, event) {
+  _tabDragIndex = index;
+  if (event?.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(index));
+  }
+}
+
+function onTabDragOver(index, event) {
+  if (!event) return;
+  event.preventDefault();
+  const tabEl = event.currentTarget;
+  if (tabEl) tabEl.classList.add('drag-over');
+}
+
+function onTabDragLeave(event) {
+  const tabEl = event?.currentTarget;
+  if (tabEl) tabEl.classList.remove('drag-over');
+}
+
+function onTabDrop(index, event) {
+  if (event) event.preventDefault();
+  const tabEl = event?.currentTarget;
+  if (tabEl) tabEl.classList.remove('drag-over');
+  let from = _tabDragIndex;
+  if (from < 0 && event?.dataTransfer) {
+    const raw = parseInt(event.dataTransfer.getData('text/plain') || '-1', 10);
+    if (!Number.isNaN(raw)) from = raw;
+  }
+  if (from < 0 || from === index || from >= _openPageTabs.length || index >= _openPageTabs.length) {
+    _tabDragIndex = -1;
+    return;
+  }
+  const moved = _openPageTabs.splice(from, 1)[0];
+  const targetIndex = from < index ? index - 1 : index;
+  _openPageTabs.splice(targetIndex, 0, moved);
+  _sortPinnedTabsFirst();
+  persistPageTabsState();
+  renderPageTabs();
+  _tabDragIndex = -1;
+}
+
+function onTabDragEnd() {
+  _tabDragIndex = -1;
+  document.querySelectorAll('.page-tab.drag-over').forEach(el => el.classList.remove('drag-over'));
+}
+
+function renderPageTabs() {
+  const wrap = document.getElementById('pageTabs');
+  if (!wrap) return;
+  if (!currentUser || !_openPageTabs.length) {
+    wrap.innerHTML = '';
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  wrap.innerHTML = _openPageTabs.map((tab, idx) => {
+    const pageId = tab.id;
+    const active = _activePageTab === pageId;
+    const canClose = _canCloseTab(pageId);
+    return `<button class="page-tab ${active ? 'active' : ''} ${tab.pinned ? 'pinned' : ''}" role="tab" aria-selected="${active ? 'true' : 'false'}" draggable="true" ondragstart="onTabDragStart(${idx}, event)" ondragover="onTabDragOver(${idx}, event)" ondragleave="onTabDragLeave(event)" ondrop="onTabDrop(${idx}, event)" ondragend="onTabDragEnd()" onauxclick="handleTabAuxClick(event, '${pageId}')" onclick="navigate('${pageId}')" title="${escHtml(getPageDisplayLabel(pageId))}">
+      <span class="page-tab-label">${escHtml(getPageDisplayLabel(pageId))}</span>
+      <span class="page-tab-pin ${tab.pinned ? 'active' : ''}" onclick="togglePinPageTab('${pageId}', event)" title="${tab.pinned ? 'Unpin tab' : 'Pin tab'}">PIN</span>
+      ${canClose ? `<span class="page-tab-close" onclick="closePageTab('${pageId}', event)" aria-label="Close tab">&times;</span>` : ''}
+    </button>`;
+  }).join('');
+}
+
+function closePageTab(pageId, event, meta = {}) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const idx = _openPageTabs.findIndex(t => t.id === pageId);
+  if (idx < 0) return;
+  if (!_canCloseTab(pageId)) return;
+  const wasActive = _activePageTab === pageId;
+  _openPageTabs.splice(idx, 1);
+  if (wasActive) {
+    const fallback = _openPageTabs[Math.min(idx, _openPageTabs.length - 1)]?.id || _openPageTabs[0]?.id || '';
+    _activePageTab = fallback;
+  }
+  persistPageTabsState();
+  renderPageTabs();
+  if (wasActive && _activePageTab) navigate(_activePageTab);
+}
 
 // --- API helper ------------------------------------------
 async function apiFetch(url, opts = {}) {
-  const res = await fetch(API + url, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
-    ...opts,
-  });
-  const data = await res.json().catch(() => ({}));
+  const timeoutMs = Number(opts.timeoutMs || 15000);
+  const bases = [];
+  const pushBase = (b) => {
+    const key = String(b || '');
+    if (!bases.includes(key)) bases.push(key);
+  };
+  pushBase(API);
+  pushBase('');
+  try {
+    if (typeof window !== 'undefined' && window.location && /^https?:$/i.test(window.location.protocol || '')) {
+      pushBase(window.location.origin || '');
+    }
+  } catch (_) {}
+  pushBase('http://127.0.0.1:5000');
+  pushBase('http://localhost:5000');
+
+  let res;
+  let lastErr = null;
+  for (const base of bases) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+    try {
+      res = await fetch(base + url, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Terminal-Id': getTerminalId(),
+          ...(opts.headers || {})
+        },
+        signal: controller ? controller.signal : undefined,
+        ...opts,
+      });
+      if (timer) clearTimeout(timer);
+      lastErr = null;
+      break;
+    } catch (e) {
+      if (timer) clearTimeout(timer);
+      lastErr = e;
+    }
+  }
+  if (!res) {
+    if (lastErr && String(lastErr.name || '').toLowerCase() === 'aborterror') {
+      throw new Error('Request timed out. Please check Clinic service and try again.');
+    }
+    throw (lastErr || new Error('Network request failed'));
+  }
+  const raw = await res.text();
+  let data = {};
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch (_) {
+      data = { raw };
+    }
+  }
   if (!res.ok && data && data.code === 'LICENSE_BLOCKED') {
     if (data.system) {
       currentSystem = data.system;
@@ -131,7 +430,13 @@ async function apiFetch(url, opts = {}) {
       renderAccessLockScreen();
     }
   }
-  if (!res.ok) throw new Error(data.error || 'Request failed');
+  if (!res.ok) {
+    const fallback = typeof data.raw === 'string' && data.raw.trim()
+      ? data.raw.trim().replace(/\s+/g, ' ').slice(0, 220)
+      : '';
+    const msg = data.error || fallback || `Request failed (${res.status})`;
+    throw new Error(msg);
+  }
   return data;
 }
 
@@ -171,7 +476,7 @@ function renderAccessLockScreen() {
     ? 'Admin must complete setup before other users can use the system.'
     : `Plan status: ${String(status).toUpperCase()} · End date: ${endDate}`;
   const cta = isAdmin
-    ? `<button class="btn btn-primary" onclick="navigate('setup')">${IC.setup} Open Owner Setup</button>`
+    ? `<button class="btn btn-primary" onclick="navigate('owner-control')">${IC.setup} Open Owner Setup</button>`
     : `<button class="btn" onclick="doLogout()">Sign Out</button>`;
 
   ca.innerHTML = `
@@ -300,13 +605,27 @@ function showLoginError(msg) {
 async function doLogout() {
   await apiFetch('/api/logout', { method: 'POST' });
   currentUser = null;
+  if (_navBadgeTimer) {
+    clearInterval(_navBadgeTimer);
+    _navBadgeTimer = null;
+  }
   _resetAppState();
+  try {
+    localStorage.removeItem('openPageTabs');
+    localStorage.removeItem('activePageTab');
+  } catch (_) {}
+  const dock = document.getElementById('quickDock');
+  if (dock) dock.classList.add('hidden');
   document.getElementById('mainApp').classList.add('hidden');
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('loginPassword').value = '';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Always show login page and hide main app on load
+  document.getElementById('loginPage').classList.remove('hidden');
+  document.getElementById('mainApp').classList.add('hidden');
+
   document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('loginUsername').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   // Restore theme
@@ -352,6 +671,7 @@ function updateThemeIcons() {
 function _resetAppState() {
   // Clear all module-level state so stale data from a previous user session never bleeds through
   try { _billingAll = []; } catch(e) {}
+  try { _expenseRows = []; _expenseMeta = { categories: [], payment_methods: [] }; } catch(e) {}
   try { _billLineItems = []; _billPkgSessions = []; } catch(e) {}
   try { _reportView = 'daily'; } catch(e) {}
   try { _allRolesList = []; } catch(e) {}
@@ -359,11 +679,15 @@ function _resetAppState() {
   try { window._billServices = []; window._billPackages = []; } catch(e) {}
   try { window._lastProductConsumptionRows = []; } catch(e) {}
   try { currentSystem = null; } catch(e) {}
+  _openPageTabs = [];
+  _activePageTab = '';
   // Clear content area immediately so the previous user's page is never visible
   const ca = document.getElementById('contentArea');
   if (ca) ca.innerHTML = '';
   const sideNav = document.getElementById('sideNav');
   if (sideNav) sideNav.innerHTML = '';
+  const tabs = document.getElementById('pageTabs');
+  if (tabs) tabs.innerHTML = '';
 }
 
 function startApp() {
@@ -380,6 +704,13 @@ function startApp() {
   }
 
   buildNav();
+  const collapsed = localStorage.getItem('sidebarCollapsed') === '1';
+  document.body.classList.toggle('sidebar-collapsed', collapsed);
+  refreshSidebarBadges();
+  if (_navBadgeTimer) clearInterval(_navBadgeTimer);
+  _navBadgeTimer = setInterval(refreshSidebarBadges, 60000);
+  ensureQuickDock();
+  registerGlobalShortcuts();
 
   // User badge in sidebar
   const initials = currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -405,8 +736,18 @@ function startApp() {
   });
   if (firstPage) {
     const forceSetup = currentSystem?.setup_required && currentUser?.role === 'admin';
-    navigate(forceSetup ? 'setup' : firstPage.id);
+    const initialPage = forceSetup ? 'owner-control' : firstPage.id;
+    loadPageTabsState(initialPage);
+    renderPageTabs();
+    navigate(_activePageTab || initialPage);
     if (forceSetup) toast('Complete Owner Setup to activate the system for all users.', 'info');
+    setTimeout(() => focusPrimarySearch(), 120);
+    if (currentUser?.role === 'receptionist' && !localStorage.getItem('receptionist-speed-tip-seen')) {
+      setTimeout(() => {
+        toast('Speed mode: Alt+P Patients, Alt+A Appointments, Alt+B Billing, Alt+N Quick New, / Search', 'info');
+        localStorage.setItem('receptionist-speed-tip-seen', '1');
+      }, 600);
+    }
   } else {
     // No accessible pages at all
     const ca = document.getElementById('contentArea');
@@ -419,35 +760,158 @@ function startApp() {
   }
 }
 
-function buildNav() {
-  const nav = document.getElementById('sideNav');
-  nav.innerHTML = '';
-  // Track sections to avoid empty section headers
-  let pendingSection = null;
+function _sectionId(label) {
+  return String(label || 'module').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function getSidebarModules() {
+  const isCustomRole = !['admin', 'doctor', 'receptionist'].includes(currentUser.role);
   const rendered = new Set();
-  NAV_ALL.forEach(item => {
+  const modules = [];
+  let currentSection = 'General';
+  let currentModule = { id: _sectionId(currentSection), label: currentSection, icon: IC.dashboard, items: [] };
+
+  const pushModule = () => {
+    if (currentModule.items.length) modules.push(currentModule);
+  };
+
+  NAV_ALL.forEach((item) => {
     if (item.section) {
-      pendingSection = item.section;
+      pushModule();
+      currentSection = item.section;
+      currentModule = { id: _sectionId(currentSection), label: currentSection, icon: null, items: [] };
       return;
     }
-    // Filter by role and permission
-    const isCustomRole = !['admin','doctor','receptionist'].includes(currentUser.role);
-    // For built-in roles use roles array; for custom roles fall back to permission check
-    if (!isCustomRole && !item.roles.includes(currentUser.role)) return;
+    if (!item.id) return;
+    if (!isCustomRole && item.roles && !item.roles.includes(currentUser.role)) return;
     if (item.perm && !can(item.perm)) return;
-    // Avoid duplicate nav entries (e.g. doctor vs non-doctor label for same id)
     if (rendered.has(item.id)) return;
     rendered.add(item.id);
-    if (pendingSection) {
-      nav.insertAdjacentHTML('beforeend',
-        `<div style="padding:16px 14px 6px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted)">${pendingSection}</div>`);
-      pendingSection = null;
-    }
-    nav.insertAdjacentHTML('beforeend',
-      `<a href="#" id="nav-${item.id}" onclick="event.preventDefault();navigate('${item.id}')">
-         ${item.icon}<span>${item.label}</span>
-       </a>`);
+    currentModule.items.push(item);
+    if (!currentModule.icon) currentModule.icon = item.icon || IC.dashboard;
   });
+
+  pushModule();
+  return modules;
+}
+
+function getNavBadge(pageId) {
+  if (pageId === 'appointments' && _navBadgeData.aptsToday > 0) return _navBadgeData.aptsToday;
+  if (pageId === 'follow-ups' && _navBadgeData.followupsToday > 0) return _navBadgeData.followupsToday;
+  if (pageId === 'billing' && _navBadgeData.pendingBills > 0) return _navBadgeData.pendingBills;
+  return null;
+}
+
+function moduleQuickAction(module) {
+  if (!module || !Array.isArray(module.items)) return '';
+  const has = (id) => module.items.some(i => i.id === id);
+  if (has('appointments') && can('appointments.create')) {
+    return `<button class="nav-quick-btn" onclick="event.stopPropagation();openNewAppointmentModal()">+ Add Appointment</button>`;
+  }
+  if (has('patients') && can('patients.create')) {
+    return `<button class="nav-quick-btn" onclick="event.stopPropagation();openPatientModal()">+ Add Patient</button>`;
+  }
+  if (has('billing') && can('billing.create')) {
+    return `<button class="nav-quick-btn" onclick="event.stopPropagation();openBillModal()">+ New Bill</button>`;
+  }
+  return '';
+}
+
+function toggleNavModule(moduleId) {
+  const isCollapsed = document.body.classList.contains('sidebar-collapsed');
+  const sb = document.getElementById('sidebar');
+  if (isCollapsed && sb && !sb.classList.contains('temp-expanded')) {
+    sb.classList.add('temp-expanded');
+  }
+  _navOpenSection = (_navOpenSection === moduleId) ? '' : moduleId;
+  localStorage.setItem('navOpenSection', _navOpenSection);
+  buildNav();
+}
+
+function handleNavModuleKeydown(event, moduleId) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    toggleNavModule(moduleId);
+    return;
+  }
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    if (_navOpenSection !== moduleId) toggleNavModule(moduleId);
+    return;
+  }
+  if (event.key === 'ArrowLeft' && _navOpenSection === moduleId) {
+    event.preventDefault();
+    toggleNavModule(moduleId);
+  }
+}
+
+function buildNav() {
+  const nav = document.getElementById('sideNav');
+  if (!nav) return;
+  const modules = getSidebarModules();
+  const lastPage = localStorage.getItem('lastNavPage') || '';
+  const activePage = currentPageId;
+
+  if (!_navOpenSection && modules.length) {
+    const activeModule = modules.find(m => m.items.some(i => i.id === activePage));
+    _navOpenSection = activeModule ? activeModule.id : (localStorage.getItem('navOpenSection') || modules[0].id);
+  }
+
+  nav.innerHTML = modules.map((module) => {
+    const isOpen = _navOpenSection === module.id;
+    const hasActive = module.items.some(i => i.id === activePage);
+    const quickBtn = moduleQuickAction(module);
+    return `<div class="nav-module ${isOpen ? 'open' : ''} ${hasActive ? 'module-active' : ''}" data-module="${module.id}">
+      <button class="nav-module-btn" type="button" title="${escHtml(module.label)}" onclick="toggleNavModule('${module.id}')" onkeydown="handleNavModuleKeydown(event,'${module.id}')" aria-expanded="${isOpen ? 'true' : 'false'}">
+        <span class="nav-module-icon">${module.icon || IC.dashboard}</span>
+        <span class="nav-module-label">${escHtml(module.label)}</span>
+        <span class="nav-module-arrow">${IC.chevRight}</span>
+      </button>
+      <div class="nav-sublist ${isOpen ? 'open' : ''}">
+        ${quickBtn ? `<div class="nav-quick-wrap">${quickBtn}</div>` : ''}
+        ${module.items.map((item) => {
+          const isActive = item.id === activePage;
+          const isLast = item.id === lastPage;
+          const badge = getNavBadge(item.id);
+          return `<a href="#" class="nav-subitem ${isActive ? 'active' : ''} ${isLast ? 'last-used' : ''}" data-page="${item.id}" title="${escHtml(item.label)}" onclick="event.preventDefault();navigate('${item.id}')">
+            <span class="nav-sub-dot"></span>
+            <span class="nav-sub-label">${escHtml(item.label)}</span>
+            ${badge ? `<span class="nav-count-badge">${badge}</span>` : ''}
+          </a>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function refreshSidebarBadges() {
+  if (!currentUser) return;
+  const today = new Date().toLocaleDateString('sv');
+  try {
+    const [apts, followups, bills] = await Promise.all([
+      apiFetch(`/api/appointments?date=${today}`).catch(() => []),
+      apiFetch(`/api/follow-ups?status=Pending&date_from=${today}&date_to=${today}`).catch(() => []),
+      apiFetch('/api/bills').catch(() => []),
+    ]);
+    _navBadgeData = {
+      aptsToday: Array.isArray(apts) ? apts.length : 0,
+      followupsToday: Array.isArray(followups) ? followups.length : 0,
+      pendingBills: Array.isArray(bills) ? bills.filter(b => String(b.payment_status || '') === 'Pending').length : 0,
+    };
+    buildNav();
+  } catch (_) {
+    // Ignore transient badge fetch errors.
+  }
+}
+
+function toggleSidebarCollapsed(forceExpanded = null) {
+  const nextCollapsed = typeof forceExpanded === 'boolean'
+    ? !forceExpanded
+    : !document.body.classList.contains('sidebar-collapsed');
+  document.body.classList.toggle('sidebar-collapsed', nextCollapsed);
+  localStorage.setItem('sidebarCollapsed', nextCollapsed ? '1' : '0');
+  const sb = document.getElementById('sidebar');
+  if (sb && !nextCollapsed) sb.classList.remove('temp-expanded');
 }
 
 function navigate(page) {
@@ -455,11 +919,11 @@ function navigate(page) {
     _patRenderedMode = '';
     clearTimeout(_patSearchTimer);
   }
-  if (currentSystem?.blocked && currentUser?.role === 'admin' && page !== 'setup') {
-    toast('Subscription is blocked. Only Setup is available for renewal.', 'error');
-    page = 'setup';
+  if (currentSystem?.blocked && currentUser?.role === 'admin' && !['setup', 'owner-control'].includes(page)) {
+    toast('Subscription is blocked. Only Owner Control is available for renewal.', 'error');
+    page = 'owner-control';
   }
-  if (isSystemBlockedForCurrentUser() && page !== 'setup') {
+  if (isSystemBlockedForCurrentUser() && !['setup', 'owner-control'].includes(page)) {
     renderAccessLockScreen();
     return;
   }
@@ -477,35 +941,24 @@ function navigate(page) {
     return;
   }
 
-  document.querySelectorAll('#sideNav a').forEach(el => el.classList.remove('active'));
-  const navEl = document.getElementById('nav-' + page);
-  if (navEl) navEl.classList.add('active');
+  localStorage.setItem('lastNavPage', page);
+  ensurePageTab(page);
+  renderPageTabs();
+  const modules = getSidebarModules();
+  const activeModule = modules.find(m => m.items.some(i => i.id === page));
+  if (activeModule) {
+    _navOpenSection = activeModule.id;
+    localStorage.setItem('navOpenSection', _navOpenSection);
+  }
+  buildNav();
+
+  const sb = document.getElementById('sidebar');
+  if (document.body.classList.contains('sidebar-collapsed') && sb?.classList.contains('temp-expanded')) {
+    setTimeout(() => sb.classList.remove('temp-expanded'), 260);
+  }
   closeSidebar();
 
-  const titles = {
-    dashboard: ['Dashboard', 'Overview of today\'s activity'],
-    patients: ['Active Patient List', 'Today\'s patients and old-patient search'],
-    appointments: ['Appointments', 'Schedule and manage appointments'],
-    'follow-ups': ['Follow Ups', 'Track patient return visits and reminders'],
-    scheduler: ['Doctor Scheduler', 'Daily schedule view by doctor'],
-    prescriptions: ['Prescriptions', 'View and create prescriptions'],
-    billing: ['Billing', 'Manage bills and payments'],
-    reports: ['Reports', 'View clinic reports and analytics'],
-    users: ['Manage Users', 'Add and manage system users'],
-    services: ['Services', 'Manage clinic services and pricing'],
-    packages: ['Packages', 'Manage service bundles and packages'],
-    setup: ['Setup', 'Clinic configuration and payment methods'],
-    'patient-packages': ['Patient Packages', 'All patient package subscriptions'],
-    'role-permissions': ['Role Permissions', 'Configure access control per role'],
-    store: ['Store Overview', 'Stock levels across all stores'],
-    'store-products': ['Products', 'Manage product catalog'],
-    'store-suppliers': ['Suppliers', 'Manage product suppliers'],
-    'store-purchase': ['Purchase Orders', 'Buy products from suppliers'],
-    'store-transfers': ['Stock Transfers', 'Move stock between stores'],
-    'store-consumption': ['Manual Consumption', 'Consume stock manually with cost tracking'],
-    'store-sub-stores': ['Sub-Stores', 'Manage store locations'],
-  };
-  const [title, sub] = titles[page] || [page, ''];
+  const [title, sub] = PAGE_TITLES[page] || [page, ''];
   document.getElementById('pageTitle').textContent = title;
   document.getElementById('pageSub').textContent = sub;
 
@@ -517,8 +970,8 @@ function navigate(page) {
 
   const renderSeq = beginPageRender(page);
 
-  const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, reports, users, services, packages, setup, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
-    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster };
+  const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, expenses, reports, users, services, packages, setup, 'owner-control': ownerControl, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
+    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-adjustments': storeAdjustments, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster, 'store-supplier-returns': storeSupplierReturns };
   if (pages[page]) {
     if (page === 'scheduler' || page === 'patient-packages') {
       pages[page](renderSeq);
@@ -528,6 +981,163 @@ function navigate(page) {
       pages[page]();
     }
   }
+  updateQuickDock(page);
+}
+
+function isTypingContext(target) {
+  if (!target) return false;
+  const tag = (target.tagName || '').toLowerCase();
+  return tag === 'input' || tag === 'textarea' || tag === 'select' || target.isContentEditable;
+}
+
+function showShortcutGuide() {
+  showModal('Speed Shortcuts', `
+    <div class="text-sm" style="display:grid;gap:10px">
+      <div><strong>Alt + P</strong> · Open Patients</div>
+      <div><strong>Alt + A</strong> · Open Appointments</div>
+      <div><strong>Alt + B</strong> · Open Billing</div>
+      <div><strong>Alt + N</strong> · Quick New (context-aware)</div>
+      <div><strong>/</strong> · Focus main search box on current page</div>
+      <div class="text-muted" style="margin-top:6px">Designed for receptionist speed: most actions in one or two clicks.</div>
+    </div>`);
+}
+
+function focusPrimarySearch() {
+  const map = {
+    dashboard: '#dashDateFilter',
+    patients: '#patientSearch',
+    appointments: '#aptName',
+    billing: '#billSearch',
+    reports: '#reportSearch'
+  };
+  const selector = map[currentPageId];
+  if (!selector) return;
+  const el = document.querySelector(selector);
+  if (el && !el.disabled) {
+    el.focus();
+    if (typeof el.select === 'function' && el.type !== 'date') el.select();
+  }
+}
+
+const QUICK_DOCK_RULES = [
+  {
+    id: 'patients',
+    page: 'patients',
+    label: 'Patient',
+    title: 'Add patient (Alt+N)',
+    icon: IC.plus,
+    perm: 'patients.create',
+    roles: ['admin', 'doctor', 'receptionist'],
+    onclick: 'openPatientModal()'
+  },
+  {
+    id: 'appointments',
+    page: 'appointments',
+    label: 'Appointment',
+    title: 'Book appointment',
+    icon: IC.calendar,
+    perm: 'appointments.create',
+    roles: ['admin', 'doctor', 'receptionist'],
+    onclick: 'openNewAppointmentModal()'
+  },
+  {
+    id: 'billing',
+    page: 'billing',
+    label: 'Bill',
+    title: 'New bill',
+    icon: IC.billing,
+    perm: 'billing.create',
+    roles: ['admin', 'receptionist'],
+    onclick: 'openBillModal()'
+  },
+  {
+    id: 'help',
+    page: '',
+    label: 'Help',
+    title: 'Shortcut guide',
+    icon: '?',
+    perm: '',
+    roles: ['admin', 'doctor', 'receptionist'],
+    onclick: 'showShortcutGuide()',
+    className: 'quick-dock-help'
+  }
+];
+
+function canAccessQuickDockRule(rule) {
+  if (!currentUser || !rule) return false;
+  const role = String(currentUser.role || '').toLowerCase();
+  const isDefaultRole = ['admin', 'doctor', 'receptionist'].includes(role);
+  if (isDefaultRole && Array.isArray(rule.roles) && rule.roles.length && !rule.roles.includes(role)) return false;
+  if (rule.perm && !can(rule.perm)) return false;
+  if (rule.page) {
+    const allowedPages = new Set(getAccessibleNavPages());
+    if (!allowedPages.has(rule.page)) return false;
+  }
+  return true;
+}
+
+function quickCreateByPage() {
+  if (currentPageId === 'patients' && can('patients.create')) return openPatientModal();
+  if (currentPageId === 'appointments' && can('appointments.create')) return openNewAppointmentModal();
+  if (currentPageId === 'billing' && can('billing.create')) return openBillModal();
+  if (can('appointments.create')) return openNewAppointmentModal();
+  if (can('patients.create')) return openPatientModal();
+}
+
+function ensureQuickDock() {
+  if (!currentUser) return;
+  let dock = document.getElementById('quickDock');
+  if (!dock) {
+    dock = document.createElement('div');
+    dock.id = 'quickDock';
+    dock.className = 'quick-dock';
+    document.body.appendChild(dock);
+  }
+  const html = QUICK_DOCK_RULES
+    .filter(canAccessQuickDockRule)
+    .map((rule) => {
+      const pageAttr = rule.page ? ` data-page="${rule.page}"` : '';
+      const extraClass = rule.className ? ` ${rule.className}` : '';
+      return `<button class="quick-dock-btn${extraClass}"${pageAttr} title="${escHtml(rule.title || rule.label || '')}" onclick="${rule.onclick}">${rule.icon}<span>${escHtml(rule.label || '')}</span></button>`;
+    })
+    .join('');
+  dock.innerHTML = html;
+  updateQuickDock(currentPageId);
+}
+
+function updateQuickDock(page) {
+  const dock = document.getElementById('quickDock');
+  if (!dock) return;
+  const hideOnLogin = !currentUser || document.getElementById('mainApp')?.classList.contains('hidden');
+  dock.classList.toggle('hidden', hideOnLogin);
+  dock.querySelectorAll('.quick-dock-btn').forEach(btn => btn.classList.remove('active'));
+  dock.querySelector(`.quick-dock-btn[data-page="${page}"]`)?.classList.add('active');
+}
+
+function registerGlobalShortcuts() {
+  if (window._shortcutsBound) return;
+  window._shortcutsBound = true;
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && String(e.key || '').toLowerCase() === 'w') {
+      if (_activePageTab && _canCloseTab(_activePageTab)) {
+        e.preventDefault();
+        closePageTab(_activePageTab);
+      }
+      return;
+    }
+    if (isTypingContext(e.target)) return;
+    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      focusPrimarySearch();
+      return;
+    }
+    if (!e.altKey) return;
+    const key = (e.key || '').toLowerCase();
+    if (key === 'p') { e.preventDefault(); navigate('patients'); return; }
+    if (key === 'a') { e.preventDefault(); navigate('appointments'); return; }
+    if (key === 'b') { e.preventDefault(); navigate('billing'); return; }
+    if (key === 'n') { e.preventDefault(); quickCreateByPage(); }
+  });
 }
 
 function toggleSidebar() {
@@ -587,7 +1197,97 @@ function applyViewPref(page, wrapSelector) {
   wrap.setAttribute('data-vpage', page);
   wrap.classList.toggle('view-grid', getViewPref(page) === 'grid');
 }
-function confirmDialog(msg) { return Promise.resolve(confirm(msg)); }
+function confirmDialog(msg, title = 'Confirm') {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('confirmOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay modal-overlay-stack';
+    overlay.id = 'confirmOverlay';
+    overlay.innerHTML = `
+      <div class="modal modal-compact">
+        <div class="modal-header">
+          <h3>${escHtml(title)}</h3>
+        </div>
+        <div class="modal-body">${escHtml(msg || '').replace(/\r?\n/g, '<br/>')}</div>
+        <div class="modal-footer">
+          <button class="btn" id="confirmCancelBtn">Cancel</button>
+          <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+        </div>
+      </div>`;
+
+    const done = (result) => {
+      if (overlay.parentNode) overlay.remove();
+      resolve(!!result);
+    };
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) e.stopPropagation();
+    });
+
+    document.body.appendChild(overlay);
+    const cancelBtn = overlay.querySelector('#confirmCancelBtn');
+    const okBtn = overlay.querySelector('#confirmOkBtn');
+    if (cancelBtn) cancelBtn.onclick = () => done(false);
+    if (okBtn) okBtn.onclick = () => done(true);
+
+    setTimeout(() => { if (okBtn) okBtn.focus(); }, 30);
+  });
+}
+
+function confirmWithReasonDialog(msg, title = 'Confirm', reasonLabel = 'Reason (optional)', defaultReason = '') {
+  return new Promise((resolve) => {
+    const existing = document.getElementById('confirmReasonOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay modal-overlay-stack';
+    overlay.id = 'confirmReasonOverlay';
+    overlay.innerHTML = `
+      <div class="modal modal-compact">
+        <div class="modal-header">
+          <h3>${escHtml(title)}</h3>
+        </div>
+        <div class="modal-body">
+          <div style="margin-bottom:10px">${escHtml(msg || '').replace(/\r?\n/g, '<br/>')}</div>
+          <div class="form-group" style="margin:0">
+            <label>${escHtml(reasonLabel)}</label>
+            <textarea id="confirmReasonInput" rows="3" placeholder="Enter reason">${escHtml(defaultReason || '')}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="confirmReasonCancelBtn">Cancel</button>
+          <button class="btn btn-danger" id="confirmReasonOkBtn">Confirm</button>
+        </div>
+      </div>`;
+
+    const done = (confirmed) => {
+      const reason = String(overlay.querySelector('#confirmReasonInput')?.value || '').trim();
+      if (overlay.parentNode) overlay.remove();
+      resolve({ confirmed: !!confirmed, reason });
+    };
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) e.stopPropagation();
+    });
+
+    document.body.appendChild(overlay);
+    const cancelBtn = overlay.querySelector('#confirmReasonCancelBtn');
+    const okBtn = overlay.querySelector('#confirmReasonOkBtn');
+    const reasonEl = overlay.querySelector('#confirmReasonInput');
+
+    if (cancelBtn) cancelBtn.onclick = () => done(false);
+    if (okBtn) okBtn.onclick = () => done(true);
+    if (reasonEl) {
+      reasonEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) done(true);
+      });
+    }
+
+    setTimeout(() => { if (reasonEl) reasonEl.focus(); }, 30);
+  });
+}
 
 function statusBadge(s) {
   const map = { Booked:'badge-scheduled', Confirmed:'badge-confirmed', Arrived:'badge-arrived', Completed:'badge-completed', Cancelled:'badge-cancelled', 'No-Show':'badge-no-show', Paid:'badge-paid', Pending:'badge-unpaid', Scheduled:'badge-scheduled', Active:'badge-confirmed' };
@@ -610,11 +1310,14 @@ function emptyState(icon, title, desc) {
 // --------------------------------------------------------
 //  DASHBOARD
 // --------------------------------------------------------
+let _dashAutoTimer = null;
 async function dashboard() {
   const today = new Date().toLocaleDateString('sv');
   const ca = document.getElementById('contentArea');
   ca.innerHTML = skeletonStats(4) + skeletonTable(4);
   const isDoctor = currentUser.role === 'doctor';
+
+  if (_dashAutoTimer) clearTimeout(_dashAutoTimer);
 
   try {
     const [rep, apts, fuTodayList, fuMissedList] = await Promise.all([
@@ -638,6 +1341,22 @@ async function dashboard() {
     }
 
     ca.innerHTML = `
+      <div class="page-hero">
+        <div>
+          <h2 class="page-hero-title">Clinic Command Center</h2>
+          <p class="page-hero-sub">Fast actions, live counters, and zero clutter for today's workflow.</p>
+        </div>
+        <div class="live-chip"><span class="live-dot"></span> Auto-refresh every 60s</div>
+      </div>
+
+      <div class="quick-actions-grid">
+        ${can('patients.create') ? `<button class="quick-action-btn" onclick="openPatientModal()">${IC.plus}<span>Add Patient <em class="qa-key">Alt+N</em></span></button>` : ''}
+        ${can('appointments.create') ? `<button class="quick-action-btn" onclick="openNewAppointmentModal()">${IC.calendar}<span>Book Appointment <em class="qa-key">Alt+A</em></span></button>` : ''}
+        ${can('billing.create') ? `<button class="quick-action-btn" onclick="openBillModal()">${IC.billing}<span>Create Bill <em class="qa-key">Alt+B</em></span></button>` : ''}
+        ${can('prescriptions.create') ? `<button class="quick-action-btn" onclick="navigate('prescriptions')">${IC.rx}<span>Open Prescriptions</span></button>` : ''}
+        <button class="quick-action-btn" onclick="navigate('follow-ups')">${IC.clock}<span>Follow-Ups</span></button>
+      </div>
+
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon blue">${IC.apts}</div>
@@ -653,11 +1372,15 @@ async function dashboard() {
         </div>` : `
         <div class="stat-card">
           <div class="stat-icon green">${IC.revenue}</div>
-          <div class="stat-content"><div class="stat-label">Booked</div><div class="stat-value">${apts.filter(a=>a.status==='Booked').length}</div>
-              </div><div class="stat-card s2"><div class="stat-icon">${IC.check}</div>
-                <div class="stat-label">Confirmed</div><div class="stat-value">${apts.filter(a=>a.status==='Confirmed').length}</div>
-              </div><div class="stat-card s3"><div class="stat-icon">${IC.check}</div>
-                <div class="stat-label">Arrived</div><div class="stat-value">${apts.filter(a=>a.status==='Arrived').length}</div></div>
+          <div class="stat-content"><div class="stat-label">Booked</div><div class="stat-value">${apts.filter(a=>a.status==='Booked').length}</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">${IC.check}</div>
+          <div class="stat-content"><div class="stat-label">Confirmed</div><div class="stat-value">${apts.filter(a=>a.status==='Confirmed').length}</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon purple">${IC.check}</div>
+          <div class="stat-content"><div class="stat-label">Arrived</div><div class="stat-value">${apts.filter(a=>a.status==='Arrived').length}</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon amber">${IC.pending}</div>
@@ -696,6 +1419,10 @@ async function dashboard() {
           ${renderDashAptTable(apts)}
         </div>
       </div>`;
+
+    _dashAutoTimer = setTimeout(() => {
+      if (currentPageId === 'dashboard') dashboard();
+    }, 60000);
   } catch (e) {
     ca.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
   }
@@ -711,7 +1438,7 @@ function renderDashAptTable(apts) {
       <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'—')}</span></td>
       <td>${escHtml(a.time)}</td>
       ${!isDoctor ? `<td>${escHtml(a.doctor_name)}</td>` : ''}
-      <td>${statusBadge(a.status)}</td>
+      <td>${appointmentStatusTag(a)}</td>
       <td class="td-actions"><div class="apt-actions">
         ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
         ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
@@ -721,6 +1448,20 @@ function renderDashAptTable(apts) {
       </div></td>
     </tr>`).join('')}</tbody>
   </table></div>`;
+}
+
+function appointmentStatusTag(a) {
+  const bookedBy = String(a && a.booked_by_name || '').trim();
+  const paidBy = String(a && a.paid_by_name || '').trim();
+  const s = String(a && a.status || '');
+  let meta = '';
+  if ((s === 'Booked' || s === 'Confirmed' || s === 'Completed') && bookedBy) {
+    meta += `<div class="text-muted text-sm" style="margin-top:2px">Booked by: ${escHtml(bookedBy)}</div>`;
+  }
+  if (s === 'Completed' && paidBy) {
+    meta += `<div class="text-muted text-sm">Paid by: ${escHtml(paidBy)}</div>`;
+  }
+  return `<div>${statusBadge(s)}${meta}</div>`;
 }
 
 function canOpenRxFromAppointment(a) {
@@ -794,6 +1535,7 @@ async function patients(search = '', page, mode, renderSeq = _pageRenderSeq) {
       <input type="file" id="patientImportFile" accept=".csv,text/csv" style="display:none" onchange="handlePatientImportFile(event)"/>
       <div id="patientTableWrap">${skeletonTable(5)}</div>`;
     _patRenderedMode = _patMode;
+    setTimeout(() => focusPrimarySearch(), 100);
   } else {
     const searchInput = document.getElementById('patientSearch');
     if (searchInput && searchInput.value !== search) searchInput.value = search;
@@ -824,7 +1566,7 @@ async function patients(search = '', page, mode, renderSeq = _pageRenderSeq) {
         </div>
       </div>` : `<div class="text-muted text-sm" style="padding:8px 4px">Showing ${total} patient${total!==1?'s':''}</div>`;
     wrap.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>MR#</th><th>Name</th><th>Civil ID</th><th>DOB</th><th>Age/Gender</th><th>Phone</th><th>Alt Phone</th><th>Status</th><th>Registered</th><th>Actions</th></tr></thead>
+      <thead><tr><th>MR#</th><th>Name</th><th>Civil ID</th><th>DOB</th><th>Age/Gender</th><th>Phone</th><th>Status</th><th>Registered</th><th>Actions</th></tr></thead>
       <tbody>${list.map((p) => {
         const statusColor = p.patient_status === 'VIP' ? 'var(--c-primary)' : p.patient_status === 'Not Good' ? 'var(--c-danger)' : 'var(--c-success)';
         const blockedBadge = p.blocked ? `<span style="background:var(--c-danger);color:#fff;border-radius:4px;font-size:10px;padding:1px 5px;margin-left:4px">BLOCKED</span>` : '';
@@ -835,7 +1577,6 @@ async function patients(search = '', page, mode, renderSeq = _pageRenderSeq) {
         <td>${escHtml(p.dob)||'—'}</td>
         <td>${escHtml(p.age)||'—'} / ${escHtml(p.gender)||'—'}</td>
         <td>${escHtml(p.phone)||'—'}</td>
-        <td>${escHtml(p.alt_phone)||'—'}</td>
         <td><span style="background:${statusColor}22;color:${statusColor};border-radius:4px;font-size:11px;padding:2px 7px;font-weight:600">${escHtml(p.patient_status||'Good')}</span></td>
         <td class="text-muted text-sm">${escHtml(formatDateTime(p.registration_date || p.created_at || ''))}</td>
         <td class="td-actions patient-actions-cell" onclick="event.stopPropagation()">
@@ -1279,13 +2020,30 @@ async function viewPatient(id) {
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
           <div>
-            <div style="font-size:22px;font-weight:700">${escHtml(p.name)}${p.second_name ? ` <span style="font-weight:400;color:var(--text-muted,#888)">${escHtml(p.second_name)}</span>` : ''}</div>
+            <div style="font-size:22px;font-weight:700">${escHtml(p.name)}${p.second_name ? ` <span style=\"font-weight:400;color:var(--text-muted,#888)\">${escHtml(p.second_name)}</span>` : ''}</div>
             <div style="color:var(--text-muted,#888);font-size:13px;margin-top:2px">MR# <strong style="color:var(--c-primary)">${escHtml(p.mr_number)||'—'}</strong>${p.civil_id ? ` &nbsp;—&nbsp; Civil ID: ${escHtml(p.civil_id)}` : ''}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm btn-primary" onclick="openPatientEmr(${p.id})">View Full EMR</button>
             <span style="background:${statusColor}22;color:${statusColor};border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">${escHtml(p.patient_status||'Good')}</span>
             ${p.blocked ? `<span style="background:var(--c-danger);color:#fff;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700">BLOCKED</span>` : ''}
+            ${(Array.isArray(bills) && bills.length) ? (() => {
+              // Prefer bill for current appointment if available, else latest bill
+              let latestBill = bills[0];
+              if (Array.isArray(bills) && bills.length > 1) {
+                // Try to find a bill for the latest appointment
+                const latestApt = patApts && patApts.length ? patApts.slice().sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))[0] : null;
+                if (latestApt) {
+                  const aptBill = bills.find(b => b.appointment_id && latestApt.id && String(b.appointment_id) === String(latestApt.id));
+                  if (aptBill) latestBill = aptBill;
+                  else latestBill = bills.slice().sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))[0];
+                } else {
+                  latestBill = bills.slice().sort((a,b) => (b.created_at||'').localeCompare(a.created_at||''))[0];
+                }
+              }
+              // Print Bill button removed from patient profile as per user request
+              return '';
+            })() : '<span style="color:#c00;font-size:12px;margin-left:6px">No bills found</span>'}
           </div>
         </div>
         <div class="detail-grid" style="margin-top:12px">
@@ -1300,30 +2058,30 @@ async function viewPatient(id) {
       </div>
 
       <!-- Summary badges · clickable to switch tabs -->
-      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <div class="ph-stat-box ph-stat-active" id="phStatAppts" onclick="_phTab('phAppts')" style="background:var(--bg-card);border:2px solid var(--c-primary);border-radius:8px;padding:10px 18px;text-align:center;min-width:80px;cursor:pointer">
-          <div style="font-size:22px;font-weight:700;color:var(--c-primary)">${patApts.length}</div>
-          <div style="font-size:11px;color:var(--text-muted,#888)">Appointments</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;align-items:stretch">
+        <div class="ph-stat-box ph-stat-active" id="phStatAppts" onclick="_phTab('phAppts')" style="background:var(--c-primary-bg);border:1.5px solid var(--c-primary);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div style="font-size:22px;font-weight:700;color:var(--c-primary);line-height:1">${patApts.length}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--c-primary);text-transform:uppercase;letter-spacing:.4px">Appointments</div>
         </div>
-        <div class="ph-stat-box" id="phStatBills" onclick="_phTab('phBills')" style="background:var(--bg-card);border:2px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;min-width:80px;cursor:pointer">
-          <div style="font-size:22px;font-weight:700;color:var(--c-primary)">${bills.length}</div>
-          <div style="font-size:11px;color:var(--text-muted,#888)">Bills</div>
+        <div class="ph-stat-box" id="phStatBills" onclick="_phTab('phBills')" style="background:var(--bg-hover);border:1.5px solid var(--border);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1">${bills.length}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Bills</div>
         </div>
-        <div class="ph-stat-box" id="phStatRxs" onclick="_phTab('phRxs')" style="background:var(--bg-card);border:2px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;min-width:80px;cursor:pointer">
-          <div style="font-size:22px;font-weight:700;color:var(--c-primary)">${rxs.length}</div>
-          <div style="font-size:11px;color:var(--text-muted,#888)">Prescriptions</div>
+        <div class="ph-stat-box" id="phStatRxs" onclick="_phTab('phRxs')" style="background:var(--bg-hover);border:1.5px solid var(--border);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1">${rxs.length}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Prescriptions</div>
         </div>
-        <div class="ph-stat-box" id="phStatPkgs" onclick="_phTab('phPkgs')" style="background:var(--bg-card);border:2px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;min-width:80px;cursor:pointer">
-          <div style="font-size:22px;font-weight:700;color:var(--c-primary)">${pkgs.length}</div>
-          <div style="font-size:11px;color:var(--text-muted,#888)">Packages</div>
+        <div class="ph-stat-box" id="phStatPkgs" onclick="_phTab('phPkgs')" style="background:var(--bg-hover);border:1.5px solid var(--border);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1">${pkgs.length}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Packages</div>
         </div>
-        <div class="ph-stat-box" id="phStatSvcs" onclick="_phTab('phSvcs')" style="background:var(--bg-card);border:2px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;min-width:80px;cursor:pointer">
-          <div style="font-size:22px;font-weight:700;color:var(--c-primary)">${allServices.length}</div>
-          <div style="font-size:11px;color:var(--text-muted,#888)">Services</div>
+        <div class="ph-stat-box" id="phStatSvcs" onclick="_phTab('phSvcs')" style="background:var(--bg-hover);border:1.5px solid var(--border);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1">${allServices.length}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.4px">Services</div>
         </div>
-        <div style="background:var(--bg-card);border:2px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;min-width:80px">
-          <div style="font-size:22px;font-weight:700;color:var(--c-primary)">${bills.reduce((s,b)=>s+(parseFloat(b.total)||0),0).toFixed(3)}</div>
-          <div style="font-size:11px;color:var(--text-muted,#888)">Total Billed</div>
+        <div style="background:var(--c-success-bg);border:1.5px solid var(--c-success);border-radius:10px;padding:12px 6px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
+          <div style="font-size:16px;font-weight:700;color:var(--c-success);line-height:1;word-break:break-all">${bills.reduce((s,b)=>s+(parseFloat(b.total)||0),0).toFixed(3)}</div>
+          <div style="font-size:10px;font-weight:600;color:var(--c-success);text-transform:uppercase;letter-spacing:.4px">Total Billed</div>
         </div>
       </div>
 
@@ -1351,25 +2109,35 @@ async function viewPatient(id) {
             <td class="text-sm">${escHtml(formatDateTime(b.created_at||''))}</td>
             <td><strong>${(parseFloat(b.total)||0).toFixed(3)}</strong></td>
             <td class="text-sm">${escHtml(b.payment_method||'—')}</td>
-            <td>${statusBadge(b.payment_status)}</td>
+            <td>
+              <span class="status-badges-wrap">
+                ${statusBadge(b.payment_status)}
+                ${(Number(b.discount_amount) > 0) ? `<span class="badge badge-discounted">${IC.discount} Discounted</span>` : ''}
+              </span>
+            </td>
             <td>${canPrintBill(b.created_at) ? `<button class="btn btn-sm" onclick="printBill(${b.id})">${IC.print}</button>` : ''}</td>
           </tr>`).join('')}</tbody>
         </table></div>` : `<p class="text-muted text-sm">No bills on file.</p>`}
       </div>
 
+
       <!-- Prescriptions tab -->
       <div id="phRxs" style="display:none">
         ${rxs.length ? `<div class="table-wrap"><table>
-          <thead><tr><th>Date</th><th>MR#</th><th>Visit ID</th><th>Doctor</th><th>Diagnosis</th><th>Medicines</th><th></th></tr></thead>
-          <tbody>${rxs.map(r=>`<tr>
-            <td class="text-sm">${escHtml(formatDateTime(r.created_at||''))}</td>
-            <td><span class="code-id code-id-primary">${escHtml(r.mr_number||p.mr_number||'—')}</span></td>
-            <td><span class="code-id code-id-muted">${escHtml(r.visit_id||'—')}</span></td>
-            <td>${escHtml(r.doctor_name||'—')}</td>
-            <td>${escHtml(r.diagnosis||'—')}</td>
-            <td class="truncate" style="max-width:160px">${escHtml(r.medicines||'—')}</td>
-            <td><button class="btn btn-sm" onclick="printPrescription(${r.id})">${IC.print} Print</button></td>
-          </tr>`).join('')}</tbody>
+          <thead><tr><th>Date</th><th>Doctor</th><th>Diagnosis</th><th>Medicines</th><th>Dosage</th><th>Progress Note</th><th></th></tr></thead>
+          <tbody>${rxs.map(r => {
+            const medList = (r.medicines||'').split(/[,\n]/).map(m=>m.trim()).filter(Boolean);
+            const dosageList = (r.dosage||'').split(/[,\n]/).map(d=>d.trim()).filter(Boolean);
+            return `<tr>
+              <td class="text-sm">${escHtml(formatDateTime(r.created_at||''))}</td>
+              <td class="text-sm">${escHtml(r.doctor_name||'—')}</td>
+              <td class="text-sm">${escHtml(r.diagnosis||'—')}</td>
+              <td class="text-sm">${medList.length ? medList.map(m=>`<div>${escHtml(m)}</div>`).join('') : '—'}</td>
+              <td class="text-sm">${dosageList.length ? dosageList.map(d=>`<div>${escHtml(d)}</div>`).join('') : '—'}</td>
+              <td class="text-sm text-muted">${escHtml(r.progress_note||'—')}</td>
+              <td><button class="btn btn-sm" onclick="printPrescription(${r.id})">${IC.print}</button></td>
+            </tr>`;
+          }).join('')}</tbody>
         </table></div>` : `<p class="text-muted text-sm">No prescriptions on file.</p>`}
       </div>
 
@@ -2229,14 +2997,14 @@ function openPatientModal(id = null) {
 }
 
 async function deletePatient(id, name) {
-  if (!confirm(`Delete patient "${name}"? This cannot be undone.`)) return;
+  if (!await confirmDialog(`Delete patient "${name}"? This cannot be undone.`)) return;
   try { await apiFetch(`/api/patients/${id}`, { method: 'DELETE' }); toast('Patient deleted', 'success'); patients(); }
   catch(e) { toast(e.message, 'error'); }
 }
 
 async function togglePatientBlocked(id, shouldBlock, name) {
   const actionLabel = shouldBlock ? 'block' : 'unblock';
-  if (!confirm(`${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} patient "${name}"?`)) return;
+  if (!await confirmDialog(`${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} patient "${name}"?`)) return;
   try {
     await apiFetch(`/api/patients/${id}`, {
       method: 'PUT',
@@ -2294,11 +3062,20 @@ async function appointments() {
 
   const ca = document.getElementById('contentArea');
   ca.innerHTML = `
+    <div class="page-hero compact">
+      <div>
+        <h2 class="page-hero-title">Appointment Flow</h2>
+        <p class="page-hero-sub">Switch views, reschedule quickly, and keep queue status visible.</p>
+      </div>
+    </div>
+
     <div class="action-bar">
       <div class="tabs">
         <button class="tab-btn ${aptViewMode==='calendar'?'active':''}" onclick="aptViewMode='calendar';appointments()">${IC.calendar} Calendar</button>
         <button class="tab-btn ${aptViewMode==='list'?'active':''}" onclick="aptViewMode='list';appointments()">${IC.list} List</button>
       </div>
+      <button class="btn" onclick="aptSetToday()">${IC.calendar} Today</button>
+      <button class="btn" onclick="aptFilterDateFrom=aptTodayStr();aptFilterDateTo='';appointmentsList()">Next Window</button>
       ${can('appointments.create') ? `<button class="btn btn-primary" onclick="openNewAppointmentModal()">${IC.plus} Book Appointment</button>` : ''}
     </div>
     <div id="aptViewBody">${skeletonTable(5)}</div>`;
@@ -2435,8 +3212,9 @@ function aptRowHtml(a) {
     <td><strong>${escHtml(a.patient_name)}</strong><br><span class="text-muted text-sm">${escHtml(a.patient_phone||'')}</span></td>
     <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'—')}</span></td>
     ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'—')}</td>` : ''}
-    <td>${statusBadge(a.status)}</td>
+    <td>${appointmentStatusTag(a)}</td>
     <td class="td-actions"><div class="apt-actions">
+      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">ℹ️ Info</button>
       ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
       ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
       ${!isDoctor && !isLocked ? `<button class="btn btn-sm btn-outline-primary" onclick="openEditAppointmentModal(${a.id})">${IC.edit} Edit</button>` : ''}
@@ -2460,8 +3238,9 @@ function listAptRowHtml(a) {
     </td>
     <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'—')}</span></td>
     ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'—')}</td>` : ''}
-    <td>${statusBadge(a.status)}</td>
+    <td>${appointmentStatusTag(a)}</td>
     <td class="td-actions"><div class="apt-actions">
+      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">ℹ️ Info</button>
       ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
       ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
       ${!isDoctor && !isLocked ? `<button class="btn btn-sm btn-outline-primary" onclick="openEditAppointmentModal(${a.id})">${IC.edit} Edit</button>` : ''}
@@ -2483,7 +3262,7 @@ async function startConsultation(aptId, patientId) {
 }
 
 async function cancelAptAndRefresh(id) {
-  if (!confirm('Cancel this appointment?')) return;
+  if (!await confirmDialog('Cancel this appointment?')) return;
   try {
     await apiFetch(`/api/appointments/${id}`, { method:'PUT', body:JSON.stringify({ status:'Cancelled' }) });
     toast('Appointment cancelled', 'success');
@@ -2533,7 +3312,7 @@ async function appointmentsList() {
       </div>
     </div>`;
 
-    body.innerHTML = filterHtml + `<div id="aptTableWrap">${skeletonTable(5)}</div>`;
+    body.innerHTML = filterHtml + `<div id="aptListStats" class="kpi-mini-grid"></div><div id="aptTableWrap">${skeletonTable(5)}</div>`;
 
     // Populate doctor dropdown
     if (!isDoctor) {
@@ -2563,6 +3342,7 @@ async function appointmentsList() {
   if (elDr)   elDr.value   = aptFilterDoctor;
 
   await aptRefreshTable();
+  setTimeout(() => focusPrimarySearch(), 100);
 }
 
 async function aptRefreshTable() {
@@ -2580,6 +3360,17 @@ async function aptRefreshTable() {
     if (aptFilterMR)       url += `mr_number=${encodeURIComponent(aptFilterMR)}&`;
     if (aptFilterCivil)    url += `civil_id=${encodeURIComponent(aptFilterCivil)}&`;
     const list = await apiFetch(url);
+    const statsEl = document.getElementById('aptListStats');
+    if (statsEl) {
+      const waiting = list.filter(a => ['Booked','Confirmed'].includes(String(a.status || ''))).length;
+      const inProgress = list.filter(a => String(a.status || '') === 'Arrived').length;
+      const completed = list.filter(a => String(a.status || '') === 'Completed').length;
+      statsEl.innerHTML = `
+        <div class="kpi-mini"><span>Total</span><strong>${list.length}</strong></div>
+        <div class="kpi-mini"><span>Waiting</span><strong>${waiting}</strong></div>
+        <div class="kpi-mini"><span>In Progress</span><strong>${inProgress}</strong></div>
+        <div class="kpi-mini"><span>Completed</span><strong>${completed}</strong></div>`;
+    }
     if (!list.length) { wrap.innerHTML = emptyState(IC.empty, 'No appointments found', 'Try adjusting filters or book a new appointment'); return; }
     wrap.innerHTML = `<div class="table-wrap"><table>
       <thead><tr>
@@ -2744,6 +3535,13 @@ function selectPatientFromDropdown(id, name, phone) {
 }
 
 async function openEditAppointmentModal(id) {
+  try {
+    const me = await apiFetch('/api/me');
+    if (me && typeof me === 'object') {
+      currentUser = { ...currentUser, ...me };
+      currentSystem = currentUser?.system || currentSystem;
+    }
+  } catch (_) {}
   const isDoctor = currentUser?.role === 'doctor';
   const [a, doctors] = await Promise.all([apiFetch(`/api/appointments/${id}`), getDoctorsCached()]);
   if (['Completed','Cancelled'].includes(a.status)) {
@@ -2764,7 +3562,7 @@ async function openEditAppointmentModal(id) {
             <option ${a.status==='Booked'?'selected':''}>Booked</option>
             <option ${a.status==='Confirmed'?'selected':''}>Confirmed</option>
             <option ${a.status==='Arrived'?'selected':''}>Arrived</option>
-            ${!isDoctor ? `<option value="Arrived+Billing">Arrived + Billing</option>` : ''}
+            ${(!isDoctor && can('billing.create')) ? `<option value="Arrived+Billing">Arrived + Billing</option>` : ''}
             <option ${a.status==='No-Show'?'selected':''}>No-Show</option>
             <option ${a.status==='Cancelled'?'selected':''}>Cancelled</option>
           </select>
@@ -2775,7 +3573,7 @@ async function openEditAppointmentModal(id) {
         <div class="form-group"><label>Time *</label><input type="time" name="time" value="${a.time}" required/></div>
       </div>
       <div class="form-group"><label>Notes</label><input name="notes" value="${escHtml(a.notes||'')}"/></div>
-      ${(!isDoctor && a.status === 'Arrived') ? `
+      ${(!isDoctor && can('billing.create') && a.status === 'Arrived') ? `
       <div class="modal-bill-row">
         <hr class="modal-divider"/>
         <button type="button" class="btn btn-success btn-full" onclick="closeModal();openBillModal(${a.patient_id},${a.id})">${IC.billing} Generate Bill for this Appointment</button>
@@ -2800,7 +3598,7 @@ async function openEditAppointmentModal(id) {
 }
 
 async function cancelAppointment(id) {
-  if (!confirm('Cancel this appointment?')) return;
+  if (!await confirmDialog('Cancel this appointment?')) return;
   try {
     await apiFetch(`/api/appointments/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'Cancelled' }) });
     toast('Appointment cancelled', 'success');
@@ -3137,7 +3935,7 @@ async function autoCreateFollowUpFromContext(patientId, doctorId = null, appoint
 }
 
 async function deleteFollowUp(id) {
-  if (!confirm('Delete this follow-up?')) return;
+  if (!await confirmDialog('Delete this follow-up?')) return;
   try {
     await apiFetch(`/api/follow-ups/${id}`, { method:'DELETE' });
     toast('Follow-up deleted', 'success');
@@ -3560,9 +4358,17 @@ async function scheduler(renderSeq = _pageRenderSeq) {
     const _sn = new Date();
     schedDate = _sn.getFullYear() + '-' + String(_sn.getMonth()+1).padStart(2,'0') + '-' + String(_sn.getDate()).padStart(2,'0');
   }
-  // If logged-in user has a department and is not admin, lock the filter to their dept
-  const isDeptLocked = !!(currentUser && currentUser.department_id && currentUser.role !== 'admin');
-  if (isDeptLocked) schedDept = String(currentUser.department_id);
+  // Department scope for non-admin users: support multi-department access.
+  const userDeptIds = (currentUser && currentUser.role !== 'admin')
+    ? ((Array.isArray(currentUser.department_ids) && currentUser.department_ids.length
+        ? currentUser.department_ids
+        : (currentUser.department_id ? [currentUser.department_id] : []))
+      .map(id => String(parseInt(id, 10))).filter(id => id && id !== 'NaN'))
+    : [];
+  const hasDeptScope = userDeptIds.length > 0;
+  const isDeptLocked = hasDeptScope && userDeptIds.length === 1;
+  if (isDeptLocked) schedDept = userDeptIds[0];
+  if (hasDeptScope && schedDept && !userDeptIds.includes(String(schedDept))) schedDept = '';
 
   const ca = document.getElementById('contentArea');
   ca.innerHTML = skeletonTable(8);
@@ -3767,11 +4573,14 @@ async function scheduler(renderSeq = _pageRenderSeq) {
 
     // Build department filter control
     const activeDepts = (departments || []).filter(d => d.active !== false);
+    const allowedDepts = hasDeptScope
+      ? activeDepts.filter(d => userDeptIds.includes(String(d.id)))
+      : activeDepts;
     const deptFilterHTML = isDeptLocked
-      ? `<span class="badge badge-scheduled" style="white-space:nowrap">${escHtml(currentUser.department_name || 'Dept')}</span>`
+      ? `<span class="badge badge-scheduled" style="white-space:nowrap">${escHtml(allowedDepts[0]?.name || currentUser.department_name || 'Dept')}</span>`
       : `<select style="width:auto" onchange="schedDept=this.value;scheduler()">
           <option value="">All Departments</option>
-          ${activeDepts.map(d => `<option value="${d.id}" ${schedDept===String(d.id)?'selected':''}>${escHtml(d.name)}</option>`).join('')}
+          ${allowedDepts.map(d => `<option value="${d.id}" ${schedDept===String(d.id)?'selected':''}>${escHtml(d.name)}</option>`).join('')}
         </select>`;
 
     // If no doctors after filter
@@ -4557,9 +5366,407 @@ async function openDiscountModal(id = null) {
     });
 }
 async function deleteDiscount(id) {
-  if (!confirm('Delete this discount?')) return;
+  if (!await confirmDialog('Delete this discount?')) return;
   try { await apiFetch(`/api/discounts/${id}`, { method:'DELETE' }); toast('Deleted','success'); _discountAll = await apiFetch('/api/discounts'); renderDiscountTable(); }
   catch(e) { toast(e.message,'error'); }
+}
+
+// --------------------------------------------------------
+//  EXPENSES
+// --------------------------------------------------------
+let _expenseRows = [];
+let _expenseMeta = { categories: [], payment_methods: [] };
+let _supplierInvoiceCandidates = [];
+
+function expenseTodayISO() {
+  return new Date().toLocaleDateString('sv');
+}
+
+function expenseMonthStartISO() {
+  const dt = new Date();
+  dt.setDate(1);
+  return dt.toLocaleDateString('sv');
+}
+
+function expenseMoney(value) {
+  return `KD ${(parseFloat(value || 0) || 0).toFixed(3)}`;
+}
+
+function expenseCategoryOptions(selected = '') {
+  const current = String(selected || '');
+  const items = Array.from(new Set([...(Array.isArray(_expenseMeta.categories) ? _expenseMeta.categories : []), ...(current ? [current] : [])].filter(Boolean)));
+  return ['<option value="">All Categories</option>']
+    .concat(items.sort((a, b) => a.localeCompare(b)).map((cat) => `<option value="${escHtml(cat)}"${cat === current ? ' selected' : ''}>${escHtml(cat)}</option>`))
+    .join('');
+}
+
+function expenseCategorySelectOptions(selected = '', placeholder = 'Select Category') {
+  const current = String(selected || '');
+  const items = Array.from(new Set((Array.isArray(_expenseMeta.categories) ? _expenseMeta.categories : []).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  return [`<option value="">${escHtml(placeholder)}</option>`]
+    .concat(items.map((cat) => `<option value="${escHtml(cat)}"${cat === current ? ' selected' : ''}>${escHtml(cat)}</option>`))
+    .join('');
+}
+
+function expensePaymentDatalistOptions() {
+  return Array.from(new Set((Array.isArray(_expenseMeta.payment_methods) ? _expenseMeta.payment_methods : []).filter(Boolean)))
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => `<option value="${escHtml(name)}"></option>`)
+    .join('');
+}
+
+function setExpensePreset(mode) {
+  const fromEl = document.getElementById('expenseDateFrom');
+  const toEl = document.getElementById('expenseDateTo');
+  if (!fromEl || !toEl) return;
+  if (mode === 'today') {
+    const today = expenseTodayISO();
+    fromEl.value = today;
+    toEl.value = today;
+  } else {
+    fromEl.value = expenseMonthStartISO();
+    toEl.value = expenseTodayISO();
+  }
+  loadExpenses();
+}
+
+function selectedSupplierInvoiceForPayment() {
+  const id = parseInt(document.getElementById('sipInvoiceId')?.value || 0, 10);
+  if (!id) return null;
+  return _supplierInvoiceCandidates.find((row) => parseInt(row.po_id, 10) === id) || null;
+}
+
+function refreshSupplierInvoicePaymentMeta() {
+  const inv = selectedSupplierInvoiceForPayment();
+  const metaEl = document.getElementById('sipInvoiceMeta');
+  if (!metaEl) return;
+  if (!inv) {
+    metaEl.innerHTML = `<div class="text-muted text-sm">Select an invoice to view due details.</div>`;
+    return;
+  }
+
+  metaEl.innerHTML = `
+    <div class="form-row" style="margin:0">
+      <div class="form-group" style="margin:0"><label>Supplier</label><div><strong>${escHtml(inv.supplier_name || '—')}</strong></div></div>
+      <div class="form-group" style="margin:0"><label>Invoice #</label><div><strong>${escHtml(inv.invoice_number || `PO-${inv.po_id}`)}</strong></div></div>
+    </div>
+    <div class="form-row" style="margin-top:8px">
+      <div class="form-group" style="margin:0"><label>Total</label><div>${expenseMoney(inv.total_amount || 0)}</div></div>
+      <div class="form-group" style="margin:0"><label>Paid</label><div>${expenseMoney(inv.paid_amount || 0)}</div></div>
+      <div class="form-group" style="margin:0"><label>Due</label><div><strong style="color:var(--c-danger)">${expenseMoney(inv.due_amount || 0)}</strong></div></div>
+    </div>`;
+
+  const amountEl = document.getElementById('sipAmount');
+  if (amountEl) {
+    const currentAmount = parseFloat(amountEl.value || 0);
+    const due = parseFloat(inv.due_amount || 0) || 0;
+    if (!(currentAmount > 0) || currentAmount > due) amountEl.value = due.toFixed(3);
+    amountEl.max = String(due.toFixed(3));
+  }
+}
+
+async function openSupplierInvoicePaymentModal(preselectPoId = null) {
+  if (!can('expenses.create')) { toast('No permission to record supplier invoice payments', 'error'); return; }
+
+  try {
+    const [invoicesResp, methodsResp, poResp] = await Promise.all([
+      apiFetch('/api/store/supplier-invoices'),
+      apiFetch('/api/payment-methods').catch(() => []),
+      apiFetch('/api/store/purchase-orders').catch(() => [])
+    ]);
+
+    let allInvoices = Array.isArray(invoicesResp) ? invoicesResp : [];
+    if (!allInvoices.length && Array.isArray(poResp) && poResp.length) {
+      allInvoices = poResp
+        .filter((po) => parseInt(po.supplier_id, 10) > 0)
+        .map((po) => {
+          const total = parseFloat(po.total_cost || 0) || 0;
+          const paid = parseFloat(po.paid_amount || 0) || 0;
+          const due = parseFloat((po.due_amount !== undefined ? po.due_amount : Math.max(0, total - paid)) || 0) || 0;
+          const paymentStatus = due <= 0.0005 ? 'Paid' : (paid > 0 ? 'Partially Paid' : 'Unpaid');
+          return {
+            po_id: po.id,
+            supplier_id: po.supplier_id,
+            supplier_name: po.supplier_name || '—',
+            invoice_number: String(po.invoice_number || '').trim() || `PO-${po.id}`,
+            order_date: po.order_date || String(po.created_at || '').slice(0, 10),
+            purchase_status: po.status || 'Pending',
+            total_amount: parseFloat(total.toFixed(3)),
+            paid_amount: parseFloat(paid.toFixed(3)),
+            due_amount: parseFloat(due.toFixed(3)),
+            payment_status: paymentStatus
+          };
+        });
+    }
+
+    const preferredId = preselectPoId ? parseInt(preselectPoId, 10) : 0;
+    _supplierInvoiceCandidates = allInvoices.filter((inv) => {
+      const due = parseFloat(inv && inv.due_amount || 0) || 0;
+      if (due > 0.0005) return true;
+      return preferredId > 0 && parseInt(inv && inv.po_id, 10) === preferredId;
+    });
+    if (!_supplierInvoiceCandidates.length) {
+      toast('No unpaid supplier invoices found', 'error');
+      return;
+    }
+
+    const paymentMethods = (Array.isArray(_expenseMeta.payment_methods) && _expenseMeta.payment_methods.length)
+      ? _expenseMeta.payment_methods
+      : (Array.isArray(methodsResp) ? methodsResp.filter((m) => m.active !== false).map((m) => m.name) : []);
+
+    const invoiceOpts = _supplierInvoiceCandidates.map((inv) => `
+      <option value="${inv.po_id}">${escHtml(`${inv.supplier_name || 'Supplier'} · ${inv.invoice_number || `PO-${inv.po_id}`} · Due ${expenseMoney(inv.due_amount || 0)}`)}</option>`).join('');
+    const methodOpts = (paymentMethods.length ? paymentMethods : ['Cash']).map((name) => `<option value="${escHtml(name)}">${escHtml(name)}</option>`).join('');
+
+    showModal('Pay Supplier Invoice', `
+      <form id="sipForm">
+        <div class="form-group">
+          <label>Supplier Invoice *</label>
+          <select id="sipInvoiceId" name="invoice_id" onchange="refreshSupplierInvoicePaymentMeta()" required>
+            <option value="">— Select Invoice —</option>
+            ${invoiceOpts}
+          </select>
+        </div>
+        <div id="sipInvoiceMeta" class="alert" style="margin-bottom:10px"><div class="text-muted text-sm">Select an invoice to view due details.</div></div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Amount (KD) *</label><input id="sipAmount" name="amount" type="number" min="0.001" step="0.001" required/></div>
+          <div class="form-group"><label>Payment Date *</label><input name="payment_date" type="date" value="${expenseTodayISO()}" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Payment Method</label><select name="payment_method">${methodOpts}</select></div>
+          <div class="form-group"><label>Reference No</label><input name="reference_no" maxlength="80" placeholder="Receipt / transfer ref"/></div>
+        </div>
+        <div class="form-group"><label>Notes</label><input name="notes" maxlength="240" placeholder="Optional note"/></div>
+      </form>`,
+      async () => {
+        const inv = selectedSupplierInvoiceForPayment();
+        if (!inv) { toast('Select a supplier invoice', 'error'); return false; }
+
+        const body = Object.fromEntries(new FormData(document.getElementById('sipForm')));
+        body.amount = parseFloat(body.amount || 0);
+        if (!(body.amount > 0)) { toast('Enter a valid payment amount', 'error'); return false; }
+        const due = parseFloat(inv.due_amount || 0) || 0;
+        if (body.amount - due > 0.0005) { toast(`Amount exceeds due (${expenseMoney(due)})`, 'error'); return false; }
+
+        try {
+          const result = await apiFetch(`/api/store/supplier-invoices/${inv.po_id}/payments`, {
+            method: 'POST',
+            body: JSON.stringify(body)
+          });
+          const dueAfter = parseFloat(result?.summary?.due_amount || 0) || 0;
+          toast(`Payment recorded. Remaining due: ${expenseMoney(dueAfter)}`, 'success');
+          closeModal();
+          await loadExpenses();
+          if (currentPageId === 'store-purchase') storePurchase();
+        } catch (e) {
+          toast(e.message || 'Failed to record payment', 'error');
+          return false;
+        }
+      }
+    );
+
+    const selectEl = document.getElementById('sipInvoiceId');
+    if (selectEl) {
+      const preferred = preselectPoId && _supplierInvoiceCandidates.some((row) => parseInt(row.po_id, 10) === parseInt(preselectPoId, 10))
+        ? String(preselectPoId)
+        : String((_supplierInvoiceCandidates[0] || {}).po_id || '');
+      selectEl.value = preferred;
+      refreshSupplierInvoicePaymentMeta();
+    }
+  } catch (e) {
+    toast(e.message || 'Failed to load supplier invoices', 'error');
+  }
+}
+
+async function expenses() {
+  const ca = document.getElementById('contentArea');
+  ca.innerHTML = `
+    <div class="action-bar bill-action-bar">
+      <div class="search-box">
+        <input id="expenseSearch" placeholder="Search title, category, vendor, notes, ref..." onkeydown="if(event.key==='Enter') loadExpenses()" />
+      </div>
+      <div class="bill-filter-group">
+        <input id="expenseDateFrom" type="date" value="${expenseMonthStartISO()}" onchange="loadExpenses()" title="From date"/>
+        <input id="expenseDateTo" type="date" value="${expenseTodayISO()}" onchange="loadExpenses()" title="To date"/>
+        <select id="expenseCategoryFilter" class="form-select" onchange="loadExpenses()">
+          <option value="">All Categories</option>
+        </select>
+        <button class="btn" onclick="setExpensePreset('today')">Today</button>
+        <button class="btn" onclick="setExpensePreset('month')">This Month</button>
+        <button class="btn report-apply-btn" onclick="loadExpenses()">${IC.search} Apply</button>
+      </div>
+      <div class="bill-action-spacer"></div>
+      ${can('expenses.create') ? `<button class="btn" onclick="openSupplierInvoicePaymentModal()">${IC.billing} Pay Supplier Invoice</button>` : ''}
+      ${can('expenses.create') ? `<button class="btn btn-primary" onclick="openExpenseModal()">${IC.plus} New Expense</button>` : ''}
+    </div>
+    <div id="expenseSummary">${skeletonStats(4)}</div>
+    <div id="expenseWrap">${skeletonTable(4)}</div>`;
+  await loadExpenses();
+}
+
+async function loadExpenses() {
+  const wrap = document.getElementById('expenseWrap');
+  const summaryWrap = document.getElementById('expenseSummary');
+  const search = document.getElementById('expenseSearch')?.value.trim() || '';
+  const dateFrom = document.getElementById('expenseDateFrom')?.value || '';
+  const dateTo = document.getElementById('expenseDateTo')?.value || '';
+  const category = document.getElementById('expenseCategoryFilter')?.value || '';
+  if (wrap) wrap.innerHTML = skeletonTable(4);
+  if (summaryWrap) summaryWrap.innerHTML = skeletonStats(4);
+
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (dateFrom) params.set('date_from', dateFrom);
+  if (dateTo) params.set('date_to', dateTo);
+  if (category) params.set('category', category);
+
+  try {
+    const data = await apiFetch(`/api/expenses${params.toString() ? `?${params.toString()}` : ''}`);
+    _expenseRows = Array.isArray(data.rows) ? data.rows : [];
+    _expenseMeta = {
+      categories: Array.isArray(data.filters?.categories) ? data.filters.categories : [],
+      payment_methods: Array.isArray(data.filters?.payment_methods) ? data.filters.payment_methods : []
+    };
+
+    const categoryEl = document.getElementById('expenseCategoryFilter');
+    if (categoryEl) categoryEl.innerHTML = expenseCategoryOptions(category);
+
+    renderExpenseSummary(data.summary || {});
+    renderExpenseTable();
+  } catch (e) {
+    if (summaryWrap) summaryWrap.innerHTML = '';
+    if (wrap) wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message || 'Failed to load expenses')}</div>`;
+  }
+}
+
+function renderExpenseSummary(summary = {}) {
+  const wrap = document.getElementById('expenseSummary');
+  if (!wrap) return;
+  wrap.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">${IC.expense}</div>
+        <div class="stat-content"><div class="stat-label">Filtered Expense</div><div class="stat-value">${expenseMoney(summary.total_amount || 0)}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">${IC.calendar}</div>
+        <div class="stat-content"><div class="stat-label">Today</div><div class="stat-value">${expenseMoney(summary.today_amount || 0)}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">${IC.list}</div>
+        <div class="stat-content"><div class="stat-label">Entries</div><div class="stat-value">${parseInt(summary.rows_count || 0, 10)}</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">${IC.services}</div>
+        <div class="stat-content"><div class="stat-label">Categories</div><div class="stat-value">${parseInt(summary.categories_count || 0, 10)}</div></div>
+      </div>
+    </div>`;
+}
+
+function renderExpenseTable() {
+  const wrap = document.getElementById('expenseWrap');
+  if (!wrap) return;
+  if (!_expenseRows.length) {
+    wrap.innerHTML = emptyState(IC.expense, 'No expenses found', 'Create your first day-to-day expense or change the filters.');
+    return;
+  }
+
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Expense</th><th>Category</th><th>Amount</th><th>Paid Via</th><th>Vendor / Ref</th><th>Updated By</th><th>Actions</th></tr></thead>
+    <tbody>${_expenseRows.map((row) => {
+      const vendorBits = [row.vendor, row.reference_no ? `Ref: ${row.reference_no}` : ''].filter(Boolean);
+      const canEditRow = can('expenses.edit');
+      const canDeleteRow = can('expenses.delete');
+      return `<tr>
+        <td><strong>${escHtml(row.expense_date || '—')}</strong><div class="text-muted text-sm">${escHtml(formatDateTime(row.created_at || ''))}</div></td>
+        <td><strong>${escHtml(row.title || '—')}</strong>${row.notes ? `<div class="text-muted text-sm expense-notes-cell">${escHtml(row.notes)}</div>` : ''}</td>
+        <td><span class="badge badge-secondary">${escHtml(row.category || '—')}</span></td>
+        <td><strong class="expense-amount">${expenseMoney(row.amount || 0)}</strong></td>
+        <td>${escHtml(row.payment_method || '—')}</td>
+        <td>${vendorBits.length ? vendorBits.map((item) => `<div>${escHtml(item)}</div>`).join('') : '—'}</td>
+        <td>${escHtml(row.updated_by_name || row.created_by_name || '—')}<div class="text-muted text-sm">${escHtml(formatDateTime(row.updated_at || row.created_at || ''))}</div></td>
+        <td class="td-actions">
+          ${canEditRow ? `<button class="btn btn-sm" onclick="openExpenseModal(${row.id})">${IC.edit}</button>` : ''}
+          ${canDeleteRow ? `<button class="btn btn-sm" style="color:#e57373" onclick="deleteExpense(${row.id})">${IC.trash}</button>` : ''}
+          ${!canEditRow && !canDeleteRow ? '—' : ''}
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+async function openExpenseModal(id = null) {
+  if (!_expenseMeta.categories.length) {
+    toast('Add expense categories first in Setup master', 'error');
+    return;
+  }
+  let entry = {
+    title: '',
+    category: '',
+    amount: '',
+    expense_date: expenseTodayISO(),
+    payment_method: '',
+    vendor: '',
+    reference_no: '',
+    notes: ''
+  };
+  if (id != null) {
+    const found = _expenseRows.find((row) => parseInt(row.id, 10) === parseInt(id, 10));
+    if (!found) { toast('Expense not found', 'error'); return; }
+    entry = { ...entry, ...found };
+  }
+
+  showModal(id != null ? `Edit Expense · ${escHtml(entry.title || '')}` : 'New Expense', `
+    <form id="expenseForm">
+      <div class="form-row">
+        <div class="form-group"><label>Expense Title *</label><input name="title" maxlength="120" value="${escHtml(entry.title || '')}" placeholder="e.g. Tea for staff, Courier, Petrol" required /></div>
+        <div class="form-group"><label>Category *</label><select name="category" required>${expenseCategorySelectOptions(entry.category || '', 'Select Category')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Amount (KD) *</label><input name="amount" type="number" min="0.001" step="0.001" value="${escHtml(String(entry.amount || ''))}" required /></div>
+        <div class="form-group"><label>Expense Date *</label><input name="expense_date" type="date" value="${escHtml(entry.expense_date || expenseTodayISO())}" required /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Paid Via</label><input name="payment_method" list="expensePaymentMethodList" maxlength="60" value="${escHtml(entry.payment_method || '')}" placeholder="Cash, Card, Bank Transfer" /></div>
+        <div class="form-group"><label>Vendor / Payee</label><input name="vendor" maxlength="120" value="${escHtml(entry.vendor || '')}" placeholder="Optional" /></div>
+      </div>
+      <datalist id="expensePaymentMethodList">${expensePaymentDatalistOptions()}</datalist>
+      <div class="form-row">
+        <div class="form-group"><label>Reference No</label><input name="reference_no" maxlength="80" value="${escHtml(entry.reference_no || '')}" placeholder="Invoice / receipt no" /></div>
+        <div class="form-group"><label>Notes</label><input name="notes" maxlength="240" value="${escHtml(entry.notes || '')}" placeholder="Optional note" /></div>
+      </div>
+    </form>`,
+    async () => {
+      const form = document.getElementById('expenseForm');
+      const body = Object.fromEntries(new FormData(form));
+      body.amount = parseFloat(body.amount || 0);
+      if (!String(body.title || '').trim()) { toast('Expense title is required', 'error'); return false; }
+      if (!String(body.category || '').trim()) { toast('Expense category is required', 'error'); return false; }
+      if (!(body.amount > 0)) { toast('Amount must be greater than 0', 'error'); return false; }
+      try {
+        if (id != null) await apiFetch(`/api/expenses/${id}`, { method:'PUT', body: JSON.stringify(body) });
+        else await apiFetch('/api/expenses', { method:'POST', body: JSON.stringify(body) });
+        toast(id != null ? 'Expense updated' : 'Expense recorded', 'success');
+        closeModal();
+        await loadExpenses();
+      } catch (e) {
+        toast(e.message || 'Failed to save expense', 'error');
+        return false;
+      }
+    });
+}
+
+async function deleteExpense(id) {
+  const row = _expenseRows.find((item) => parseInt(item.id, 10) === parseInt(id, 10));
+  const title = row && row.title ? row.title : `#${id}`;
+  if (!await confirmDialog(`Delete expense "${title}"?`)) return;
+  try {
+    await apiFetch(`/api/expenses/${id}`, { method:'DELETE' });
+    toast('Expense deleted', 'success');
+    await loadExpenses();
+  } catch (e) {
+    toast(e.message || 'Failed to delete expense', 'error');
+  }
 }
 
 // --------------------------------------------------------
@@ -4718,6 +5925,13 @@ async function billing() {
   const ca = document.getElementById('contentArea');
   const todayStr = new Date().toLocaleDateString('sv');
   ca.innerHTML = `
+    <div class="page-hero compact">
+      <div>
+        <h2 class="page-hero-title">Billing Workstation</h2>
+        <p class="page-hero-sub">POS-like workflow with live totals and quick collections.</p>
+      </div>
+    </div>
+
     <div class="action-bar bill-action-bar">
       <div class="search-box"><input id="billSearch" type="text" placeholder="Search bill no, visit ID, patient, MR #..." oninput="filterBills()"/></div>
       <div class="bill-filter-group">
@@ -4730,9 +5944,12 @@ async function billing() {
       ${can('billing.create') ? `<button class="btn btn-primary" onclick="openBillModal()">${IC.plus} New Bill</button>` : ''}
       <div class="bill-vt-wrap">${viewToggleHTML('billing')}</div>
     </div>
+    <div id="billTopStats" class="kpi-mini-grid"></div>
     <div id="billWrap">${skeletonTable(5)}</div>`;
+  setTimeout(() => focusPrimarySearch(), 100);
   try {
     _billingAll = await apiFetch('/api/bills');
+    renderBillTopStats(_billingAll);
     filterBills();
     enrichBillingPkgSessionProgress(_billingAll)
       .then(() => {
@@ -4742,6 +5959,21 @@ async function billing() {
       .catch(() => {});
   } catch(e) {
   }
+}
+function renderBillTopStats(rows) {
+  const el = document.getElementById('billTopStats');
+  if (!el) return;
+  const list = Array.isArray(rows) ? rows : [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todays = list.filter(b => String(b.created_at || '').slice(0, 10) === todayStr);
+  const collected = todays.reduce((sum, b) => sum + parseFloat(b.total || 0), 0);
+  const pending = todays.filter(b => String(b.payment_status || '') === 'Pending').length;
+  const paid = todays.filter(b => String(b.payment_status || '') === 'Paid').length;
+  el.innerHTML = `
+    <div class="kpi-mini"><span>Today's Bills</span><strong>${todays.length}</strong></div>
+    <div class="kpi-mini"><span>Collected</span><strong>KD ${collected.toFixed(3)}</strong></div>
+    <div class="kpi-mini"><span>Pending</span><strong>${pending}</strong></div>
+    <div class="kpi-mini"><span>Paid</span><strong>${paid}</strong></div>`;
 }
 function clearBillFilters() {
   const todayStr = new Date().toLocaleDateString('sv');
@@ -4762,6 +5994,7 @@ function filterBills() {
       b.bill_number,
       b.visit_id,
       b.patient_name,
+      b.doctor_name,
       b.mr_number,
       b.patient_phone,
       b.payment_method,
@@ -4780,7 +6013,7 @@ function renderBillingRows(list) {
   if (!wrap) return;
   if (!list.length) { wrap.innerHTML = emptyState(IC.billing, 'No bills found', 'Try a different search or create a new bill'); return; }
   wrap.innerHTML = `<div class="table-wrap billing-table-wrap"><table class="billing-table">
-      <thead><tr><th>#</th><th>Bill No.</th><th>Visit ID</th><th>MR #</th><th>Patient</th><th>Items</th><th>Total</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+      <thead><tr><th>#</th><th>Bill No.</th><th>Visit ID</th><th>MR #</th><th>Patient</th><th>Doctor</th><th>Items</th><th>Total</th><th>Method</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody>${list.map((b,i) => {
         const itemLabel = (l) => {
           const pkg = l.package_name && !String(l.name || '').includes(String(l.package_name)) ? ` [${l.package_name}]` : '';
@@ -4808,12 +6041,18 @@ function renderBillingRows(list) {
               </div>
             </div>
           </td>
+          <td>${escHtml(b.doctor_name || '—')}</td>
           <td class="text-muted text-sm billing-items-cell" title="${itemsFullSummary}">${itemsSummary}</td>
           <td><strong class="billing-total">KD ${b.total}</strong></td>
           <td>${(b.payment_splits && b.payment_splits.length > 1)
             ? `<div class="billing-splits">${b.payment_splits.map(s=>`<span class="billing-split-chip">${escHtml(s.method)} KD ${parseFloat(s.amount).toFixed(3)}</span>`).join('')}</div>`
             : escHtml(b.payment_method)}</td>
-          <td>${statusBadge(b.payment_status)}</td>
+          <td>
+            <span class="status-badges-wrap">
+              ${statusBadge(b.payment_status)}
+              ${(Number(b.discount_amount) > 0) ? `<span class="badge badge-discounted">${IC.discount} Discounted</span>` : ''}
+            </span>
+          </td>
           <td class="text-muted text-sm">${escHtml(formatDateTime(b.created_at||''))}</td>
           <td class="td-actions">
             <div class="billing-actions">
@@ -5190,7 +6429,8 @@ async function openBillModal(prePatientId = null, preAptId = null) {
                  <input type="hidden" name="patient_id" id="billPatientId"/>
                  <div id="billPatDropdown" class="psd-list" style="display:none"></div>
                </div>
-               <div id="billPatLabel" class="text-muted text-sm"></div>`}
+               <div id="billPatLabel" class="text-muted text-sm"></div>
+               <div id="billPendingServicesAlert"></div>`}
           <input type="hidden" name="appointment_id" value="${preAptId||''}"/>
         </div>
         <div class="bill-doctor-row">
@@ -5403,13 +6643,45 @@ async function openBillModal(prePatientId = null, preAptId = null) {
         discount_amount: discountAmount || 0,
         discount_label: discountInfo.label || '' };
       try {
-        await apiFetch('/api/bills', { method: 'POST', body: JSON.stringify(body) });
+        const billRes = await apiFetch('/api/bills', { method: 'POST', body: JSON.stringify(body) });
         toast('Receipt created', 'success');
+        // Close bill modal first, then print
+        closeModal();
+        // Automatically print the bill if created successfully and bill id is available
+        if (billRes && billRes.id) {
+          await printBill(billRes.id);
+        }
+        // Update appointment status in scheduler/calendar immediately if bill paid
+        if (finalPaymentStatus === 'Paid' && apt) {
+          const aptIdNum = parseInt(apt, 10);
+          let updated = false;
+          if (aptIdNum && Array.isArray(calAllApts)) {
+            // Use updated appointment from backend if available
+            if (billRes && billRes.appointment && billRes.appointment.id) {
+              for (let i = 0; i < calAllApts.length; ++i) {
+                if (parseInt(calAllApts[i].id) === parseInt(billRes.appointment.id)) {
+                  calAllApts[i] = { ...calAllApts[i], ...billRes.appointment };
+                  updated = true;
+                  break;
+                }
+              }
+            } else {
+              // fallback: just set status
+              for (let i = 0; i < calAllApts.length; ++i) {
+                if (parseInt(calAllApts[i].id) === aptIdNum) {
+                  calAllApts[i].status = 'Completed';
+                  updated = true;
+                  break;
+                }
+              }
+            }
+            if (updated && typeof renderCalendar === 'function') renderCalendar();
+          }
+        }
         closeModal();
         if (finalPaymentStatus === 'Paid') {
-          const created = await autoCreateFollowUpFromContext(parseInt(patId, 10), parseInt(doctorId, 10), apt ? parseInt(apt, 10) : null, 'Post billing follow-up', true);
+          const created = await autoCreateFollowUpFromContext(parseInt(patId, 10), parseInt(doctorId, 10), apt ? parseInt(apt, 10) : null, 'Post billing follow-up', false);
           if (!created) {
-            navigate('follow-ups');
             toast('Bill settled. Could not auto-create follow-up. You can add one now.', 'error');
           } else {
             toast('Bill settled and follow-up created', 'success');
@@ -5419,6 +6691,11 @@ async function openBillModal(prePatientId = null, preAptId = null) {
         }
       } catch(e) { toast(e.message, 'error'); return false; }
     }, 'modal-bill');
+  // Change the save button label to "Save & Print"
+  setTimeout(() => {
+    const btn = document.getElementById('modalSaveBtn');
+    if (btn) btn.innerHTML = `${IC.print || '🖨️'} Save &amp; Print`;
+  }, 0);
   if (prePatientId) loadBillPackageSessions(prePatientId);
 }
 
@@ -5840,6 +7117,31 @@ function selectBillPatient(id, name) {
   document.getElementById('billPatLabel').textContent = `Selected: ${name}`;
   document.getElementById('billPatDropdown').style.display='none';
   loadBillPackageSessions(id);
+  loadPendingServicesAlert(id);
+}
+async function loadPendingServicesAlert(patientId) {
+  const alertEl = document.getElementById('billPendingServicesAlert');
+  if (!alertEl || !patientId) return;
+  alertEl.style.display = 'none';
+  alertEl.innerHTML = '';
+  try {
+    const data = await apiFetch(`/api/patients/${patientId}/pending-services`);
+    if (!data.pending_count) return;
+    alertEl.style.display = 'block';
+    alertEl.innerHTML = `
+      <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:12px">
+        <div style="font-weight:700;color:#b45309;margin-bottom:6px">⏳ ${data.pending_count} Pending Service(s) from Previous Visit(s)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${data.items.map(it => `
+            <span style="background:#fff;border:1px solid #fbbf24;border-radius:4px;padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px">
+              <span style="color:${it.service_status==='In Progress'?'#2563eb':'#d97706'}">${it.service_status==='In Progress'?'🔵':'⏳'}</span>
+              ${escHtml(it.service_name)}
+              <span style="color:#666;font-size:11px">${escHtml(it.bill_number)}</span>
+              <button type="button" onclick="viewBillModal(${it.bill_id})" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:11px;text-decoration:underline">View</button>
+            </span>`).join('')}
+        </div>
+      </div>`;
+  } catch (_) { /* ignore */ }
 }
 async function loadBillPackageSessions(patientId) {
   const el = document.getElementById('billPkgSessionContent');
@@ -5976,6 +7278,11 @@ async function openEditBillModal(id) {
   if (!payMethods.length) payMethods = ['Cash','Card','UPI','Online'];
   if (!payMethods.includes(b.payment_method)) payMethods.unshift(b.payment_method);
 
+  // Fetch discounts for dropdown
+  let discountsRaw = [];
+  try { discountsRaw = await apiFetch('/api/discounts'); } catch {}
+  const todayISO = new Date().toISOString().slice(0,10);
+  const activeDiscounts = (discountsRaw||[]).filter(d => d.active !== false && (!d.valid_from || d.valid_from <= todayISO) && (!d.valid_to || d.valid_to >= todayISO));
   showModal(`Edit Receipt · ${escHtml(b.patient_name)}`, `
     <form id="editBillForm">
       <div class="form-group"><label>Patient</label><input value="${escHtml(b.patient_name)}" disabled/></div>
@@ -6000,23 +7307,77 @@ async function openEditBillModal(id) {
           </select>
         </div>
       </div>
+      <div class="form-row">
+        <div class="form-group"><label>Discount</label>
+          <select name="discount_id" id="editBillDiscountSelect">
+            <option value="" data-type="" data-value="0">Select Discount</option>
+            ${activeDiscounts.map(d => {
+              const label = d.type==='percentage'
+                ? `${escHtml(d.name)} (${parseFloat(d.value||0).toFixed(2)}%)`
+                : d.type==='fixed'
+                  ? `${escHtml(d.name)} (KD ${parseFloat(d.value||0).toFixed(3)})`
+                  : `${escHtml(d.name)} (Open)`;
+              return `<option value="${d.id}" data-type="${escHtml(d.type)}" data-value="${parseFloat(d.value||0)}" data-max="${d.max_limit!=null ? parseFloat(d.max_limit) : ''}"${String(d.id)===String(b.discount_id)?' selected':''}>${label}</option>`;
+            }).join('')}
+          </select>
+        </div>
+        <div class="form-group" id="editBillOpenDiscWrap" style="display:${b.discount_type==='open'?'':'none'}">
+          <label>Manual Discount Amount (KD)</label>
+          <input name="discount_amount" id="editBillOpenDiscAmt" type="number" min="0" step="0.001" value="${b.discount_type==='open'?parseFloat(b.discount_amount||0):''}"/>
+        </div>
+      </div>
     </form>`,
     async () => {
-      const body = Object.fromEntries(new FormData(document.getElementById('editBillForm')));
+      const f = document.getElementById('editBillForm');
+      const body = Object.fromEntries(new FormData(f));
       if (!_billLineItems.length) { toast('Please add at least one item','error'); return false; }
       body.line_items = _billLineItems;
+      // Discount logic
+      const sel = f.querySelector('#editBillDiscountSelect');
+      const selectedOpt = sel.options[sel.selectedIndex];
+      body.discount_id = sel.value || null;
+      body.discount_type = selectedOpt.getAttribute('data-type') || null;
+      body.discount_label = selectedOpt.textContent || '';
+      if (body.discount_type === 'open') {
+        body.discount_amount = parseFloat(f.querySelector('#editBillOpenDiscAmt').value) || 0;
+      } else if (body.discount_type === 'percentage') {
+        const perc = parseFloat(selectedOpt.getAttribute('data-value')) || 0;
+        const subtotal = (_billLineItems||[]).reduce((s,i)=>s + (parseFloat(i.amount)||0), 0);
+        body.discount_amount = parseFloat(((subtotal * perc) / 100).toFixed(3));
+      } else if (body.discount_type === 'fixed') {
+        body.discount_amount = parseFloat(selectedOpt.getAttribute('data-value')) || 0;
+      } else {
+        body.discount_amount = 0;
+      }
       try {
         await apiFetch(`/api/bills/${id}`, { method: 'PUT', body: JSON.stringify(body) });
         toast('Receipt updated', 'success');
-        closeModal(); billing();
+        closeModal();
+        billing(); // Refresh bill list to show updated discount/total
       } catch(e) { toast(e.message, 'error'); return false; }
     });
+  // Show/hide open discount field on change
+  setTimeout(() => {
+    const sel = document.getElementById('editBillDiscountSelect');
+    if (sel) {
+      sel.addEventListener('change', function() {
+        const type = sel.options[sel.selectedIndex].getAttribute('data-type');
+        document.getElementById('editBillOpenDiscWrap').style.display = (type === 'open') ? '' : 'none';
+      });
+    }
+  }, 0);
   // Render existing items after modal is in DOM
   setTimeout(() => renderBillItemsList(), 0);
 }
 
 async function openCancelBillModal(id) {
-  const b = await apiFetch(`/api/bills/${id}`);
+  let b;
+  // Accept pre-fetched bill if provided (for instant UI update after save)
+  if (arguments.length > 1 && arguments[1]) {
+    b = arguments[1];
+  } else {
+    b = await apiFetch(`/api/bills/${id}`);
+  }
   if (['Refunded','Partially Refunded'].includes(String(b.payment_status || ''))) {
     toast('Refunded bills cannot be cancelled.', 'error');
     return;
@@ -6190,6 +7551,7 @@ async function printBill(id) {
         ? (item.unit || 'pcs')
         : (item.type === 'pkg_session' ? 'session' : (item.type === 'package' ? 'package' : 'service'));
       const rate = qty > 0 ? (amount / qty) : amount;
+      const svcStatus = item.service_status || 'Completed';
       const serviceNames = Array.isArray(item.selected_service_names) ? item.selected_service_names.filter(Boolean) : [];
       let descHtml = escHtml(item.name || '');
 
@@ -6206,6 +7568,13 @@ async function printBill(id) {
         const progress = getPkgSessionProgressLabel(item, b, pp);
         const progressHtml = progress ? `<div style="font-size:13px;color:#111;margin-top:2px"><strong>${escHtml(progress)}</strong></div>` : '';
         descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div><div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>${progressHtml}`;
+      }
+
+      if (item.type !== 'package') {
+        const statusColor = svcStatus === 'Completed' ? '#1b5e20' : (svcStatus === 'In Progress' ? '#0d47a1' : '#b45309');
+        const statusIcon = svcStatus === 'Completed' ? '✔' : (svcStatus === 'In Progress' ? '🔵' : '⏳');
+        const completionText = item.completion_date ? ` · ${escHtml(String(item.completion_date).slice(0, 10))}` : '';
+        descHtml += `<div style="font-size:13px;color:${statusColor};margin-top:3px"><strong>${statusIcon} ${escHtml(svcStatus)}${completionText}</strong></div>`;
       }
 
       return `<tr style="border-bottom:1px solid #bbb">
@@ -6374,12 +7743,26 @@ async function printBill(id) {
   }
 
   // Check if printer is configured
-  const hasPrinter = currentSystem && currentSystem.printer && currentSystem.printer.printer_name;
+  const printerCfg = currentSystem && currentSystem.printer ? currentSystem.printer : {};
+  const hasPrinter = printerCfg.printer_name;
+  const printMode = printerCfg.print_mode || 'auto';
+
+  if (printMode === 'manual') {
+    // --- Manual Print: show preview then trigger browser print popup ---
+    printArea.classList.add('hidden');
+    showManualPrintPreview(b, () => {
+      printArea.classList.remove('hidden');
+      window.print();
+      setTimeout(() => printArea.classList.add('hidden'), 500);
+    });
+    return;
+  }
+
+  // --- Auto Print (default) ---
   if (hasPrinter) {
     // Send to backend printer
     try {
       const htmlContent = printArea.innerHTML;
-      const printerCfg = currentSystem && currentSystem.printer ? currentSystem.printer : {};
       const isNetworkThermal = String(printerCfg.printer_type || '').toLowerCase() === 'network';
       const imageData = isNetworkThermal ? await captureReceiptImageData() : '';
       if (isNetworkThermal && !imageData) {
@@ -6392,7 +7775,8 @@ async function printBill(id) {
           bill_number: b.bill_number || 'Receipt',
           bill: b,
           settled_by: createdByName,
-          image_data: imageData
+          image_data: imageData,
+          terminal_id: getTerminalId()
         })
       });
       toast('Bill sent to printer.', 'success');
@@ -6406,6 +7790,57 @@ async function printBill(id) {
   // Fallback to browser print
   window.print();
   setTimeout(() => printArea.classList.add('hidden'), 500);
+}
+
+function showManualPrintPreview(bill, onPrint) {
+  const previewHtml = document.getElementById('printArea')?.innerHTML || '';
+
+  showModal('🖨️ Print Preview', `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:16px;background:#fff;max-height:480px;overflow-y:auto;color:#000">
+      ${previewHtml}
+    </div>`,
+    [
+      {
+        label: `${IC.print || '🖨️'} Print`,
+        class: 'btn-primary',
+        onclick: () => {
+          closeModal();
+          onPrint();
+        }
+      }
+    ],
+    'modal-lg'
+  );
+}
+
+async function manualPrintRefreshPrinters() {
+  const sel = document.getElementById('manualPrintPrinterSelect');
+  const statusEl = document.getElementById('manualPrintStatus');
+  if (!sel) return;
+  if (statusEl) statusEl.textContent = 'Fetching printers...';
+  try {
+    const printers = await apiFetch('/api/printers/list');
+    const currentVal = sel.value;
+    // Keep the "browser print" option and rebuild the rest
+    sel.innerHTML = '<option value="">— Browser print (no printer) —</option>';
+    if (Array.isArray(printers) && printers.length) {
+      printers.forEach(p => {
+        const name = (p && (p.name || p.displayName)) ? String(p.name || p.displayName).trim() : String(p || '').trim();
+        if (!name) return;
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = (p && p.displayName) ? p.displayName : name;
+        opt.dataset.type = 'usb';
+        sel.appendChild(opt);
+      });
+      if (currentVal) sel.value = currentVal;
+      if (statusEl) statusEl.textContent = `✓ Found ${printers.length} printer(s).`;
+    } else {
+      if (statusEl) statusEl.textContent = '⚠ No printers found.';
+    }
+  } catch (e) {
+    if (statusEl) statusEl.textContent = `✗ Error: ${e.message}`;
+  }
 }
 
 async function viewBillModal(id) {
@@ -6436,7 +7871,7 @@ async function viewBillModal(id) {
   
   let itemsHtml = '';
   if (items.length) {
-    itemsHtml = items.map(item => {
+    itemsHtml = items.map((item, idx) => {
       const amount = parseFloat(item.amount || 0) || 0;
       const qty = parseFloat(item.qty || item.quantity || 1) || 1;
       const unit = item.type === 'product'
@@ -6455,7 +7890,15 @@ async function viewBillModal(id) {
       const viewName = viewExtra
         ? `${escHtml(name)}<div style="font-size:12px;color:#2f3a4a;margin-top:2px"><strong>${escHtml(viewExtra)}</strong></div>`
         : escHtml(name);
-      return `<tr><td>${viewName}</td><td style="text-align:right">${qty.toFixed(3)}</td><td style="text-align:center">${escHtml(unit)}</td><td style="text-align:right">KD ${rate.toFixed(3)}</td><td style="text-align:right"><strong>KD ${amount.toFixed(3)}</strong></td></tr>`;
+      const svcStatus = item.service_status || 'Completed';
+      const isPackageType = item.type === 'package' || item.type === 'pkg_session';
+      const statusColor = svcStatus === 'Completed' ? '#16a34a' : (svcStatus === 'In Progress' ? '#2563eb' : '#d97706');
+      const statusIcon = svcStatus === 'Completed' ? '✔' : (svcStatus === 'In Progress' ? '🔵' : '⏳');
+      const statusBadgeHtml = isPackageType ? '' : `<div style="margin-top:4px;font-size:11px;color:${statusColor};font-weight:600">${statusIcon} ${escHtml(svcStatus)}${item.completion_date ? ` · ${escHtml(String(item.completion_date).slice(0,10))}` : ''}</div>`;
+      const canComplete = !isPackageType && svcStatus !== 'Completed';
+      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '✔ Mark Completed' : '🔵 Start'}</button>` : (svcStatus === 'Completed' ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">↩ Revert</button>` : '');
+      const viewNameWithStatus = `<div>${viewName}${statusBadgeHtml}${actionBtn ? `<div>${actionBtn}</div>` : ''}</div>`;
+      return `<tr><td>${viewNameWithStatus}</td><td style="text-align:right">${qty.toFixed(3)}</td><td style="text-align:center">${escHtml(unit)}</td><td style="text-align:right">KD ${rate.toFixed(3)}</td><td style="text-align:right"><strong>KD ${amount.toFixed(3)}</strong></td></tr>`;
     }).join('');
   } else {
     if (b.consultation_fee) itemsHtml += `<tr><td>Consultation Fee</td><td style="text-align:right">1.000</td><td style="text-align:center">service</td><td style="text-align:right">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td><td style="text-align:right"><strong>KD ${parseFloat(b.consultation_fee).toFixed(3)}</strong></td></tr>`;
@@ -6471,8 +7914,8 @@ async function viewBillModal(id) {
     ? 'Percentage'
     : (discountTypeRaw === 'fixed' ? 'Fixed Amount' : (discountTypeRaw === 'open' ? 'Open / Manual' : (String(b.discount_label || '').includes('%') ? 'Percentage' : 'Discount')));
   const discountHtml = b.discount_amount > 0 ? `
-    <div style="margin-top:8px;padding:8px 12px;background:#fff8f8;border-radius:4px;border:1px solid #ffd0d0;font-size:13px">
-      <strong>Discount Applied:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <span style="color:#e53935"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></span>
+    <div style="margin-top:8px;padding:8px 12px;background:var(--c-danger-bg);border-radius:6px;border:1px solid rgba(239,68,68,.2);font-size:13px;color:var(--text)">
+      <strong>Discount Applied:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <span style="color:var(--c-danger)"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></span>
       &nbsp;|&nbsp; <strong>Discount Type:</strong> ${escHtml(discountTypeLabel)}
       &nbsp;|&nbsp; <strong>Subtotal:</strong> KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}
     </div>` : '';
@@ -6518,10 +7961,14 @@ async function viewBillModal(id) {
     </div>
     <hr style="margin:16px 0;border:none;border-top:1px solid #ddd"/>
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <div style="padding:12px 16px;background:#f9f9f9;border-radius:4px">
-        <div style="font-size:12px;color:#666">${b.discount_amount > 0 ? 'SUBTOTAL' : 'TOTAL'}</div>
-        <div style="font-size:24px;font-weight:700;color:#000">KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</div>
-        ${b.discount_amount > 0 ? `<div style="font-size:12px;color:#e53935;margin-top:4px">Discount: - KD ${parseFloat(b.discount_amount||0).toFixed(3)}</div><div style="font-size:18px;font-weight:700;color:#000;margin-top:4px">Net: KD ${parseFloat(b.total||0).toFixed(3)}</div>` : ''}
+      <div style="padding:12px 16px;background:var(--bg-hover);border:1px solid var(--border);border-radius:8px">
+        <div style="font-size:12px;color:var(--text-muted)">${b.discount_amount > 0 ? 'SUBTOTAL' : 'TOTAL'}</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text)">KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</div>
+        ${b.discount_amount > 0 ? `
+          <div style="font-size:12px;color:var(--c-danger);margin-top:4px">
+            Discount (${escHtml(b.discount_label || discountTypeLabel)}${b.discount_type === 'percentage' && b.discount_value ? ` · ${parseFloat(b.discount_value)}%` : b.discount_type === 'fixed' ? ' · Fixed' : ''}): - KD ${parseFloat(b.discount_amount||0).toFixed(3)}
+          </div>
+          <div style="font-size:18px;font-weight:700;color:var(--text);margin-top:4px">Net: KD ${parseFloat(b.total||0).toFixed(3)}</div>` : ''}
       </div>
     </div>
     ${discountHtml}
@@ -6529,6 +7976,27 @@ async function viewBillModal(id) {
     ${refundsHtml}
     ${cancellationHtml}
   `, null, 'close'); // read-only modal
+}
+
+// --------------------------------------------------------
+//  SERVICE COMPLETION
+// --------------------------------------------------------
+async function markServiceComplete(billId, itemIdx, newStatus, opts = {}) {
+  const refreshBillModal = opts.refreshBillModal !== false;
+  const refreshPendingReport = !!opts.refreshPendingReport;
+  try {
+    await apiFetch(`/api/bills/${billId}/items/${itemIdx}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus })
+    });
+    toast(`Service marked as ${newStatus}`, 'success');
+    if (refreshBillModal) await viewBillModal(billId);
+    if (refreshPendingReport && _reportView === 'pending-services') await loadPendingSvcReport();
+  } catch (e) {
+    toast(e.message || 'Failed to update service status', 'error');
+    throw e;
+  }
 }
 
 // --------------------------------------------------------
@@ -6626,7 +8094,9 @@ async function reports() {
     { value: 'product-consumption', label: 'Product Cost Summary', desc: 'Grand total consumption and cost by product', icon: IC.store },
     { value: 'manual-consumption-cost', label: 'Manual Consumption Cost', desc: 'Manual stock consumption with cost and reasons', icon: IC.store },
     { value: 'stock-movement', label: 'Stock Movement', desc: 'Incoming and outgoing stock transactions', icon: IC.transfer || IC.store },
-    { value: 'stock-status', label: 'Stock Status', desc: 'Current stock levels with low-stock highlights', icon: IC.store }
+    { value: 'stock-status', label: 'Stock Status', desc: 'Current stock levels with low-stock highlights', icon: IC.store },
+    { value: 'supplier-ledger', label: 'Supplier Ledger', desc: 'Per-supplier debit, credit and outstanding balance', icon: IC.billing || IC.reports },
+    { value: 'pending-services', label: 'Pending Services', desc: 'Services billed but not yet completed across all patients', icon: IC.pending || IC.services }
   ];
   if (currentUser.role === 'admin') options.push({ value: 'revenue', label: 'Revenue', desc: 'Last 30 days billing trend', icon: IC.revenue });
   if (currentUser.role === 'admin') options.push({ value: 'discounts-report', label: 'Discount Report', desc: 'Total discounts given by type and user', icon: IC.discount });
@@ -6689,13 +8159,44 @@ function renderSelectedReport() {
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <input type="date" id="reportDate" value="${today}" style="width:auto" onchange="loadDailyReport(this.value)"/>
             <button class="btn btn-sm report-clear-btn" onclick="resetDailyReportDate()">Today</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#dailyReportBody table', 'daily_report_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#dailyReportBody', 'daily_report')">📄 PDF</button>
           </div>
         </div>
         <div id="dailyReportBody">${skeletonStats(3)}</div>
       </div>`;
     loadDailyReport(today);
+
+  // Add setReportRange function for quick range selection
+  window.setReportRange = function(range) {
+    const dateInput = document.getElementById('reportDate');
+    const now = new Date();
+    let dateStr = '';
+    if (range === 'week') {
+      // Set to Monday of this week
+      const day = now.getDay();
+      const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(now.setDate(diff));
+      dateStr = monday.toISOString().slice(0,10);
+    } else if (range === 'month') {
+      // Set to first day of this month
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      dateStr = first.toISOString().slice(0,10);
+    } else if (range === 'year') {
+      // Set to Jan 1 of this year
+      const first = new Date(now.getFullYear(), 0, 1);
+      dateStr = first.toISOString().slice(0,10);
+    } else if (range === 'prevYear') {
+      // Set to Jan 1 of previous year
+      const first = new Date(now.getFullYear() - 1, 0, 1);
+      dateStr = first.toISOString().slice(0,10);
+    } else {
+      // Today
+      dateStr = new Date().toISOString().slice(0,10);
+    }
+    if (dateInput) {
+      dateInput.value = dateStr;
+      loadDailyReport(dateStr);
+    }
+  }
     return;
   }
 
@@ -6706,7 +8207,6 @@ function renderSelectedReport() {
           <div class="card-title">${IC.patients} Full Patient Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm" onclick="exportFullPatientReportCSV()">CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#fullPatientsReportBody', 'full_patients_report')">PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -6730,7 +8230,6 @@ function renderSelectedReport() {
           <div class="card-title">${IC.pending} No-Show Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm" onclick="exportTableToCSV('#noShowReportBody table', 'no_show_report_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#noShowReportBody', 'no_show_report')">📄 PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -7022,8 +8521,10 @@ function renderSelectedReport() {
               <option value="">All Types</option>
               <option value="purchase">Purchase</option>
               <option value="transfer">Transfer</option>
+              <option value="adjustment">Adjustment</option>
               <option value="consumption">Consumption</option>
               <option value="manual-consumption">Manual Consumption</option>
+              <option value="supplier-return">Supplier Return</option>
             </select>
             <button class="btn btn-sm report-apply-btn" onclick="loadStockMovementReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="clearStockMovementFilters()">Clear</button>
@@ -7063,6 +8564,63 @@ function renderSelectedReport() {
     return;
   }
 
+  if (_reportView === 'supplier-ledger') {
+    const today2 = new Date().toLocaleDateString('sv');
+    panel.innerHTML = `
+      <div class="card" style="margin:0;border:1px solid var(--border-light)">
+        <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
+          <div class="card-title">${IC.billing || IC.reports} Supplier Ledger</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="exportTableToCSV('#supplierLedgerBody table', 'supplier_ledger_${today2}.csv')">&#x1F4E5; CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#supplierLedgerBody', 'supplier_ledger')">&#x1F4C4; PDF</button>
+          </div>
+        </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="search-box"><input id="slSearch" type="text" placeholder="Search supplier, reference, type..." oninput="loadSupplierLedger()"/></div>
+          <div class="bill-filter-group report-filter-group">
+            <select id="slSupplier" onchange="loadSupplierLedger()"><option value="">All Suppliers</option></select>
+            <input id="slFrom" type="date" value="" title="From date" onchange="loadSupplierLedger()"/>
+            <input id="slTo"   type="date" value="" title="To date"   onchange="loadSupplierLedger()"/>
+            <button class="btn btn-sm report-apply-btn" onclick="loadSupplierLedger()">Apply Filter</button>
+            <button class="btn btn-sm report-clear-btn" onclick="clearSupplierLedgerFilters()">Clear</button>
+          </div>
+        </div>
+        <div id="supplierLedgerBody">${skeletonTable(6)}</div>
+      </div>`;
+    loadSupplierLedger();
+    return;
+  }
+
+  if (_reportView === 'pending-services') {
+    const today2 = new Date().toLocaleDateString('sv');
+    panel.innerHTML = `
+      <div class="card" style="margin:0;border:1px solid var(--border-light)">
+        <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
+          <div class="card-title">${IC.pending || IC.services} Pending Services Report</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="exportTableToCSV('#pendingSvcBody table', 'pending_services_${today2}.csv')">&#x1F4E5; CSV</button>
+          </div>
+        </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="bill-filter-group report-filter-group">
+            <input id="psvFrom" type="date" value="" title="From date" onchange="loadPendingSvcReport()"/>
+            <input id="psvTo"   type="date" value="" title="To date"   onchange="loadPendingSvcReport()"/>
+            <select id="psvStatus" onchange="loadPendingSvcReport()">
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <button class="btn btn-sm report-apply-btn" onclick="loadPendingSvcReport()">Apply</button>
+            <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('psvFrom').value='';document.getElementById('psvTo').value='';document.getElementById('psvStatus').value='';loadPendingSvcReport()">Clear</button>
+          </div>
+        </div>
+        <div id="pendingSvcBody">${skeletonTable(6)}</div>
+      </div>`;
+    loadPendingSvcReport();
+    return;
+  }
+
   panel.innerHTML = `
     <div class="card" style="margin:0;border:1px solid var(--border-light)">
       <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
@@ -7079,14 +8637,6 @@ function renderSelectedReport() {
           <input id="logTo" type="date" value="${today}" onchange="loadActivityLogs()" title="To date"/>
           <select id="logAction" onchange="loadActivityLogs()">
             <option value="">All Actions</option>
-            <option value="booked">Booked</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="arrived">Arrived</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="bill_created">Bill Created</option>
-            <option value="payment_received">Payment Received</option>
-            <option value="package_renamed">Package Renamed</option>
           </select>
           <button class="btn btn-sm report-apply-btn" onclick="loadActivityLogs()">Apply Filter</button>
           <button class="btn btn-sm report-clear-btn" onclick="clearActivityLogFilters()">Clear</button>
@@ -7094,6 +8644,7 @@ function renderSelectedReport() {
       </div>
       <div id="activityLogBody" style="height:68vh;min-height:420px;overflow:auto;border:1px solid var(--border-light);border-radius:10px;padding:8px;background:var(--bg)">${skeletonTable(8)}</div>
     </div>`;
+  loadActivityLogActions();
   loadActivityLogs();
 }
 
@@ -7184,6 +8735,36 @@ function clearActivityLogFilters() {
   loadActivityLogs();
 }
 
+function formatActivityActionLabel(action) {
+  const raw = String(action || '').trim();
+  if (!raw) return '';
+  return raw
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, ch => ch.toUpperCase());
+}
+
+async function loadActivityLogActions() {
+  const sel = document.getElementById('logAction');
+  if (!sel) return;
+  const previous = sel.value || '';
+  sel.innerHTML = '<option value="">All Actions</option>';
+  try {
+    const actions = await apiFetch('/api/activity-logs/actions');
+    const list = Array.isArray(actions) ? actions : [];
+    list.forEach(action => {
+      const value = String(action || '').trim();
+      if (!value) return;
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = formatActivityActionLabel(value);
+      sel.appendChild(opt);
+    });
+    if (previous && list.includes(previous)) sel.value = previous;
+  } catch (_) {
+    // Keep All Actions option if loading fails.
+  }
+}
+
 function clearStockMovementFilters() {
   const today = new Date().toLocaleDateString('sv');
   const search = document.getElementById('smSearch');
@@ -7208,6 +8789,224 @@ function clearStockStatusFilters() {
   if (lowOnly) lowOnly.checked = false;
   loadStockStatusReport();
 }
+
+function clearStockStatusFilters() {
+  const search = document.getElementById('ssSearch');
+  const store = document.getElementById('ssStore');
+  const lowOnly = document.getElementById('ssLowOnly');
+  if (search) search.value = '';
+  if (store) store.value = '';
+  if (lowOnly) lowOnly.checked = false;
+  loadStockStatusReport();
+}
+
+// ── Supplier Ledger Report ──────────────────────────────
+function clearSupplierLedgerFilters() {
+  const s = document.getElementById('slSearch');
+  const sup = document.getElementById('slSupplier');
+  const from = document.getElementById('slFrom');
+  const to = document.getElementById('slTo');
+  if (s) s.value = '';
+  if (sup) sup.value = '';
+  if (from) from.value = '';
+  if (to) to.value = '';
+  loadSupplierLedger();
+}
+
+async function loadSupplierLedger() {
+  const wrap = document.getElementById('supplierLedgerBody');
+  if (!wrap) return;
+  const search   = document.getElementById('slSearch')?.value?.trim() || '';
+  const supplier = document.getElementById('slSupplier')?.value || '';
+  const from     = document.getElementById('slFrom')?.value || '';
+  const to       = document.getElementById('slTo')?.value || '';
+
+  const params = new URLSearchParams();
+  if (search)   params.set('search', search);
+  if (supplier) params.set('supplier_id', supplier);
+  if (from)     params.set('date_from', from);
+  if (to)       params.set('date_to', to);
+
+  wrap.innerHTML = skeletonTable(6);
+  try {
+    const data = await apiFetch(`/api/reports/supplier-ledger?${params.toString()}`);
+
+    // Populate supplier dropdown on first load
+    const supSel = document.getElementById('slSupplier');
+    if (supSel && supSel.options.length <= 1 && (data.filters?.suppliers || []).length) {
+      data.filters.suppliers.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id; o.textContent = s.name;
+        supSel.appendChild(o);
+      });
+      if (supplier) supSel.value = supplier;
+    }
+
+    const { suppliers = [], summary = {} } = data;
+    if (!suppliers.length) {
+      wrap.innerHTML = emptyState(IC.billing || IC.reports, 'No supplier ledger data', 'No purchase orders or payments found for the selected filters');
+      return;
+    }
+
+    const summaryHtml = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+        <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">Suppliers</div>
+          <div style="font-size:20px;font-weight:700">${summary.total_suppliers || 0}</div>
+        </div>
+        <div class="stat-card" style="background:#fff5f5;border:1px solid #fdd;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">Total Payments (Dr.)</div>
+          <div style="font-size:20px;font-weight:700;color:#c0392b">KD ${(summary.total_debit || 0).toFixed(3)}</div>
+        </div>
+        <div class="stat-card" style="background:#f0fff4;border:1px solid #c3e6cb;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">Net Purchases (Cr.)</div>
+          <div style="font-size:20px;font-weight:700;color:#27ae60">KD ${(summary.total_credit || 0).toFixed(3)}</div>
+        </div>
+        <div class="stat-card" style="background:#fff8e1;border:1px solid #ffecb3;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">Total Returns</div>
+          <div style="font-size:20px;font-weight:700;color:#e67e22">KD ${(summary.total_returns || 0).toFixed(3)}</div>
+        </div>
+        <div class="stat-card" style="background:${(summary.total_balance || 0) > 0 ? '#fff8e1' : '#f0fff4'};border:1px solid ${(summary.total_balance || 0) > 0 ? '#ffc107' : '#c3e6cb'};border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">Outstanding Balance</div>
+          <div style="font-size:20px;font-weight:700;color:${(summary.total_balance || 0) > 0 ? '#e67e22' : '#27ae60'}">KD ${(summary.total_balance || 0).toFixed(3)}</div>
+        </div>
+      </div>`;
+
+    const tables = suppliers.map(ledger => {
+      const balColor = ledger.balance > 0.0005 ? '#c0392b' : '#27ae60';
+      const balLabel = ledger.balance > 0.0005 ? 'Outstanding' : 'Settled';
+      const rows = ledger.entries.map(e => {
+        const typeClass = e.type === 'Purchase' ? 'badge-unpaid' : (e.type === 'Payment' ? 'badge-paid' : 'badge-scheduled');
+        const debit  = e.debit  > 0 ? `<span style="color:#c0392b;font-weight:600">KD ${e.debit.toFixed(3)}</span>`  : '<span class="text-muted">—</span>';
+        const credit = e.credit !== 0
+          ? (e.credit > 0
+            ? `<span style="color:#27ae60;font-weight:600">KD ${e.credit.toFixed(3)}</span>`
+            : `<span style="color:#e67e22;font-weight:600">- KD ${Math.abs(e.credit).toFixed(3)}</span>`)
+          : '<span class="text-muted">—</span>';
+        const balTxt = e.balance > 0.0005
+          ? `<span style="color:#e67e22;font-weight:600">KD ${e.balance.toFixed(3)}</span>`
+          : `<span style="color:#27ae60;font-weight:600">KD 0.000</span>`;
+        return `<tr>
+          <td class="text-muted text-sm">${escHtml(e.date || '—')}</td>
+          <td><span class="badge ${typeClass}">${escHtml(e.type)}</span></td>
+          <td class="text-sm">${escHtml(e.reference || '—')}</td>
+          <td class="text-sm text-muted">${escHtml(e.description || '—')}</td>
+          <td style="text-align:right">${debit}</td>
+          <td style="text-align:right">${credit}</td>
+          <td style="text-align:right">${balTxt}</td>
+        </tr>`;
+      }).join('');
+
+      return `
+        <div style="margin-bottom:24px;border:1px solid var(--border-light);border-radius:10px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--bg-card);border-bottom:1px solid var(--border-light)">
+            <div>
+              <strong style="font-size:15px">${escHtml(ledger.supplier_name)}</strong>
+              ${ledger.supplier_phone ? `<span class="text-muted text-sm" style="margin-left:10px">${escHtml(ledger.supplier_phone)}</span>` : ''}
+            </div>
+            <div style="display:flex;gap:16px;align-items:center">
+              <span class="text-sm text-muted">Dr. <strong style="color:#c0392b">KD ${ledger.total_debit.toFixed(3)}</strong></span>
+              <span class="text-sm text-muted">Cr. <strong style="color:#27ae60">KD ${ledger.total_credit.toFixed(3)}</strong></span>
+              <span class="badge" style="background:${balColor};color:#fff;font-size:12px">${balLabel}: KD ${ledger.balance.toFixed(3)}</span>
+            </div>
+          </div>
+          ${ledger.entries.length ? `
+          <div class="table-wrap" style="margin:0">
+            <table style="font-size:13px">
+              <thead><tr>
+                <th>Date</th><th>Type</th><th>Reference</th><th>Description</th>
+                <th style="text-align:right">Debit (Dr.) Payment</th>
+                <th style="text-align:right">Credit (Cr.) Purchase/Adj.</th>
+                <th style="text-align:right">Balance</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+              <tfoot><tr style="font-weight:700;background:var(--bg-card)">
+                <td colspan="4" style="text-align:right">Total</td>
+                <td style="text-align:right;color:#c0392b">KD ${ledger.total_debit.toFixed(3)}</td>
+                <td style="text-align:right;color:#27ae60">KD ${ledger.total_credit.toFixed(3)}</td>
+                <td style="text-align:right;color:${balColor}">KD ${ledger.balance.toFixed(3)}</td>
+              </tr></tfoot>
+            </table>
+          </div>` : `<div class="text-muted text-sm" style="padding:12px 14px">No transactions in selected date range.</div>`}
+        </div>`;
+    }).join('');
+
+    wrap.innerHTML = summaryHtml + `<div id="slTables">${tables}</div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="text-danger" style="padding:16px">${escHtml(e.message || 'Failed to load supplier ledger')}</div>`;
+  }
+}
+
+async function loadPendingSvcReport() {
+  const wrap = document.getElementById('pendingSvcBody');
+  if (!wrap) return;
+  const from   = document.getElementById('psvFrom')?.value || '';
+  const to     = document.getElementById('psvTo')?.value || '';
+  const status = document.getElementById('psvStatus')?.value || '';
+  const params = new URLSearchParams();
+  if (from)   params.set('date_from', from);
+  if (to)     params.set('date_to', to);
+  if (status) params.set('status', status);
+  wrap.innerHTML = skeletonTable(6);
+  try {
+    const data = await apiFetch(`/api/reports/pending-services?${params.toString()}`);
+    const { summary = {}, rows = [] } = data;
+    const statusColor = s => s === 'Completed' ? '#16a34a' : (s === 'In Progress' ? '#2563eb' : '#d97706');
+    const statusIcon  = s => s === 'Completed' ? '✔' : (s === 'In Progress' ? '🔵' : '⏳');
+    const summaryHtml = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">Total Items</div>
+          <div style="font-size:22px;font-weight:700">${summary.total || 0}</div>
+        </div>
+        <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">⏳ Pending</div>
+          <div style="font-size:22px;font-weight:700;color:#d97706">${summary.pending || 0}</div>
+        </div>
+        <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">🔵 In Progress</div>
+          <div style="font-size:22px;font-weight:700;color:#2563eb">${summary.in_progress || 0}</div>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">✔ Completed</div>
+          <div style="font-size:22px;font-weight:700;color:#16a34a">${summary.completed || 0}</div>
+        </div>
+      </div>`;
+    if (!rows.length) {
+      wrap.innerHTML = summaryHtml + emptyState(IC.pending || IC.services, 'No service records found', 'Try adjusting the filters');
+      return;
+    }
+    const tableRows = rows.map(r => `
+      <tr>
+        <td class="text-sm">${escHtml(r.bill_date || '—')}</td>
+        <td><button class="btn-link" onclick="viewBillModal(${r.bill_id})">${escHtml(r.bill_number || '—')}</button></td>
+        <td class="text-sm">${escHtml(r.patient_name || '—')} <span class="text-muted text-sm">${escHtml(r.mr_number || '')}</span></td>
+        <td class="text-sm">${escHtml(r.service_name || '—')}</td>
+        <td><span style="color:${statusColor(r.service_status)};font-weight:600;font-size:12px">${statusIcon(r.service_status)} ${escHtml(r.service_status)}</span></td>
+        <td class="text-sm text-muted">${r.completion_date ? escHtml(String(r.completion_date).slice(0,10)) : '—'}</td>
+        <td class="text-sm text-muted">${escHtml(r.provider_name || '—')}</td>
+        <td style="text-align:right" class="text-sm">KD ${parseFloat(r.amount || 0).toFixed(3)}</td>
+        <td>
+          ${r.service_status !== 'Completed'
+            ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '✔ Complete' : '🔵 Start'}</button>`
+            : '<span class="text-muted text-sm">—</span>'}
+        </td>
+      </tr>`).join('');
+    wrap.innerHTML = summaryHtml + `
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Bill #</th><th>Patient</th><th>Service</th>
+            <th>Status</th><th>Completed On</th><th>Provider</th><th style="text-align:right">Amount</th><th>Action</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="text-danger" style="padding:16px">${escHtml(e.message || 'Failed to load report')}</div>`;
+  }
+}
+
 
 function debounceFullPatientsReportSearch() {
   clearTimeout(_fullPatientsReportSearchTimer);
@@ -7924,7 +9723,7 @@ async function loadUserCollectionReport(page) {
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         ${methodTotals.map(m => `<span style="padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover);font-size:12px"><strong>${escHtml(m.payment_method)}</strong>: KD ${parseFloat(m.amount || 0).toFixed(3)}</span>`).join('')}
       </div>
-      <div class="table-wrap"><table>
+      <div class="table-wrap"><table class="user-collection-table">
         <thead><tr><th>Date</th><th>User</th><th>Payment Method</th><th>Gross</th><th>Refund</th><th>Net Amount</th><th>Bill Count</th><th>Breakdown</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
           <td>${escHtml(r.date || '—')}</td>
@@ -8620,40 +10419,66 @@ function exportActivityLogsCSV() {
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // USER MANAGEMENT
 let userStatusFilter = '';
+let userRoleFilter = '';
+let userNameFilter = '';
 
 async function users() {
   const ca = document.getElementById('contentArea');
-  ca.innerHTML = `
-    <div class="action-bar">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <select style="width:auto;min-width:150px" onchange="userStatusFilter=this.value;users()">
-          <option value="" ${userStatusFilter===''?'selected':''}>All Users</option>
-          <option value="active" ${userStatusFilter==='active'?'selected':''}>Active</option>
-          <option value="inactive" ${userStatusFilter==='inactive'?'selected':''}>Inactive</option>
-        </select>
-      </div>
-      <div style="flex:1"></div>
-      ${can('users.create') ? `<button class="btn btn-primary" onclick="openAddUserModal()">${IC.plus} Add User</button>` : ''}
-      ${viewToggleHTML('users')}
-    </div>
-    <div id="usersWrap">${skeletonTable(4)}</div>`;
+  ca.innerHTML = `<div class="action-bar"><div style="flex:1"></div></div><div id="usersWrap">${skeletonTable(4)}</div>`;
   try {
-    const list = await apiFetch('/api/users');
-    const filtered = (list || []).filter(u => {
-      if (userStatusFilter === 'active') return u.active !== false;
-      if (userStatusFilter === 'inactive') return u.active === false;
-      return true;
-    });
-    const wrap = document.getElementById('usersWrap');
-    wrap.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Department</th><th>Slot Duration</th><th>Actions</th></tr></thead>
+    const [list, allRoles] = await Promise.all([apiFetch('/api/users'), apiFetch('/api/roles').catch(()=>[])]);
+    window._usersCache = list || [];
+    const roleOpts = [
+      '<option value="">All Roles</option>',
+      ...(allRoles||[]).map(r => `<option value="${escHtml(r.name)}" ${userRoleFilter===r.name?'selected':''}>${escHtml(r.label||r.name)}</option>`)
+    ].join('');
+    ca.innerHTML = `
+      <div class="action-bar">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="search" placeholder="Search by name…" style="width:170px" value="${escHtml(userNameFilter)}" oninput="userNameFilter=this.value;renderUsersTable(window._usersCache||[])" />
+          <select style="width:auto;min-width:130px" onchange="userRoleFilter=this.value;renderUsersTable(window._usersCache||[])">
+            ${roleOpts}
+          </select>
+          <select style="width:auto;min-width:130px" onchange="userStatusFilter=this.value;renderUsersTable(window._usersCache||[])">
+            <option value="" ${userStatusFilter===''?'selected':''}>All Status</option>
+            <option value="active" ${userStatusFilter==='active'?'selected':''}>Active</option>
+            <option value="inactive" ${userStatusFilter==='inactive'?'selected':''}>Inactive</option>
+          </select>
+        </div>
+        <div style="flex:1"></div>
+        ${can('users.create') ? `<button class="btn btn-primary" onclick="openAddUserModal()">${IC.plus} Add User</button>` : ''}
+        ${viewToggleHTML('users')}
+      </div>
+      <div id="usersWrap"></div>`;
+    renderUsersTable(window._usersCache);
+  } catch(e) {
+    document.getElementById('usersWrap').innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
+}
+
+function renderUsersTable(list) {
+  const q = userNameFilter.toLowerCase().trim();
+  const filtered = list.filter(u => {
+    if (userStatusFilter === 'active' && u.active === false) return false;
+    if (userStatusFilter === 'inactive' && u.active !== false) return false;
+    if (userRoleFilter && u.role !== userRoleFilter) return false;
+    if (q && !u.name.toLowerCase().includes(q) && !u.username.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const wrap = document.getElementById('usersWrap');
+  if (!wrap) return;
+  wrap.innerHTML = filtered.length === 0
+    ? `<div class="empty-state">No users match the current filters.</div>`
+    : `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Status</th><th>Department</th><th>Store Access</th><th>Slot Duration</th><th>Actions</th></tr></thead>
       <tbody>${filtered.map((u,i) => `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(u.name)}</strong></td>
         <td>${escHtml(u.username)}</td>
         <td>${roleBadge(u.role)}</td>
         <td>${u.active === false ? '<span class="badge badge-cancelled">Inactive</span>' : '<span class="badge badge-completed">Active</span>'}</td>
-        <td>${(u.role==='doctor'||u.role==='receptionist') ? escHtml(u.department_name || '—') : '—'}</td>
+        <td>${escHtml((u.department_names || []).length ? u.department_names.join(', ') : (u.department_name || '')) || '—'}</td>
+        <td>${u.role === 'admin' ? 'All Stores' : escHtml((u.store_names || []).length ? u.store_names.join(', ') : 'All Stores')}</td>
         <td>${u.role==='doctor' ? `<span class="badge badge-scheduled">${u.slot_duration||30} min</span>` : '—'}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="openEditUserModal(${u.id})">${IC.edit} Edit</button>
@@ -8663,26 +10488,43 @@ async function users() {
         </td>
       </tr>`).join('')}</tbody>
     </table></div>`;
-    applyViewPref('users', '#usersWrap');
-  } catch(e) {
-    document.getElementById('usersWrap').innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  applyViewPref('users', '#usersWrap');
+}
+
+
+function userStoreChecklistHtml(stores, selectedIds = [], inputName = 'store_ids') {
+  const normalizedSelected = new Set((selectedIds || []).map((id) => String(id)));
+  const activeStores = (stores || []).filter((store) => store.active !== false);
+  if (!activeStores.length) {
+    return '<div class="text-sm text-muted">No stores available.</div>';
   }
+  return activeStores.map((store) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border)">
+      <input type="checkbox" name="${inputName}" value="${store.id}" ${normalizedSelected.has(String(store.id)) ? 'checked' : ''}/>
+      <span>${escHtml(store.name || `Store #${store.id}`)}</span>
+    </label>`).join('');
+}
+
+function collectCheckedValues(formEl, inputName) {
+  return Array.from(formEl.querySelectorAll(`input[name="${inputName}"]:checked`)).map((input) => parseInt(input.value, 10)).filter((value) => value > 0);
 }
 
 async function openAddUserModal() {
   let departments = [];
   let allRoles = [];
+  let stores = [];
   try {
-    [departments, allRoles] = await Promise.all([
+    [departments, allRoles, stores] = await Promise.all([
       apiFetch('/api/doctor-departments'),
-      apiFetch('/api/roles')
+      apiFetch('/api/roles'),
+      apiFetch('/api/store/sub-stores')
     ]);
   } catch(e) {
     toast(e.message, 'error');
     return;
   }
-  const depOptions = (departments || []).filter(d => d.active !== false)
-    .map(d => `<option value="${d.id}">${escHtml(d.name)}</option>`).join('');
+  const deptChecklistHtml = (departments || []).filter(d => d.active !== false)
+    .map(d => `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border)"><input type="checkbox" name="department_ids" value="${d.id}"/><span>${escHtml(d.name)}</span></label>`).join('');
   const roleOptions = (allRoles || [])
     .map(r => `<option value="${r.name}">${escHtml(r.label || r.name)}</option>`).join('');
   showModal('Add User', `
@@ -8694,7 +10536,7 @@ async function openAddUserModal() {
       </div>
       <div class="form-row">
         <div class="form-group"><label>Role *</label>
-          <select name="role" required onchange="const isDoc=this.value==='doctor';const needsDept=isDoc||this.value==='receptionist';document.getElementById('slotDurGroup').style.display=isDoc?'':'none';document.getElementById('depGroup').style.display=needsDept?'':'none'">
+          <select name="role" required onchange="const isDoc=this.value==='doctor';const limitStores=this.value!==''&&this.value!=='admin';document.getElementById('slotDurGroup').style.display=isDoc?'':'none';document.getElementById('storeAccessGroup').style.display=limitStores?'':'none'">
             <option value="">Select Role</option>
             ${roleOptions}
           </select>
@@ -8709,13 +10551,6 @@ async function openAddUserModal() {
             <option value="60">1 hour</option>
           </select>
         </div>
-        <div class="form-group" id="depGroup" style="display:none">
-          <label>Department *</label>
-          <select name="department_id">
-            <option value="">Select Department</option>
-            ${depOptions}
-          </select>
-        </div>
         <div class="form-group">
           <label>Status</label>
           <select name="active">
@@ -8724,11 +10559,27 @@ async function openAddUserModal() {
           </select>
         </div>
       </div>
+      <div class="form-group">
+        <label>Department Access</label>
+        <div style="max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg-card)">
+          ${deptChecklistHtml || '<div class="text-sm text-muted">No departments available.</div>'}
+        </div>
+        <div class="text-sm text-muted" style="margin-top:6px">Select one or more departments to restrict access. Leave all unchecked for no restriction.</div>
+      </div>
+      <div class="form-group" id="storeAccessGroup" style="display:none">
+        <label>Store Access</label>
+        <div style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg-card)">
+          ${userStoreChecklistHtml(stores)}
+        </div>
+        <div class="text-sm text-muted" style="margin-top:6px">Leave all unchecked to allow all stores. Select one or more stores to restrict access.</div>
+      </div>
     </form>`,
     async () => {
-      const body = Object.fromEntries(new FormData(document.getElementById('addUserForm')));
+      const form = document.getElementById('addUserForm');
+      const body = Object.fromEntries(new FormData(form));
+      body.store_ids = collectCheckedValues(form, 'store_ids');
+      body.department_ids = collectCheckedValues(form, 'department_ids');
       if (!body.name || !body.username || !body.password || !body.role) { toast('All fields required', 'error'); return false; }
-      if ((body.role === 'doctor' || body.role === 'receptionist') && !body.department_id) { toast('Department is required for ' + body.role, 'error'); return false; }
       try {
         await apiFetch('/api/users', { method: 'POST', body: JSON.stringify(body) });
         toast('User added', 'success');
@@ -8738,9 +10589,10 @@ async function openAddUserModal() {
 }
 async function openEditUserModal(id) {
   try {
-    const [list, departments] = await Promise.all([
+    const [list, departments, stores] = await Promise.all([
       apiFetch('/api/users'),
-      apiFetch('/api/doctor-departments')
+      apiFetch('/api/doctor-departments'),
+      apiFetch('/api/store/sub-stores')
     ]);
     const u = list.find(x => x.id === id);
     if (!u) { toast('User not found', 'error'); return; }
@@ -8750,13 +10602,13 @@ async function openEditUserModal(id) {
       <form id="editUserForm">
         <div class="form-group"><label>Full Name</label><input name="name" value="${escHtml(u.name)}"/></div>
         <div class="form-group"><label>Role</label><input value="${escHtml(u.role)}" disabled/></div>
-        ${(u.role==='doctor'||u.role==='receptionist') ? `
+        ${u.role !== 'admin' ? `
         <div class="form-group">
-          <label>Department</label>
-          <select name="department_id">
-            <option value="">Select Department</option>
-            ${depOptions}
-          </select>
+          <label>Department Access</label>
+          <div style="max-height:180px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg-card)">
+            ${(departments || []).filter(d => d.active !== false || (u.department_ids||[u.department_id]).includes(d.id)).map(d => `<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px dashed var(--border)"><input type="checkbox" name="department_ids" value="${d.id}" ${(u.department_ids||[u.department_id]).map(Number).includes(d.id)?'checked':''}/><span>${escHtml(d.name)}</span></label>`).join('')|| '<div class="text-sm text-muted">No departments available.</div>'}
+          </div>
+          <div class="text-sm text-muted" style="margin-top:6px">Leave all unchecked for no restriction. Select one or more to restrict access.</div>
         </div>` : ''}
         <div class="form-group">
           <label>Status</label>
@@ -8766,6 +10618,14 @@ async function openEditUserModal(id) {
           </select>
           ${u.id === currentUser.id ? '<div class="text-sm text-muted" style="margin-top:6px">You cannot deactivate your own account.</div>' : ''}
         </div>
+        ${u.role !== 'admin' ? `
+        <div class="form-group">
+          <label>Store Access</label>
+          <div style="max-height:220px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg-card)">
+            ${userStoreChecklistHtml(stores, u.store_ids || [])}
+          </div>
+          <div class="text-sm text-muted" style="margin-top:6px">Leave all unchecked to allow all stores. Select one or more stores to restrict access.</div>
+        </div>` : ''}
         ${u.role==='doctor' ? `
         <div class="form-group">
           <label>Slot Duration</label>
@@ -8779,7 +10639,10 @@ async function openEditUserModal(id) {
         </div>` : ''}
       </form>`,
       async () => {
-        const body = Object.fromEntries(new FormData(document.getElementById('editUserForm')));
+        const form = document.getElementById('editUserForm');
+        const body = Object.fromEntries(new FormData(form));
+        if (u.role !== 'admin') body.store_ids = collectCheckedValues(form, 'store_ids');
+        if (u.role !== 'admin') body.department_ids = collectCheckedValues(form, 'department_ids');
         try {
           await apiFetch(`/api/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
           toast('User updated', 'success');
@@ -8790,7 +10653,7 @@ async function openEditUserModal(id) {
 }
 
 async function deleteUser(id, name) {
-  if (!confirm(`Delete user "${name}"?`)) return;
+  if (!await confirmDialog(`Delete user "${name}"?`)) return;
   try {
     await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
     toast('User deleted', 'success');
@@ -8883,6 +10746,75 @@ document.addEventListener('keydown', e => {
 //  SERVICES
 // -----------------------------------------------
 let SERVICE_CATEGORIES = ['Consultation','Diagnostic','Procedure','Therapy','Other'];
+const SERVICES_BATCH_SIZE = 100;
+let _filteredServices = [];
+let _servicesRenderedCount = 0;
+let _servicesInfiniteObserver = null;
+
+function renderServiceRow(s, index, isAdmin) {
+  return `<tr>
+    <td>${index + 1}</td>
+    <td><strong>${escHtml(s.name)}</strong></td>
+    <td>${serviceCategoryBadgeHtml(s.category)}</td>
+    <td>${escHtml(s.description||'—')}</td>
+    <td><strong>KD ${s.price.toFixed(3)}</strong></td>
+    <td>${s.duration_min ? s.duration_min+' min' : '—'}</td>
+    <td>${s.active ? '<span class="badge badge-completed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
+    ${isAdmin?`<td class="action-btns">
+      <button class="btn btn-sm" onclick="openServiceProductModal(${s.id})" title="Assign Products">${IC.product || IC.store}</button>
+      <button class="btn btn-sm btn-ghost" onclick="openEditServiceModal(${s.id})" title="Edit">${IC.edit}</button>
+      ${can('services.delete') ? `<button class="btn btn-sm btn-danger-ghost" onclick="deleteService(${s.id},'${escHtml(s.name)}')" title="Delete">${IC.trash}</button>` : ''}
+    </td>`:''}
+  </tr>`;
+}
+
+function disconnectServicesInfiniteScroll() {
+  if (_servicesInfiniteObserver) {
+    _servicesInfiniteObserver.disconnect();
+    _servicesInfiniteObserver = null;
+  }
+}
+
+function updateServicesLoadState() {
+  const info = document.getElementById('svcLoadState');
+  if (!info) return;
+  const total = Array.isArray(_filteredServices) ? _filteredServices.length : 0;
+  const rendered = Math.min(_servicesRenderedCount, total);
+  info.textContent = total > SERVICES_BATCH_SIZE
+    ? `Showing ${rendered} of ${total} services`
+    : `${total} service${total !== 1 ? 's' : ''}`;
+}
+
+function appendMoreServices(isAdmin) {
+  const tbody = document.getElementById('svcTableBody');
+  if (!tbody) return;
+  const start = _servicesRenderedCount;
+  const nextRows = (_filteredServices || []).slice(start, start + SERVICES_BATCH_SIZE);
+  if (!nextRows.length) {
+    disconnectServicesInfiniteScroll();
+    return;
+  }
+  tbody.insertAdjacentHTML('beforeend', nextRows.map((service, offset) => renderServiceRow(service, start + offset, isAdmin)).join(''));
+  _servicesRenderedCount += nextRows.length;
+  updateServicesLoadState();
+  if (_servicesRenderedCount >= (_filteredServices || []).length) {
+    disconnectServicesInfiniteScroll();
+  }
+}
+
+function attachServicesInfiniteScroll(isAdmin) {
+  disconnectServicesInfiniteScroll();
+  const sentinel = document.getElementById('svcLoadMoreSentinel');
+  if (!sentinel) return;
+  if (_servicesRenderedCount >= (_filteredServices || []).length) return;
+  _servicesInfiniteObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) appendMoreServices(isAdmin);
+    });
+  }, { root: null, rootMargin: '0px 0px 240px 0px', threshold: 0.01 });
+  _servicesInfiniteObserver.observe(sentinel);
+}
+
 async function loadServiceCategories() {
   try {
     const cats = await apiFetch('/api/service-categories');
@@ -8913,6 +10845,7 @@ async function services() {
   try {
     const list = await apiFetch('/api/services');
     window._allServices = list;
+    _filteredServices = list.slice();
     renderServicesTable(list, isAdmin);
   } catch(e) { toast(e.message, 'error'); }
 }
@@ -8925,35 +10858,63 @@ function filterServices() {
     (!q || s.name.toLowerCase().includes(q) || (s.description||'').toLowerCase().includes(q)) &&
     (!cat || s.category === cat)
   );
+  _filteredServices = filtered;
   renderServicesTable(filtered, isAdmin);
 }
 
 function renderServicesTable(list, isAdmin) {
   const wrap = document.getElementById('svcWrap');
   if (!wrap) return;
+  disconnectServicesInfiniteScroll();
   if (!list.length) { wrap.innerHTML = `<div class="empty-state">${IC.empty}<p>No services found</p></div>`; return; }
+  _filteredServices = Array.isArray(list) ? list.slice() : [];
+  _servicesRenderedCount = 0;
   wrap.innerHTML = `<div class="table-wrap"><table>
     <thead><tr><th>#</th><th>Name</th><th>Category</th><th>Description</th><th>Price (KD)</th><th>Duration</th><th>Status</th>${isAdmin?'<th>Actions</th>':''}</tr></thead>
-    <tbody>${list.map((s,i)=>`<tr>
-      <td>${i+1}</td>
-      <td><strong>${escHtml(s.name)}</strong></td>
-      <td><span class="badge badge-${catBadgeClass(s.category)}">${escHtml(s.category)}</span></td>
-      <td>${escHtml(s.description||'—')}</td>
-      <td><strong>KD ${s.price.toFixed(3)}</strong></td>
-      <td>${s.duration_min ? s.duration_min+' min' : '—'}</td>
-      <td>${s.active ? '<span class="badge badge-completed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
-      ${isAdmin?`<td class="action-btns">
-        <button class="btn btn-sm" onclick="openServiceProductModal(${s.id})" title="Assign Products">${IC.product || IC.store}</button>
-        <button class="btn btn-sm btn-ghost" onclick="openEditServiceModal(${s.id})" title="Edit">${IC.edit}</button>
-        ${can('services.delete') ? `<button class="btn btn-sm btn-danger-ghost" onclick="deleteService(${s.id},'${escHtml(s.name)}')" title="Delete">${IC.trash}</button>` : ''}
-      </td>`:''}
-    </tr>`).join('')}</tbody>
-  </table></div>`;
+    <tbody id="svcTableBody"></tbody>
+  </table></div>
+  <div class="svc-load-state" id="svcLoadState"></div>
+  <div class="svc-load-more-sentinel" id="svcLoadMoreSentinel" aria-hidden="true"></div>`;
+  appendMoreServices(isAdmin);
+  attachServicesInfiniteScroll(isAdmin);
   applyViewPref('services', '#svcWrap');
 }
 
-function catBadgeClass(cat) {
-  return {Consultation:'scheduled',Diagnostic:'confirmed',Procedure:'arrived',Therapy:'completed',Other:'secondary'}[cat]||'secondary';
+function serviceCategoryBadgeStyle(cat) {
+  const presets = {
+    consultation: { bg: 'rgba(14, 165, 233, .14)', color: '#0369a1' },
+    diagnostic: { bg: 'rgba(79, 70, 229, .12)', color: '#4338ca' },
+    procedure: { bg: 'rgba(249, 115, 22, .14)', color: '#c2410c' },
+    therapy: { bg: 'rgba(34, 197, 94, .14)', color: '#15803d' },
+    other: { bg: 'rgba(100, 116, 139, .14)', color: '#475569' }
+  };
+  const raw = String(cat || 'Other').trim();
+  const key = raw.toLowerCase();
+  if (presets[key]) return presets[key];
+
+  const palette = [
+    { bg: 'rgba(190, 24, 93, .14)', color: '#be185d' },
+    { bg: 'rgba(124, 58, 237, .14)', color: '#7c3aed' },
+    { bg: 'rgba(8, 145, 178, .14)', color: '#0e7490' },
+    { bg: 'rgba(22, 163, 74, .14)', color: '#15803d' },
+    { bg: 'rgba(202, 138, 4, .18)', color: '#a16207' },
+    { bg: 'rgba(234, 88, 12, .14)', color: '#c2410c' },
+    { bg: 'rgba(37, 99, 235, .14)', color: '#1d4ed8' },
+    { bg: 'rgba(217, 70, 239, .14)', color: '#a21caf' },
+    { bg: 'rgba(15, 118, 110, .14)', color: '#0f766e' },
+    { bg: 'rgba(220, 38, 38, .14)', color: '#b91c1c' }
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < key.length; i += 1) hash = ((hash << 5) - hash) + key.charCodeAt(i);
+  const picked = palette[Math.abs(hash) % palette.length];
+  return picked;
+}
+
+function serviceCategoryBadgeHtml(cat) {
+  const label = String(cat || 'Other').trim() || 'Other';
+  const style = serviceCategoryBadgeStyle(label);
+  return `<span class="badge" style="background:${style.bg};color:${style.color}">${escHtml(label)}</span>`;
 }
 
 function openAddServiceModal() {
@@ -9021,7 +10982,7 @@ async function openEditServiceModal(id) {
 }
 
 async function deleteService(id, name) {
-  if (!confirm(`Delete service "${name}"? This cannot be undone.`)) return;
+  if (!await confirmDialog(`Delete service "${name}"? This cannot be undone.`)) return;
   try {
     await apiFetch(`/api/services/${id}`, { method:'DELETE' });
     toast('Service deleted','success'); services();
@@ -9399,7 +11360,7 @@ function renderServiceProductList(links) {
 }
 
 async function deleteServiceProductLink(id, serviceId) {
-  if (!confirm('Remove this product from service?')) return;
+  if (!await confirmDialog('Remove this product from service?')) return;
   try {
     await apiFetch(`/api/store/service-products/${id}`, { method:'DELETE' });
     const modal = document.getElementById('modalOverlay');
@@ -9686,7 +11647,7 @@ async function openEditPackageModal(id) {
 }
 
 async function deletePackage(id, name) {
-  if (!confirm(`Delete package "${name}"? This cannot be undone.`)) return;
+  if (!await confirmDialog(`Delete package "${name}"? This cannot be undone.`)) return;
   try {
     await apiFetch(`/api/packages/${id}`, { method:'DELETE' });
     toast('Package deleted','success'); packages();
@@ -9696,14 +11657,14 @@ async function deletePackage(id, name) {
 // -----------------------------------------------
 //  SETUP
 // -----------------------------------------------
-async function setup() {
+async function ownerControl() {
   const ca = document.getElementById('contentArea');
   ca.innerHTML = `
     <div class="setup-layout">
       <div class="setup-head">
         <div>
-          <div class="setup-title">Setup Center</div>
-          <div class="setup-subtitle">Manage clinic masters, doctor availability, and store-related settings from one place.</div>
+          <div class="setup-title">Owner Control</div>
+          <div class="setup-subtitle">Manage clinic profile, subscription, backups, restore, and system reset.</div>
         </div>
       </div>
 
@@ -9764,9 +11725,112 @@ async function setup() {
                 <button class="btn btn-primary" onclick="saveOwnerControl()">${IC.check} Save Owner Settings</button>
                 <button class="btn" onclick="completeOwnerSetup()">${IC.setup} Mark Setup Complete</button>
                 ${currentUser && currentUser.role === 'admin' ? `<button id="ownerBackupBtn" class="btn" onclick="triggerDbBackup()">${IC.download || IC.reports} Create DB Backup</button>` : ''}
+                ${currentUser && currentUser.role === 'admin' ? `<button id="ownerSystemUpdateBtn" class="btn btn-warning" onclick="triggerSystemUpdate()">${IC.clock || ''} System Update</button>` : ''}
               </div>
               <div id="ownerSubscriptionState" class="text-muted" style="margin-top:10px"></div>
+              <div id="ownerAppVersionState" class="text-muted" style="margin-top:6px"></div>
               ${currentUser && currentUser.role === 'admin' ? `<div id="ownerBackupState" class="text-muted" style="margin-top:6px"></div>` : ''}
+              ${currentUser && currentUser.role === 'admin' ? `<div id="ownerSystemUpdateState" class="text-muted" style="margin-top:6px"></div>` : ''}
+              ${currentUser && currentUser.role === 'admin' ? `<div id="ownerRestorePanel" style="margin-top:10px;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-hover)">
+                <div style="font-weight:700;color:var(--text);margin-bottom:8px">One-Click Data Restore</div>
+                <div class="text-sm text-muted" style="margin-bottom:8px">Restore full database from backup file. A safety backup is created automatically before restore.</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+                  <select id="restoreBackupSelect" class="form-select" style="min-width:280px;max-width:100%"></select>
+                  <button id="restoreLatestBtn" class="btn btn-danger" onclick="startDbRestoreLatest()">${IC.download || IC.reports} Restore Latest</button>
+                  <button id="restoreSelectedBtn" class="btn" onclick="startDbRestoreSelected()">${IC.download || IC.reports} Restore Selected</button>
+                </div>
+                <div id="restoreProgressWrap" style="display:none;margin-top:8px">
+                  <div style="height:10px;border-radius:999px;background:var(--bg);overflow:hidden"><div id="restoreProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--c-warning),var(--c-danger));transition:width .25s ease"></div></div>
+                  <div id="restoreProgressText" class="text-sm text-muted" style="margin-top:6px"></div>
+                  <div id="restoreBackupSafety" class="text-sm" style="margin-top:6px"></div>
+                </div>
+              </div>` : ''}
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.x} System Reset</div>
+            </div>
+            <div class="card-body">
+              <div style="border:1px solid color-mix(in srgb, var(--c-danger) 40%, var(--border) 60%);background:color-mix(in srgb, var(--c-danger-bg) 75%, transparent);padding:10px 12px;border-radius:10px;color:var(--c-danger);font-weight:700;font-size:13px;">
+                This will permanently delete all patient and transactional data.
+              </div>
+              <div id="resetSummary" class="text-sm" style="margin-top:10px;color:var(--text-secondary)">Loading reset summary...</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+                <input id="resetIncludeAudit" type="checkbox" onchange="refreshResetSummary()" />
+                <label for="resetIncludeAudit" class="text-sm">Also delete audit logs</label>
+              </div>
+              <div class="form-row" style="margin-top:10px;">
+                <div class="form-group">
+                  <label>Type RESET to confirm</label>
+                  <input id="resetConfirmText" placeholder="RESET" />
+                </div>
+                <div class="form-group">
+                  <label>Re-enter Admin Password</label>
+                  <input id="resetPassword" type="password" placeholder="Password" />
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                <button id="startResetBtn" class="btn btn-danger" onclick="startSystemResetJob()">${IC.x} Start One-Click Tenant Reset</button>
+                <button class="btn" onclick="loadSystemResetPanel()">${IC.clock} Refresh Status</button>
+              </div>
+              <div id="resetProgressWrap" style="display:none;margin-top:10px;">
+                <div style="height:10px;border-radius:999px;background:var(--bg-hover);overflow:hidden;">
+                  <div id="resetProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--c-danger),color-mix(in srgb,var(--c-warning) 50%, var(--c-danger) 50%));transition:width .25s ease"></div>
+                </div>
+                <div id="resetProgressText" class="text-sm text-muted" style="margin-top:6px"></div>
+                <div id="resetBackupLinks" class="text-sm" style="margin-top:6px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>`;
+  loadOwnerControl();
+  loadSystemResetPanel();
+}
+
+async function setup() {
+  const ca = document.getElementById('contentArea');
+  ca.innerHTML = `
+    <div class="setup-layout">
+      <div class="setup-head">
+        <div>
+          <div class="setup-title">Setup Center</div>
+          <div class="setup-subtitle">Manage clinic masters, doctor availability, and store-related settings.</div>
+        </div>
+      </div>
+
+      <section class="setup-section setup-section-clinic">
+        <div class="setup-section-head">
+          <div class="setup-section-title"><span class="setup-section-icon">${IC.billing}</span><span>Clinic & Billing Masters</span></div>
+        </div>
+        <div class="setup-grid setup-grid-2">
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.billing} Payment Methods</div>
+              ${can('setup.edit') ? `<button class="btn btn-primary btn-sm" onclick="openAddPaymentMethodModal()">${IC.plus} Add</button>` : ''}
+            </div>
+            <div class="card-body">
+              <div id="pmWrap">${skeletonTable(4)}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.services} Service Categories</div>
+              ${can('setup.edit') ? `<button class="btn btn-primary btn-sm" onclick="openAddServiceCategoryModal()">${IC.plus} Add</button>` : ''}
+            </div>
+            <div class="card-body">
+              <div id="scWrap">${skeletonTable(4)}</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.expense} Expense Categories</div>
+              ${can('setup.edit') ? `<button class="btn btn-primary btn-sm" onclick="openAddExpenseCategoryModal()">${IC.plus} Add</button>` : ''}
+            </div>
+            <div class="card-body">
+              <div id="ecWrap">${skeletonTable(4)}</div>
             </div>
           </div>
           <div class="card">
@@ -9774,7 +11838,13 @@ async function setup() {
               <div class="card-title">🖨️ Printer Configuration</div>
             </div>
             <div class="card-body">
-              <form id="ownerPrinterForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+              <form id="setupPrinterForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+                <div class="form-group"><label>Print Mode</label>
+                  <select name="print_mode">
+                    <option value="auto">Auto Print – print immediately after bill creation</option>
+                    <option value="manual">Manual Print – show preview with Print / Cancel</option>
+                  </select>
+                </div>
                 <div class="form-group"><label>Printer Type</label>
                   <select name="printer_type" onchange="updatePrinterTypeFields()">
                     <option value="">—— Not Configured ——</option>
@@ -9798,32 +11868,6 @@ async function setup() {
                 <button class="btn" onclick="testPrinterConnection()">🧪 Test Printer</button>
               </div>
               <div id="printerStatus" class="text-muted" style="margin-top:8px;font-size:13px"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="setup-section setup-section-clinic">
-        <div class="setup-section-head">
-          <div class="setup-section-title"><span class="setup-section-icon">${IC.billing}</span><span>Clinic & Billing Masters</span></div>
-        </div>
-        <div class="setup-grid setup-grid-2">
-          <div class="card">
-            <div class="card-header-row">
-              <div class="card-title">${IC.billing} Payment Methods</div>
-              ${can('setup.edit') ? `<button class="btn btn-primary btn-sm" onclick="openAddPaymentMethodModal()">${IC.plus} Add</button>` : ''}
-            </div>
-            <div class="card-body">
-              <div id="pmWrap">${skeletonTable(4)}</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header-row">
-              <div class="card-title">${IC.services} Service Categories</div>
-              ${can('setup.edit') ? `<button class="btn btn-primary btn-sm" onclick="openAddServiceCategoryModal()">${IC.plus} Add</button>` : ''}
-            </div>
-            <div class="card-body">
-              <div id="scWrap">${skeletonTable(4)}</div>
             </div>
           </div>
         </div>
@@ -9882,11 +11926,43 @@ async function setup() {
     </div>`;
   loadPaymentMethods();
   loadServiceCategoriesTable();
+  loadExpenseCategoriesTable();
+  loadSetupPrinterConfig();
   loadDoctorDepartmentsTable();
   loadDoctorSchedulesTable();
   loadUomsTable();
   loadProductCategoriesTable();
-  loadOwnerControl();
+}
+
+async function loadSetupPrinterConfig() {
+  if (!can('setup.edit')) return;
+  try {
+    const cfg = await apiFetch('/api/setup/profile');
+    currentSystem = cfg;
+    const printerForm = document.getElementById('setupPrinterForm');
+    const printer = cfg.printer || {};
+    if (!printerForm) return;
+
+    printerForm.print_mode.value = printer.print_mode || 'auto';
+    printerForm.printer_type.value = printer.printer_type || '';
+    printerForm.printer_ip.value = printer.printer_ip || '';
+    printerForm.printer_port.value = printer.printer_port || 9100;
+    const manual = document.getElementById('printerNameManual');
+    if (manual) manual.value = printer.printer_name || '';
+    updatePrinterTypeFields();
+
+    const printerStatus = document.getElementById('printerStatus');
+    if (printer.printer_name && printerStatus) {
+      printerStatus.textContent = `✓ Configured: ${printer.printer_name} (${printer.printer_type || 'unknown'})`;
+    } else if (printerStatus) {
+      printerStatus.textContent = '';
+    }
+
+    // Don't auto-load printers - let user click "Refresh List" to avoid command prompt popup
+    // refreshAvailablePrinters(printer.printer_name || '');
+  } catch (e) {
+    toast(e.message, 'error');
+  }
 }
 
 async function loadOwnerControl() {
@@ -9940,31 +12016,177 @@ async function loadOwnerControl() {
       state.textContent = `Current Status: ${statusText} | Days Left: ${daysLeft} | Setup Completed: ${cfg.setup_required ? 'No' : 'Yes'}`;
     }
 
-    // Load printer configuration
-    const printerForm = document.getElementById('ownerPrinterForm');
-    const printer = cfg.printer || {};
-    if (printerForm) {
-      printerForm.printer_type.value = printer.printer_type || '';
-      printerForm.printer_ip.value = printer.printer_ip || '';
-      printerForm.printer_port.value = printer.printer_port || 9100;
-      const manual = document.getElementById('printerNameManual');
-      if (manual) manual.value = printer.printer_name || '';
-      updatePrinterTypeFields();
-
-      const printerStatus = document.getElementById('printerStatus');
-      if (printer.printer_name && printerStatus) {
-        printerStatus.textContent = `✓ Configured: ${printer.printer_name} (${printer.printer_type || 'unknown'})`;
-      }
-
-      // Don't auto-load printers - let user click "Refresh List" to avoid command prompt popup
-      // refreshAvailablePrinters(printer.printer_name || '');
+    const build = cfg.build || {};
+    const appVersionState = document.getElementById('ownerAppVersionState');
+    if (appVersionState) {
+      const ver = build.version || 'unknown';
+      const commit = build.git_commit ? ` (${build.git_commit})` : '';
+      const started = build.started_at ? formatDateTime(build.started_at) : 'unknown';
+      const latest = build.latest_file_mtime ? formatDateTime(build.latest_file_mtime) : 'unknown';
+      appVersionState.textContent = `App Version: v${ver}${commit} | Server Started: ${started} | Latest Code File: ${latest}`;
     }
 
     if (currentUser && currentUser.role === 'admin') {
       loadOwnerBackupStatus();
+      loadSystemResetPanel();
+      loadSystemRestorePanel();
     }
   } catch (e) {
     toast(e.message, 'error');
+  }
+}
+
+let _resetJobPollTimer = null;
+let _restoreJobPollTimer = null;
+let _ownerBackupsCache = [];
+
+function renderResetSummary(summary) {
+  const el = document.getElementById('resetSummary');
+  if (!el) return;
+  if (!summary) {
+    el.textContent = 'Summary unavailable.';
+    return;
+  }
+  const rows = [
+    ['Patients', summary.patients || 0],
+    ['Appointments', summary.appointments || 0],
+    ['Follow Ups', summary.follow_ups || 0],
+    ['EMR (Prescriptions)', summary.prescriptions || 0],
+    ['Billing & Invoices', summary.bills || 0],
+    ['Refunds', summary.refunds || 0],
+    ['Expenses', summary.expenses || 0],
+    ['Services', summary.services || 0],
+    ['Packages', summary.packages || 0],
+    ['Inventory Tx', summary.inventory_transactions || 0],
+    ['Audit Logs', summary.audit_logs || 0]
+  ];
+  el.innerHTML = rows.map(([k, v]) => `<span style="display:inline-block;margin-right:10px;margin-bottom:6px;padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover)"><strong>${escHtml(String(k))}:</strong> ${escHtml(String(v))}</span>`).join('');
+}
+
+async function refreshResetSummary() {
+  const includeAudit = !!document.getElementById('resetIncludeAudit')?.checked;
+  try {
+    const res = await apiFetch('/api/system-reset/precheck', {
+      method: 'POST',
+      body: JSON.stringify({ scope: 'full_transactional', includeAuditLogs: includeAudit })
+    });
+    renderResetSummary(res.summary || null);
+  } catch (e) {
+    const el = document.getElementById('resetSummary');
+    if (el) el.textContent = e.message || 'Unable to load summary';
+  }
+}
+
+function renderResetProgress(job) {
+  const wrap = document.getElementById('resetProgressWrap');
+  const bar = document.getElementById('resetProgressBar');
+  const txt = document.getElementById('resetProgressText');
+  const links = document.getElementById('resetBackupLinks');
+  if (!wrap || !bar || !txt || !links) return;
+  if (!job) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
+  const progress = Math.max(0, Math.min(100, parseInt(job.progress || 0, 10) || 0));
+  bar.style.width = `${progress}%`;
+  txt.textContent = `${progress}% · ${job.phase || 'running'} · ${job.message || ''}`;
+  if (job.backup && job.backup.files) {
+    links.innerHTML = `Backup: <a href="${escHtml(job.backup.files.sqlite || '#')}" target="_blank" rel="noopener">Download SQLite</a> · <a href="${escHtml(job.backup.files.json || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
+  } else {
+    links.textContent = '';
+  }
+}
+
+async function loadSystemResetPanel() {
+  if (!can('setup.edit')) return;
+  try {
+    await refreshResetSummary();
+    const st = await apiFetch('/api/system-reset/status');
+    if (st && st.in_progress && st.active_job_id) {
+      pollSystemResetJob(st.active_job_id);
+    } else {
+      renderResetProgress(null);
+      if (_resetJobPollTimer) {
+        clearInterval(_resetJobPollTimer);
+        _resetJobPollTimer = null;
+      }
+    }
+  } catch (_) {
+    // Hide silently if endpoint not available for current role.
+  }
+}
+
+async function pollSystemResetJob(jobId) {
+  if (!jobId) return;
+  const run = async () => {
+    try {
+      const job = await apiFetch(`/api/system-reset/jobs/${encodeURIComponent(jobId)}`);
+      renderResetProgress(job);
+      const btn = document.getElementById('startResetBtn');
+      if (btn) btn.disabled = !!(job && ['queued', 'running'].includes(String(job.status || '')));
+      if (job && ['completed', 'failed', 'cancelled'].includes(String(job.status || ''))) {
+        if (_resetJobPollTimer) {
+          clearInterval(_resetJobPollTimer);
+          _resetJobPollTimer = null;
+        }
+        if (String(job.status) === 'completed') toast('System reset completed successfully.', 'success');
+        if (String(job.status) === 'failed') toast(job.error || 'System reset failed.', 'error');
+        refreshResetSummary();
+      }
+    } catch (e) {
+      if (_resetJobPollTimer) {
+        clearInterval(_resetJobPollTimer);
+        _resetJobPollTimer = null;
+      }
+      toast(e.message || 'Unable to fetch reset progress', 'error');
+    }
+  };
+  await run();
+  if (_resetJobPollTimer) clearInterval(_resetJobPollTimer);
+  _resetJobPollTimer = setInterval(run, 1200);
+}
+
+async function startSystemResetJob() {
+  const confirmText = String(document.getElementById('resetConfirmText')?.value || '').trim();
+  const password = String(document.getElementById('resetPassword')?.value || '');
+  const includeAudit = !!document.getElementById('resetIncludeAudit')?.checked;
+  if (confirmText !== 'RESET') {
+    toast('Type RESET exactly to confirm.', 'error');
+    return;
+  }
+  if (!password) {
+    toast('Password is required.', 'error');
+    return;
+  }
+  if (!await confirmDialog('This will permanently delete all patient and transaction data. Continue?', 'Confirm System Reset')) return;
+
+  const btn = document.getElementById('startResetBtn');
+  const oldText = btn ? btn.innerHTML : '';
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `${IC.clock} Starting...`;
+    }
+    const res = await apiFetch('/api/system-reset/start', {
+      method: 'POST',
+      body: JSON.stringify({
+        scope: 'full_transactional',
+        includeAuditLogs: includeAudit,
+        confirmText: 'RESET',
+        password
+      })
+    });
+    const jobId = res && res.job_id;
+    if (!jobId) throw new Error('Reset job id missing from response');
+    toast('Reset job started. System is now locked during cleanup.', 'info');
+    pollSystemResetJob(jobId);
+  } catch (e) {
+    toast(e.message || 'Unable to start system reset', 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = oldText || `${IC.x} Start One-Click Tenant Reset`;
+    }
   }
 }
 
@@ -9974,17 +12196,160 @@ async function loadOwnerBackupStatus() {
   try {
     const rows = await apiFetch('/api/admin/db-backups');
     const list = Array.isArray(rows) ? rows : [];
+    _ownerBackupsCache = list;
     if (!list.length) {
       state.textContent = 'No backups yet. Click Create DB Backup to make your first snapshot.';
+      renderRestoreBackupOptions([]);
       return;
     }
     const latest = list[0];
     const when = latest && latest.created_at ? formatDateTime(latest.created_at) : 'Unknown time';
     const bid = latest && latest.backup_id ? latest.backup_id : 'Unknown';
     state.innerHTML = `Latest backup: <strong>${escHtml(bid)}</strong> · ${escHtml(when)} · <a href="${escHtml((latest.files && latest.files.sqlite) || '#')}" target="_blank" rel="noopener">Download SQLite</a> · <a href="${escHtml((latest.files && latest.files.json) || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
+    renderRestoreBackupOptions(list);
   } catch (e) {
     state.textContent = 'Backup status unavailable. If you just updated server code, restart server once.';
+    renderRestoreBackupOptions([]);
   }
+}
+
+function renderRestoreBackupOptions(backups) {
+  const sel = document.getElementById('restoreBackupSelect');
+  const latestBtn = document.getElementById('restoreLatestBtn');
+  const selectedBtn = document.getElementById('restoreSelectedBtn');
+  if (!sel) return;
+  if (!Array.isArray(backups) || !backups.length) {
+    sel.innerHTML = '<option value="">No backups available</option>';
+    sel.disabled = true;
+    if (latestBtn) latestBtn.disabled = true;
+    if (selectedBtn) selectedBtn.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  if (latestBtn) latestBtn.disabled = false;
+  if (selectedBtn) selectedBtn.disabled = false;
+  sel.innerHTML = backups.map((b, i) => `<option value="${escHtml(String(b.backup_id || ''))}" ${i === 0 ? 'selected' : ''}>${escHtml(String(b.backup_id || ''))} ${b.created_at ? `(${escHtml(formatDateTime(b.created_at))})` : ''}</option>`).join('');
+}
+
+function renderRestoreProgress(job) {
+  const wrap = document.getElementById('restoreProgressWrap');
+  const bar = document.getElementById('restoreProgressBar');
+  const txt = document.getElementById('restoreProgressText');
+  const safety = document.getElementById('restoreBackupSafety');
+  if (!wrap || !bar || !txt || !safety) return;
+  if (!job) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = '';
+  const progress = Math.max(0, Math.min(100, parseInt(job.progress || 0, 10) || 0));
+  bar.style.width = `${progress}%`;
+  txt.textContent = `${progress}% · ${job.phase || 'running'} · ${job.message || ''}`;
+  if (job.safety_backup) {
+    safety.innerHTML = `Safety backup: <strong>${escHtml(String(job.safety_backup.backup_id || 'created'))}</strong> ${job.safety_backup.files ? `· <a href="${escHtml(job.safety_backup.files.sqlite || '#')}" target="_blank" rel="noopener">SQLite</a> · <a href="${escHtml(job.safety_backup.files.json || '#')}" target="_blank" rel="noopener">JSON</a>` : ''}`;
+  } else {
+    safety.textContent = '';
+  }
+}
+
+async function pollSystemRestoreJob(jobId) {
+  if (!jobId) return;
+  const run = async () => {
+    try {
+      const job = await apiFetch(`/api/system-restore/jobs/${encodeURIComponent(jobId)}`);
+      renderRestoreProgress(job);
+      const latestBtn = document.getElementById('restoreLatestBtn');
+      const selectedBtn = document.getElementById('restoreSelectedBtn');
+      const busy = !!(job && ['queued', 'running'].includes(String(job.status || '')));
+      if (latestBtn) latestBtn.disabled = busy;
+      if (selectedBtn) selectedBtn.disabled = busy;
+      if (job && ['completed', 'failed', 'cancelled'].includes(String(job.status || ''))) {
+        if (_restoreJobPollTimer) {
+          clearInterval(_restoreJobPollTimer);
+          _restoreJobPollTimer = null;
+        }
+        if (String(job.status) === 'completed') {
+          toast('Database restore completed successfully.', 'success');
+          try {
+            currentUser = await apiFetch('/api/me');
+            currentSystem = currentUser?.system || null;
+            applyClinicBranding();
+            startApp();
+          } catch (_) {
+            currentUser = null;
+            _resetAppState();
+            const dock = document.getElementById('quickDock');
+            if (dock) dock.classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+            toast('Restore completed. Please sign in again.', 'info');
+          }
+        }
+        if (String(job.status) === 'failed') toast(job.error || 'Database restore failed.', 'error');
+        loadOwnerBackupStatus();
+      }
+    } catch (e) {
+      if (_restoreJobPollTimer) {
+        clearInterval(_restoreJobPollTimer);
+        _restoreJobPollTimer = null;
+      }
+      toast(e.message || 'Unable to fetch restore progress', 'error');
+    }
+  };
+  await run();
+  if (_restoreJobPollTimer) clearInterval(_restoreJobPollTimer);
+  _restoreJobPollTimer = setInterval(run, 1200);
+}
+
+async function loadSystemRestorePanel() {
+  if (!can('setup.edit')) return;
+  try {
+    const st = await apiFetch('/api/system-restore/status');
+    if (st && st.in_progress && st.active_job_id) {
+      pollSystemRestoreJob(st.active_job_id);
+    } else {
+      renderRestoreProgress(null);
+      if (_restoreJobPollTimer) {
+        clearInterval(_restoreJobPollTimer);
+        _restoreJobPollTimer = null;
+      }
+    }
+  } catch (_) {
+    // Hide silently if endpoint is unavailable.
+  }
+}
+
+async function startDbRestoreSelected() {
+  const sel = document.getElementById('restoreBackupSelect');
+  const backupId = String(sel?.value || '').trim();
+  if (!backupId) {
+    toast('Please select a backup to restore.', 'error');
+    return;
+  }
+  if (!await confirmDialog(`Restore database from backup ${backupId}? This replaces current data.`, 'Confirm Restore')) return;
+  try {
+    const res = await apiFetch('/api/system-restore/start', {
+      method: 'POST',
+      body: JSON.stringify({ backup_id: backupId })
+    });
+    if (res && res.job_id) {
+      toast('Restore started. Please wait for completion.', 'info');
+      pollSystemRestoreJob(res.job_id);
+    }
+  } catch (e) {
+    toast(e.message || 'Restore failed to start', 'error');
+  }
+}
+
+async function startDbRestoreLatest() {
+  const latest = Array.isArray(_ownerBackupsCache) && _ownerBackupsCache.length ? _ownerBackupsCache[0] : null;
+  if (!latest || !latest.backup_id) {
+    toast('No backups available to restore.', 'error');
+    return;
+  }
+  const sel = document.getElementById('restoreBackupSelect');
+  if (sel) sel.value = String(latest.backup_id);
+  await startDbRestoreSelected();
 }
 
 async function triggerDbBackup() {
@@ -10016,6 +12381,53 @@ async function triggerDbBackup() {
     if (btn) {
       btn.disabled = false;
       btn.innerHTML = prevLabel || `${IC.download || IC.reports} Create DB Backup`;
+    }
+  }
+}
+
+async function triggerSystemUpdate() {
+  if (!currentUser || currentUser.role !== 'admin') {
+    toast('Only admin can run system update.', 'error');
+    return;
+  }
+  const ok = await confirmDialog('Run system update from git now? A safety backup will be created. You may need to restart the app service after update.', 'Confirm System Update');
+  if (!ok) return;
+
+  const btn = document.getElementById('ownerSystemUpdateBtn');
+  const state = document.getElementById('ownerSystemUpdateState');
+  const prevLabel = btn ? btn.innerHTML : '';
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = `${IC.clock || ''} Updating...`;
+    }
+    if (state) state.textContent = 'Running system update... this can take a few minutes.';
+
+    const res = await apiFetch('/api/admin/system-update', {
+      method: 'POST',
+      body: JSON.stringify({ remote: 'origin', branch: 'main' }),
+      timeoutMs: 300000  // 5 minutes – update downloads zip + runs npm install
+    });
+
+    const backupId = res && res.backup && res.backup.backup_id ? res.backup.backup_id : 'created';
+    const from = res && res.before_commit ? res.before_commit : 'unknown';
+    const to = res && res.after_commit ? res.after_commit : 'unknown';
+    const changed = !!(res && res.updated);
+    const restartNote = (res && res.restart_required)
+      ? 'Restart app service to apply backend code changes.'
+      : '';
+    if (state) {
+      state.innerHTML = `Update completed: <strong>${escHtml(from)}</strong> → <strong>${escHtml(to)}</strong> · Backup: <strong>${escHtml(backupId)}</strong>${changed ? '' : ' · Already up to date'}${restartNote ? ` · ${escHtml(restartNote)}` : ''}`;
+    }
+    toast(changed ? 'System update completed.' : 'System is already up to date.', 'success');
+  } catch (e) {
+    const msg = e && e.message ? e.message : 'System update failed';
+    if (state) state.textContent = msg;
+    toast(msg, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = prevLabel || `${IC.clock || ''} System Update`;
     }
   }
 }
@@ -10143,7 +12555,7 @@ async function completeOwnerSetup() {
 }
 
 function updatePrinterTypeFields() {
-  const form = document.getElementById('ownerPrinterForm');
+  const form = document.getElementById('setupPrinterForm');
   const type = form ? form.printer_type.value : '';
   const ipField = document.getElementById('networkIPField');
   const portField = document.getElementById('networkPortField');
@@ -10217,7 +12629,7 @@ async function refreshAvailablePrinters(preferredName = '') {
 }
 
 async function savePrinterConfig() {
-  const form = document.getElementById('ownerPrinterForm');
+  const form = document.getElementById('setupPrinterForm');
   if (!form) return;
   const type = form.printer_type.value;
   const select = document.getElementById('printerNameSelect');
@@ -10226,13 +12638,14 @@ async function savePrinterConfig() {
   // Get printer name from either dropdown or manual input
   let name = (select && select.value) || (manual && manual.value) || '';
   name = name.trim();
-  
-  if (!type) {
-    toast('Please select a printer type.', 'error');
+
+  // Validate only when a printer type is selected
+  if (type && !name) {
+    toast('Please select or enter a printer name.', 'error');
     return;
   }
-  if (!name) {
-    toast('Please select or enter a printer name.', 'error');
+  if (!type && name) {
+    toast('Please select a printer type.', 'error');
     return;
   }
   
@@ -10241,7 +12654,9 @@ async function savePrinterConfig() {
       printer_type: type,
       printer_name: name,
       printer_ip: type === 'network' ? (form.printer_ip.value.trim() || null) : null,
-      printer_port: type === 'network' ? (parseInt(form.printer_port.value || 9100, 10) || 9100) : null
+      printer_port: type === 'network' ? (parseInt(form.printer_port.value || 9100, 10) || 9100) : null,
+      print_mode: form.print_mode ? (form.print_mode.value || 'auto') : 'auto',
+      terminal_id: getTerminalId()
     };
     
     const result = await apiFetch('/api/setup/printer', {
@@ -10252,15 +12667,17 @@ async function savePrinterConfig() {
     currentSystem = result;
     toast('Printer configuration saved.', 'success');
     const status = document.getElementById('printerStatus');
-    if (status) status.textContent = `✓ Configured: ${name} (${type})`;
-    loadOwnerControl();
+    if (status) status.textContent = name ? `✓ Configured: ${name} (${type})` : '';
+    if (currentPageId === 'setup') {
+      loadSetupPrinterConfig();
+    }
   } catch (e) {
     toast(e.message, 'error');
   }
 }
 
 async function testPrinterConnection() {
-  const form = document.getElementById('ownerPrinterForm');
+  const form = document.getElementById('setupPrinterForm');
   const select = document.getElementById('printerNameSelect');
   const manual = document.getElementById('printerNameManual');
   
@@ -10283,7 +12700,8 @@ async function testPrinterConnection() {
         printer_name: name,
         printer_type: form ? form.printer_type.value : '',
         printer_ip: form ? String(form.printer_ip.value || '').trim() : '',
-        printer_port: form ? (parseInt(form.printer_port.value || 9100, 10) || 9100) : 9100
+        printer_port: form ? (parseInt(form.printer_port.value || 9100, 10) || 9100) : 9100,
+        terminal_id: getTerminalId()
       })
     });
     
@@ -10378,12 +12796,87 @@ async function togglePaymentMethod(id, active) {
 }
 
 async function deletePaymentMethod(id, name) {
-  if (!confirm(`Delete payment method "${name}"?`)) return;
+  if (!await confirmDialog(`Delete payment method "${name}"?`)) return;
   try {
     await apiFetch(`/api/payment-methods/${id}`, { method:'DELETE' });
     toast('Payment method deleted', 'success');
     loadPaymentMethods();
   } catch(e) { toast(e.message, 'error'); }
+}
+
+// --- Expense Categories (Setup) --------------------------
+async function loadExpenseCategoriesTable() {
+  const wrap = document.getElementById('ecWrap');
+  if (!wrap) return;
+  try {
+    const list = await apiFetch('/api/expense-categories');
+    _expenseMeta.categories = list.map(c => c.name);
+    if (!list.length) {
+      wrap.innerHTML = emptyState(IC.expense, 'No Expense Categories', 'Add predefined categories for daily expense entry.');
+      return;
+    }
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Category Name</th>${can('setup.edit') ? '<th>Actions</th>' : ''}</tr></thead>
+      <tbody>${list.map((c, i) => `<tr>
+        <td>${i + 1}</td>
+        <td><strong>${escHtml(c.name)}</strong></td>
+        ${can('setup.edit') ? `<td class="td-actions">
+          <button class="btn btn-sm" onclick='openEditExpenseCategoryModal(${c.id}, ${JSON.stringify(String(c.name || ''))})'>${IC.edit}</button>
+          <button class="btn btn-danger btn-sm" onclick='deleteExpenseCategory(${c.id}, ${JSON.stringify(String(c.name || ''))})'>${IC.trash}</button>
+        </td>` : ''}
+      </tr>`).join('')}</tbody>
+    </table></div>`;
+  } catch (e) {
+    wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
+}
+
+function openAddExpenseCategoryModal() {
+  showModal('Add Expense Category', `
+    <div class="form-group">
+      <label>Category Name <span style="color:var(--c-danger)">*</span></label>
+      <input id="ecName" class="form-control" placeholder="e.g. Utilities, Rent, Travel" autofocus/>
+    </div>`,
+    async () => {
+      const name = document.getElementById('ecName')?.value?.trim();
+      if (!name) { toast('Name is required', 'error'); return false; }
+      try {
+        await apiFetch('/api/expense-categories', { method:'POST', body: JSON.stringify({ name }) });
+        toast('Expense category added', 'success');
+        closeModal();
+        loadExpenseCategoriesTable();
+        if (currentPageId === 'expenses') loadExpenses();
+      } catch (e) { toast(e.message, 'error'); return false; }
+    });
+}
+
+function openEditExpenseCategoryModal(id, currentName) {
+  showModal('Edit Expense Category', `
+    <div class="form-group">
+      <label>Category Name <span style="color:var(--c-danger)">*</span></label>
+      <input id="ecEditName" class="form-control" value="${escHtml(currentName)}" autofocus/>
+    </div>`,
+    async () => {
+      const name = document.getElementById('ecEditName')?.value?.trim();
+      if (!name) { toast('Name is required', 'error'); return false; }
+      try {
+        await apiFetch(`/api/expense-categories/${id}`, { method:'PUT', body: JSON.stringify({ name }) });
+        toast('Expense category updated', 'success');
+        closeModal();
+        loadExpenseCategoriesTable();
+        if (currentPageId === 'expenses') loadExpenses();
+      } catch (e) { toast(e.message, 'error'); return false; }
+    });
+}
+
+async function deleteExpenseCategory(id, name) {
+  if (!await confirmDialog(`Delete expense category "${name}"?`)) return;
+  try {
+    await apiFetch(`/api/expense-categories/${id}`, { method:'DELETE' });
+    toast('Expense category deleted', 'success');
+    loadExpenseCategoriesTable();
+    if (currentPageId === 'expenses') loadExpenses();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 // --- Service Categories (Setup) --------------------------
@@ -10450,7 +12943,7 @@ function openEditServiceCategoryModal(id, currentName) {
 }
 
 async function deleteServiceCategory(id, name) {
-  if (!confirm(`Delete category "${name}"?\n\nExisting services using this category will keep their current value.`)) return;
+  if (!await confirmDialog(`Delete category "${name}"?\n\nExisting services using this category will keep their current value.`)) return;
   try {
     await apiFetch(`/api/service-categories/${id}`, { method:'DELETE' });
     toast('Category deleted', 'success');
@@ -10539,7 +13032,7 @@ async function openEditDoctorDepartmentModal(id) {
 }
 
 async function deleteDoctorDepartment(id, name) {
-  if (!confirm(`Delete department "${name}"?`)) return;
+  if (!await confirmDialog(`Delete department "${name}"?`)) return;
   try {
     await apiFetch(`/api/doctor-departments/${id}`, { method:'DELETE' });
     toast('Department deleted', 'success');
@@ -10629,7 +13122,7 @@ function openEditUomModal(id) {
 }
 
 async function deleteUom(id, symbol) {
-  if (!confirm(`Delete UOM "${symbol}"?`)) return;
+  if (!await confirmDialog(`Delete UOM "${symbol}"?`)) return;
   try {
     await apiFetch(`/api/uoms/${id}`, { method:'DELETE' });
     toast('UOM deleted', 'success');
@@ -10711,7 +13204,7 @@ function openEditProductCategoryModal(id) {
 }
 
 async function deleteProductCategory(id, name) {
-  if (!confirm(`Delete product category "${name}"?`)) return;
+  if (!await confirmDialog(`Delete product category "${name}"?`)) return;
   try {
     await apiFetch(`/api/store/product-categories/${id}`, { method:'DELETE' });
     toast('Product category deleted', 'success');
@@ -11033,13 +13526,14 @@ const PERM_GROUPS = [
     'billing.discount.view','billing.discount.apply','billing.discount.open','billing.discount.override',
     'billing.refund.view','billing.refund.initiate'
   ] },
+  { label: 'Expenses',          perms: ['expenses.view','expenses.create','expenses.edit','expenses.delete'] },
   { label: 'Reports',           perms: ['reports.view'] },
   { label: 'Users',             perms: ['users.view','users.create','users.edit','users.delete'] },
   { label: 'Services',          perms: ['services.view','services.create','services.edit','services.delete','services.import','services.export'] },
   { label: 'Packages',          perms: ['packages.view','packages.create','packages.edit','packages.delete'] },
   { label: 'Setup',             perms: ['setup.view','setup.edit'] },
   { label: 'Role Permissions',  perms: ['role_permissions.view','role_permissions.edit'] },
-  { label: 'Store',             perms: ['store.view','store.manage','store.purchase','store.transfer','store.consume'] },
+  { label: 'Store',             perms: ['store.view','store.manage','store.purchase','store.transfer','store.adjust','store.consume','store.consume.cost'] },
 ];
 
 // Roles list is now loaded dynamically from the API
@@ -11048,6 +13542,11 @@ let _allRolesList = [];
 function formatPermissionActionLabel(permissionKey) {
   const p = String(permissionKey || '').trim();
   if (!p) return '';
+
+  const explicitLabels = {
+    'store.consume.cost': 'Manual Consumption Cost'
+  };
+  if (explicitLabels[p]) return explicitLabels[p];
 
   const parts = p.split('.').filter(Boolean);
   if (!parts.length) return p;
@@ -11197,7 +13696,7 @@ async function openEditRoleModal(id, currentLabel) {
 }
 
 async function deleteCustomRole(id, name, label) {
-  if (!confirm(`Delete role "${label}"?\n\nThis will fail if any users are still assigned this role.`)) return;
+  if (!await confirmDialog(`Delete role "${label}"?\n\nThis will fail if any users are still assigned this role.`)) return;
   try {
     await apiFetch(`/api/roles/${id}`, { method:'DELETE' });
     toast(`Role "${label}" deleted`, 'success');
@@ -11241,6 +13740,59 @@ async function toggleRolePerm(checkbox, role, perm) {
 // --------------------------------------------------------
 
 // -- Store Overview --------------------------------------
+const STORE_OVERVIEW_ITEMS_PER_VIEW = 6;
+let _storeOverviewCache = { storesById: new Map(), rowsByStore: new Map() };
+
+function renderStoreOverviewCard(storeId) {
+  const sid = parseInt(storeId, 10);
+  const st = _storeOverviewCache.storesById.get(sid);
+  const visibleRows = (_storeOverviewCache.rowsByStore.get(sid) || []).slice();
+  if (!st) return '';
+
+  const storeLowCount = visibleRows.filter((s) => (parseFloat(s.qty || 0) || 0) <= (parseFloat(s.reorder_level || 0) || 0)).length;
+  const storeQty = visibleRows.reduce((sum, s) => sum + (parseFloat(s.qty || 0) || 0), 0);
+  const storeValue = visibleRows.reduce((sum, s) => sum + ((parseFloat(s.qty || 0) || 0) * (parseFloat(s.avg_cost || 0) || 0)), 0);
+  const healthPct = visibleRows.length ? Math.max(0, Math.min(100, Math.round(((visibleRows.length - storeLowCount) / visibleRows.length) * 100))) : 100;
+
+  const fillerCount = Math.max(0, STORE_OVERVIEW_ITEMS_PER_VIEW - Math.min(visibleRows.length, STORE_OVERVIEW_ITEMS_PER_VIEW));
+
+  return `<article class="card store-store-card new-look" id="storeCard-${sid}">
+    <div class="store-store-head">
+      <div>
+        <div class="card-title">${IC.store} ${escHtml(st.name)} ${st.is_main ? '<span class="badge badge-admin" style="font-size:10px;margin-left:4px">Main</span>' : ''}</div>
+        <div class="text-muted text-sm">${visibleRows.length} product${visibleRows.length !== 1 ? 's' : ''} · KD ${storeValue.toFixed(3)}</div>
+      </div>
+      <span class="badge ${storeLowCount ? 'badge-unpaid' : 'badge-paid'}">${storeLowCount} low</span>
+    </div>
+    <div class="store-health-row">
+      <div class="store-health-track"><span style="width:${healthPct}%"></span></div>
+      <div class="text-muted text-sm">Health ${healthPct}%</div>
+    </div>
+    <div class="store-mini-metrics">
+      <span><strong>${storeQty.toFixed(3)}</strong> units</span>
+      <span><strong>${visibleRows.length}</strong> total items</span>
+      <span>${expiryChipHtml(visibleRows[0]?.next_expiry, visibleRows[0]?.missing_expiry_count)}</span>
+    </div>
+    ${visibleRows.length ? `<div class="store-product-stack" title="Use mouse wheel to scroll">${visibleRows.map((row) => {
+      const isLow = (parseFloat(row.qty || 0) || 0) <= (parseFloat(row.reorder_level || 0) || 0);
+      return `<div class="store-product-item ${isLow ? 'is-low' : ''}">
+        <div class="store-product-main">
+          <strong>${escHtml(row.product_name || '—')}</strong>
+          <div class="text-muted text-sm">${escHtml(row.product_sku || 'No SKU')}</div>
+        </div>
+        <div class="store-product-meta">
+          <span class="badge ${isLow ? 'badge-unpaid' : 'badge-paid'}">${parseFloat(row.qty || 0).toFixed(3)} ${escHtml(row.product_unit || '')}</span>
+          <span class="store-product-cost">KD ${parseFloat(row.avg_cost || 0).toFixed(3)}</span>
+          <span>${expiryChipHtml(row.next_expiry, row.missing_expiry_count)}</span>
+        </div>
+      </div>`;
+    }).join('')}
+    ${fillerCount > 0 ? Array.from({ length: fillerCount }).map(() => `<div class="store-product-item store-product-item-placeholder"></div>`).join('') : ''}
+    </div>
+    ` : `<div class="store-spotlight-empty">No stock in this location.</div>`}
+  </article>`;
+}
+
 async function storeOverview() {
   const ca = document.getElementById('contentArea');
   ca.innerHTML = `<div class="store-loading">${skeletonStats(4)}</div>`;
@@ -11251,39 +13803,135 @@ async function storeOverview() {
       apiFetch('/api/store/sub-stores'),
       apiFetch('/api/store/purchase-orders'),
     ]);
-    const totalProducts  = products.length;
-    const lowStock       = products.filter(p => p.total_stock <= p.reorder_level).length;
-    const pendingOrders  = orders.filter(o => o.status === 'Pending').length;
-    const totalStoresCnt = subStores.length;
+    const safeStock = Array.isArray(stock) ? stock : [];
+    const safeStores = Array.isArray(subStores) ? subStores : [];
+    const safeOrders = Array.isArray(orders) ? orders : [];
+
+    _storeOverviewCache = {
+      storesById: new Map(safeStores.map((s) => [parseInt(s.id, 10), s])),
+      rowsByStore: new Map()
+    };
+
+    const totalProducts = Array.isArray(products) ? products.length : 0;
+    const pendingOrders = safeOrders.filter(o => String(o.status || '') === 'Pending').length;
+    const totalStoresCnt = safeStores.length;
+    const lowRows = safeStock.filter((s) => (parseFloat(s.qty || 0) || 0) <= (parseFloat(s.reorder_level || 0) || 0));
+    const lowStock = lowRows.length;
+    const totalQty = safeStock.reduce((sum, row) => sum + (parseFloat(row.qty || 0) || 0), 0);
+    const totalValue = safeStock.reduce((sum, row) => sum + ((parseFloat(row.qty || 0) || 0) * (parseFloat(row.avg_cost || 0) || 0)), 0);
+    const activeStores = safeStores.filter((s) => s.active !== false).length;
+
+    const urgentLow = lowRows
+      .map((row) => {
+        const qty = parseFloat(row.qty || 0) || 0;
+        const reorder = parseFloat(row.reorder_level || 0) || 0;
+        return { ...row, shortage: Math.max(0, reorder - qty) };
+      })
+      .sort((a, b) => b.shortage - a.shortage)
+      .slice(0, 6);
+
+    const recentOrders = safeOrders
+      .slice()
+      .sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
+      .slice(0, 5);
 
     ca.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon" style="background:var(--c-primary-bg);color:var(--c-primary)">${IC.product}</div><div class="stat-info"><div class="stat-label">Total Products</div><div class="stat-value">${totalProducts}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:#fff3cd;color:#b45309">${IC.product}</div><div class="stat-info"><div class="stat-label">Low Stock</div><div class="stat-value" style="color:#b45309">${lowStock}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:var(--c-success-bg);color:var(--c-success)">${IC.store}</div><div class="stat-info"><div class="stat-label">Sub-Stores</div><div class="stat-value">${totalStoresCnt}</div></div></div>
-      <div class="stat-card"><div class="stat-icon" style="background:var(--c-danger-bg);color:var(--c-danger)">${IC.billing}</div><div class="stat-info"><div class="stat-label">Pending Orders</div><div class="stat-value">${pendingOrders}</div></div></div>
-    </div>
-    <div class="store-overview-grid">
-      ${subStores.map(st => {
-        const storeStock = stock.filter(s => s.store_id === st.id);
-        const rows = storeStock.map(s => {
-          const isLow = s.qty <= (s.reorder_level || 0);
-          return `<tr>
-            <td><strong>${escHtml(s.product_name||'—')}</strong></td>
-            <td><span class="badge ${isLow?'badge-unpaid':'badge-paid'}">${s.qty} ${escHtml(s.product_unit||'')}</span></td>
-            <td>KD ${parseFloat(s.avg_cost || 0).toFixed(3)}</td>
-            <td>${expiryChipHtml(s.next_expiry, s.missing_expiry_count)}</td>
-          </tr>`;
-        }).join('');
-        return `<div class="card store-store-card">
-          <div class="card-header-row">
-            <div class="card-title">${IC.store} ${escHtml(st.name)} ${st.is_main?'<span class="badge badge-admin" style="font-size:10px;margin-left:4px">Main</span>':''}</div>
-            <span class="text-muted text-sm">${storeStock.length} product${storeStock.length!==1?'s':''}</span>
+      <div class="store-overview-shell">
+        <section class="store-overview-hero">
+          <div>
+            <div class="store-overview-eyebrow">Inventory Command Center</div>
+            <h2 class="store-overview-title">Store Overview</h2>
+            <p class="store-overview-subtitle">Track stock health, pending purchase pressure, and store-level value at a glance.</p>
+            <div class="store-overview-meta">
+              <span>${activeStores} active store${activeStores !== 1 ? 's' : ''}</span>
+              <span>${totalQty.toFixed(3)} units on hand</span>
+              <span>KD ${totalValue.toFixed(3)} estimated value</span>
+            </div>
           </div>
-          ${storeStock.length ? `<div class="table-wrap"><table><thead><tr><th>Product</th><th>Qty</th><th>WAC</th><th>Expiry</th></tr></thead><tbody>${rows}</tbody></table></div>` : emptyState(IC.product,'No stock','No items in this store')}
-        </div>`;
-      }).join('')}
-    </div>`;
+          <div class="store-overview-actions">
+            <button class="btn btn-primary" onclick="navigate('store-products')">${IC.product} Manage Products</button>
+            <button class="btn" onclick="navigate('store-purchase')">${IC.billing} Purchase Orders</button>
+            <button class="btn" onclick="navigate('store-adjustments')">${IC.transfer} Stock Adjustments</button>
+          </div>
+        </section>
+
+        <section class="store-overview-kpis">
+          <article class="store-kpi-card accent-products">
+            <div class="store-kpi-label">Total Products</div>
+            <div class="store-kpi-value">${totalProducts}</div>
+            <div class="store-kpi-note">Across all store locations</div>
+          </article>
+          <article class="store-kpi-card accent-alert">
+            <div class="store-kpi-label">Low Stock Alerts</div>
+            <div class="store-kpi-value">${lowStock}</div>
+            <div class="store-kpi-note">Needs replenishment soon</div>
+          </article>
+          <article class="store-kpi-card accent-stores">
+            <div class="store-kpi-label">Store Locations</div>
+            <div class="store-kpi-value">${totalStoresCnt}</div>
+            <div class="store-kpi-note">${activeStores} currently active</div>
+          </article>
+          <article class="store-kpi-card accent-orders">
+            <div class="store-kpi-label">Pending Orders</div>
+            <div class="store-kpi-value">${pendingOrders}</div>
+            <div class="store-kpi-note">Waiting for receipt update</div>
+          </article>
+        </section>
+
+        <section class="store-overview-panels">
+          <article class="card store-spotlight-card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.pending} Low Stock Spotlight</div>
+              <span class="text-muted text-sm">Top ${urgentLow.length || 0}</span>
+            </div>
+            ${urgentLow.length ? `<div class="store-spotlight-list">${urgentLow.map((row) => `
+              <div class="store-spotlight-item">
+                <div>
+                  <div class="store-spotlight-name">${escHtml(row.product_name || 'Product')}</div>
+                  <div class="text-muted text-sm">${escHtml(row.store_name || 'Unknown Store')} · ${escHtml(row.product_sku || '')}</div>
+                </div>
+                <div class="store-spotlight-metrics">
+                  <span class="badge badge-unpaid">${parseFloat(row.qty || 0).toFixed(3)} ${escHtml(row.product_unit || '')}</span>
+                  <span class="store-spotlight-gap">Gap ${parseFloat(row.shortage || 0).toFixed(3)}</span>
+                </div>
+              </div>`).join('')}</div>` : `<div class="store-spotlight-empty">All good. No low-stock alerts right now.</div>`}
+          </article>
+
+          <article class="card store-orders-card">
+            <div class="card-header-row">
+              <div class="card-title">${IC.billing} Recent Purchase Orders</div>
+              <button class="btn btn-sm" onclick="navigate('store-purchase')">Open</button>
+            </div>
+            ${recentOrders.length ? `<div class="store-order-list">${recentOrders.map((po) => `<div class="store-order-item">
+              <div>
+                <div><strong>PO#${parseInt(po.id || 0, 10)}</strong></div>
+                <div class="text-muted text-sm">${escHtml(formatDateTime(po.created_at || ''))}</div>
+              </div>
+              <div class="store-order-right">
+                <div>${statusBadge(po.status || 'Pending')}</div>
+                <div class="text-muted text-sm">${(po.items || []).length} item${(po.items || []).length !== 1 ? 's' : ''}</div>
+              </div>
+            </div>`).join('')}</div>` : `<div class="store-spotlight-empty">No purchase orders found.</div>`}
+          </article>
+        </section>
+
+        <section class="store-overview-grid">
+          ${safeStores.map((st) => {
+            const sid = parseInt(st.id, 10);
+            const visibleRows = safeStock
+              .filter((s) => parseInt(s.store_id, 10) === sid)
+              .slice()
+              .sort((a, b) => {
+                const aLow = (parseFloat(a.qty || 0) || 0) <= (parseFloat(a.reorder_level || 0) || 0) ? 1 : 0;
+                const bLow = (parseFloat(b.qty || 0) || 0) <= (parseFloat(b.reorder_level || 0) || 0) ? 1 : 0;
+                if (aLow !== bLow) return bLow - aLow;
+                return String(a.product_name || '').localeCompare(String(b.product_name || ''));
+              });
+            _storeOverviewCache.rowsByStore.set(sid, visibleRows);
+            return renderStoreOverviewCard(sid);
+          }).join('')}
+        </section>
+      </div>`;
   } catch(e) { toast(e.message,'error'); }
 }
 
@@ -11566,15 +14214,19 @@ async function deleteSupplier(id, name) {
 
 // -- Purchase Orders -------------------------------------
 let _storePOs = [];
+let _poFilters = { search: '', from: '', to: '' };
 async function storePurchase() {
   const ca = document.getElementById('contentArea');
   const todayStr = new Date().toLocaleDateString('sv');
+  const fromVal = _poFilters.from || todayStr;
+  const toVal = _poFilters.to || todayStr;
+  const searchVal = _poFilters.search || '';
   ca.innerHTML = `
     <div class="action-bar store-action-bar">
-      <div class="search-box"><input id="poSearch" type="text" placeholder="Search purchase orders..." oninput="filterStorePOs()"/></div>
+      <div class="search-box"><input id="poSearch" type="text" placeholder="Search purchase orders..." value="${escHtml(searchVal)}" oninput="filterStorePOs()"/></div>
       <div class="bill-filter-group">
-        <input id="poDateFrom" type="date" value="${todayStr}" title="From date"/>
-        <input id="poDateTo" type="date" value="${todayStr}" title="To date"/>
+        <input id="poDateFrom" type="date" value="${fromVal}" title="From date"/>
+        <input id="poDateTo" type="date" value="${toVal}" title="To date"/>
         <button class="btn report-apply-btn" onclick="filterStorePOs()">${IC.search} Filter</button>
         <button class="btn report-clear-btn" onclick="clearPOFilters()">Clear</button>
       </div>
@@ -11595,15 +14247,18 @@ function clearPOFilters() {
   if (f) f.value = t;
   if (to) to.value = t;
   if (s) s.value = '';
+  _poFilters = { search: '', from: t, to: t };
   filterStorePOs();
 }
 function filterStorePOs() {
-  const q = (document.getElementById('poSearch')?.value || '').toLowerCase().trim();
+  const rawSearch = (document.getElementById('poSearch')?.value || '').trim();
+  const q = rawSearch.toLowerCase();
   const from = document.getElementById('poDateFrom')?.value || '';
   const to = document.getElementById('poDateTo')?.value || '';
+  _poFilters = { search: rawSearch, from, to };
   renderPOs(_storePOs.filter(o => {
     const status = o.status === 'Received' ? 'received' : 'pending';
-    const textMatch = !q || [o.supplier_name, o.invoice_number, o.order_date, o.notes, status]
+    const textMatch = !q || [o.supplier_name, o.invoice_number, o.order_date, o.notes, status, o.payment_status]
       .map(v => String(v || '').toLowerCase()).some(v => v.includes(q));
     const d = String(o.order_date || o.created_at || '').slice(0,10);
     const fromOk = !from || (d && d >= from);
@@ -11615,20 +14270,27 @@ function renderPOs(list) {
   const wrap = document.getElementById('poWrap'); if (!wrap) return;
   if (!list.length) { wrap.innerHTML = emptyState(IC.billing,'No purchase orders','Create your first purchase order'); return; }
   wrap.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>#</th><th>Supplier</th><th>Invoice #</th><th>Items</th><th>Total Cost</th><th>Status</th><th>Order Date</th><th>Actions</th></tr></thead>
+    <thead><tr><th>#</th><th>Supplier</th><th>Invoice #</th><th>Items</th><th>Total Cost</th><th>Payment</th><th>Status</th><th>Order Date</th><th>Actions</th></tr></thead>
     <tbody>${list.map((o,i)=>{
       const missingExpiry = (o.items||[]).some(x => !String(x.expiry_date || x.expiry || x.exp_date || '').slice(0,10));
+      const payStatus = String(o.payment_status || 'Unpaid');
+      const payBadge = payStatus === 'Paid'
+        ? '<span class="badge badge-paid">Paid</span>'
+        : (payStatus === 'Partially Paid' ? '<span class="badge badge-arrived">Partially Paid</span>' : '<span class="badge badge-unpaid">Unpaid</span>');
+      const dueAmount = o.due_amount != null ? parseFloat(o.due_amount) : parseFloat(o.total_cost || 0);
       return `<tr>
       <td>${i+1}</td>
       <td><strong>${escHtml(o.supplier_name||'—')}</strong></td>
       <td class="text-muted text-sm">${escHtml(o.invoice_number||'—')}</td>
       <td>${(o.items||[]).length} item(s)${missingExpiry ? ` <span class="expiry-chip missing">Expiry Missing</span>` : ''}</td>
       <td><strong>KD ${(o.total_cost||0).toFixed(3)}</strong></td>
+      <td>${payBadge}<div class="text-muted text-sm">Due KD ${dueAmount.toFixed(3)}</div></td>
       <td>${o.status==='Received'?'<span class="badge badge-paid">Received</span>':'<span class="badge badge-scheduled">Pending</span>'}</td>
       <td class="text-muted text-sm">${escHtml(o.order_date||'—')}</td>
       <td class="td-actions">
         <div class="apt-actions po-actions">
           <button class="btn btn-sm" onclick="viewPODetails(${o.id})">${IC.eye} View</button>
+          ${can('expenses.create') && dueAmount > 0.0005 ? `<button class="btn btn-sm" onclick="openSupplierInvoicePaymentModal(${o.id})">${IC.billing} Pay</button>` : ''}
           ${can('store.purchase')?`<button class="btn btn-sm" onclick="openPOExpiryEditor(${o.id})">Expiry</button>`:''}
           ${o.status==='Pending'&&can('store.manage')?`<button class="btn btn-sm btn-success" onclick="receivePO(${o.id})">${IC.check} Receive</button>`:''}
           ${o.status==='Pending'&&can('store.manage')?`<button class="btn btn-sm btn-danger" onclick="deletePO(${o.id})">${IC.trash}</button>`:''}
@@ -12192,6 +14854,227 @@ function transOnProductChange(sel) {
   if (p && p.uom_id) uomSel.value = String(p.uom_id);
 }
 
+// -- Stock Adjustments ----------------------------------
+let _storeAdjustments = [];
+let _saStores = [];
+let _saProducts = [];
+
+async function storeAdjustments() {
+  const ca = document.getElementById('contentArea');
+  ca.innerHTML = `
+    <div class="action-bar store-action-bar">
+      <div class="search-box"><input id="saSearch" type="text" placeholder="Search adjustments..." oninput="filterStoreAdjustments()"/></div>
+      <button class="btn" onclick="exportStoreAdjustmentsCSV()">${IC.download || 'CSV'} Export CSV</button>
+      <div class="store-action-spacer"></div>
+      ${can('store.adjust') ? `<button class="btn btn-primary" onclick="openNewStockAdjustmentModal()">${IC.plus} New Adjustment</button>` : ''}
+    </div>
+    <div id="saWrap">${skeletonTable(5)}</div>`;
+  try {
+    _storeAdjustments = await apiFetch('/api/store/adjustments');
+    renderStoreAdjustments(_storeAdjustments);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function filterStoreAdjustments() {
+  renderStoreAdjustments(getFilteredStoreAdjustments());
+}
+
+function getFilteredStoreAdjustments() {
+  const q = (document.getElementById('saSearch')?.value || '').toLowerCase().trim();
+  return (_storeAdjustments || []).filter((row) => {
+    if (!q) return true;
+    return [
+      row.adjustment_no,
+      row.adjustment_type,
+      row.store_name,
+      row.product_name,
+      row.product_sku,
+      row.reason,
+      row.remarks,
+      row.created_by_name,
+      row.created_at
+    ].map((v) => String(v || '').toLowerCase()).some((v) => v.includes(q));
+  });
+}
+
+function renderStoreAdjustments(list) {
+  const wrap = document.getElementById('saWrap');
+  if (!wrap) return;
+  if (!list.length) {
+    wrap.innerHTML = emptyState(IC.transfer, 'No adjustments', 'Create stock adjustments for IN or OUT movements');
+    return;
+  }
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Adj No</th><th>Type</th><th>Store</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Stock (Before → After)</th><th>Reason</th><th>Status</th><th>Date</th><th>By</th>${isAdmin ? '<th>Action</th>' : ''}</tr></thead>
+    <tbody>${list.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td><span class="code-id code-id-primary">${escHtml(r.adjustment_no || ('ADJ#' + r.id))}</span></td>
+      <td>${String(r.adjustment_type || '').toUpperCase() === 'IN' ? '<span class="badge badge-paid">IN</span>' : '<span class="badge badge-unpaid">OUT</span>'}</td>
+      <td><strong>${escHtml(r.store_name || '—')}</strong></td>
+      <td>${escHtml(r.product_name || '—')}<br><span class="text-muted text-sm">${escHtml(r.product_sku || '')}</span></td>
+      <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
+      <td>KD ${parseFloat(r.unit_cost || 0).toFixed(3)}</td>
+      <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
+      <td>${parseFloat(r.stock_before || 0).toFixed(3)} → ${parseFloat(r.stock_after || 0).toFixed(3)}</td>
+      <td>${escHtml(r.reason || '—')}<br><span class="text-muted text-sm">${escHtml(r.remarks || '')}</span></td>
+      <td>${r.reversal_of_id ? `<span class="badge badge-secondary">Reversal</span>${r.reversal_of_adjustment_no ? `<div class="text-muted text-sm">of ${escHtml(r.reversal_of_adjustment_no)}</div>` : ''}` : (r.reversed_by_adjustment_id ? `<span class="badge badge-cancelled">Reversed</span>${r.reversed_by_adjustment_no ? `<div class="text-muted text-sm">by ${escHtml(r.reversed_by_adjustment_no)}</div>` : ''}` : '<span class="badge badge-completed">Active</span>')}</td>
+      <td class="text-muted text-sm">${escHtml(formatDateTime(r.date || r.created_at || ''))}</td>
+      <td class="text-muted text-sm">${escHtml(r.created_by_name || '—')}</td>
+      ${isAdmin ? `<td>${(!r.reversal_of_id && !r.reversed_by_adjustment_id) ? `<button class="btn btn-sm" onclick="reverseStoreAdjustment(${parseInt(r.id, 10)}, '${escHtml(r.adjustment_no || ('ADJ#' + r.id))}')">${IC.transfer || '↺'} Reverse</button>` : '<span class="text-muted text-sm">—</span>'}</td>` : ''}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function exportStoreAdjustmentsCSV() {
+  const rows = getFilteredStoreAdjustments();
+  if (!rows.length) { toast('No rows to export', 'error'); return; }
+  const header = ['Adjustment No', 'Type', 'Store', 'Product', 'SKU', 'Qty', 'Unit Cost', 'Total Cost', 'Stock Before', 'Stock After', 'Reason', 'Remarks', 'Status', 'Reversal Ref', 'Date', 'Created By'];
+  const csvRows = rows.map((r) => {
+    const status = r.reversal_of_id ? 'Reversal' : (r.reversed_by_adjustment_id ? 'Reversed' : 'Active');
+    const reversalRef = r.reversal_of_adjustment_no || r.reversed_by_adjustment_no || '';
+    return [
+      r.adjustment_no || ('ADJ#' + r.id),
+      r.adjustment_type || '',
+      r.store_name || '',
+      r.product_name || '',
+      r.product_sku || '',
+      parseFloat(r.qty || 0).toFixed(3),
+      parseFloat(r.unit_cost || 0).toFixed(3),
+      parseFloat(r.total_cost || 0).toFixed(3),
+      parseFloat(r.stock_before || 0).toFixed(3),
+      parseFloat(r.stock_after || 0).toFixed(3),
+      r.reason || '',
+      r.remarks || '',
+      status,
+      reversalRef,
+      r.date || r.created_at || '',
+      r.created_by_name || ''
+    ];
+  });
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const csv = [header, ...csvRows].map((row) => row.map(esc).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `stock_adjustments_${new Date().toLocaleDateString('sv')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  toast('CSV exported', 'success');
+}
+
+async function reverseStoreAdjustment(id, adjustmentNo) {
+  const label = String(adjustmentNo || ('ADJ#' + id));
+  const result = await confirmWithReasonDialog(
+    `Reverse adjustment ${label}? This creates an opposite entry.`,
+    'Reverse Adjustment',
+    'Reversal Reason (optional)',
+    'Correction'
+  );
+  if (!result.confirmed) return;
+  try {
+    await apiFetch(`/api/store/adjustments/${id}/reverse`, {
+      method: 'POST',
+      body: JSON.stringify({ reason: result.reason })
+    });
+    toast('Adjustment reversed successfully', 'success');
+    storeAdjustments();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function openNewStockAdjustmentModal() {
+  try {
+    const [stores, products] = await Promise.all([
+      apiFetch('/api/store/sub-stores'),
+      apiFetch('/api/store/products')
+    ]);
+    _saStores = (stores || []).filter((s) => s.active !== false);
+    _saProducts = (products || []).filter((p) => p.active !== false);
+    if (!_saStores.length) { toast('No active stores available', 'error'); return; }
+    if (!_saProducts.length) { toast('No active products available', 'error'); return; }
+
+    const storeOpts = _saStores.map((s) => `<option value="${s.id}">${escHtml(s.name)}</option>`).join('');
+    const productOpts = _saProducts.map((p) => `<option value="${p.id}">${escHtml(p.name)}${p.sku ? ` (${escHtml(p.sku)})` : ''}</option>`).join('');
+    const todayStr = new Date().toLocaleDateString('sv');
+
+    showModal('New Stock Adjustment', `
+      <form id="saForm">
+        <div class="form-row">
+          <div class="form-group"><label>Store *</label><select id="saStoreId" name="store_id" onchange="saRefreshStockHint()" required>${storeOpts}</select></div>
+          <div class="form-group"><label>Date *</label><input id="saDate" name="date" type="date" value="${todayStr}" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Product *</label><select id="saProductId" name="product_id" onchange="saRefreshStockHint()" required>${productOpts}</select></div>
+          <div class="form-group"><label>Type *</label><select id="saType" name="adjustment_type" onchange="saRefreshStockHint()" required><option value="IN">IN</option><option value="OUT">OUT</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Quantity *</label><input id="saQty" name="qty" type="number" min="0.001" step="0.001" value="1" required/></div>
+          <div class="form-group"><label>Unit Cost (optional)</label><input id="saUnitCost" name="unit_cost" type="number" min="0" step="0.001" value="0"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Reason *</label><input id="saReason" name="reason" value="Adjustment" required/></div>
+          <div class="form-group"><label>Remarks</label><input id="saRemarks" name="remarks" placeholder="Optional"/></div>
+        </div>
+        <div id="saStockHint" class="text-sm text-muted">Loading stock...</div>
+      </form>
+    `, [{
+      label: 'Save Adjustment',
+      class: 'btn-primary',
+      async onclick(modal) {
+        const form = modal.querySelector('#saForm');
+        const body = Object.fromEntries(new FormData(form));
+        body.store_id = parseInt(body.store_id, 10);
+        body.product_id = parseInt(body.product_id, 10);
+        body.qty = parseFloat(body.qty || 0);
+        body.unit_cost = parseFloat(body.unit_cost || 0);
+        if (!body.store_id || !body.product_id || !body.adjustment_type || !(body.qty > 0)) {
+          toast('Fill all required fields', 'error');
+          return false;
+        }
+        try {
+          await apiFetch('/api/store/adjustments', { method: 'POST', body: JSON.stringify(body) });
+          toast('Stock adjustment saved', 'success');
+          closeModal();
+          storeAdjustments();
+        } catch (e) {
+          toast(e.message, 'error');
+          return false;
+        }
+      }
+    }]);
+
+    saRefreshStockHint();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+async function saRefreshStockHint() {
+  const hint = document.getElementById('saStockHint');
+  const storeId = document.getElementById('saStoreId')?.value;
+  const productId = parseInt(document.getElementById('saProductId')?.value || 0, 10);
+  const type = (document.getElementById('saType')?.value || 'IN').toUpperCase();
+  if (!hint || !storeId || !productId) return;
+  try {
+    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}`);
+    const row = (stockRows || []).find((s) => parseInt(s.product_id, 10) === productId);
+    const avail = parseFloat(row?.qty || 0) || 0;
+    const avgCost = parseFloat(row?.avg_cost || 0) || 0;
+    hint.textContent = `${type === 'OUT' ? 'Available' : 'Current'} stock: ${avail.toFixed(3)}${type === 'OUT' ? ' (OUT cannot exceed available)' : ''} · Avg Cost: KD ${avgCost.toFixed(3)}`;
+    const costInput = document.getElementById('saUnitCost');
+    if (costInput && !(parseFloat(costInput.value || 0) > 0)) costInput.value = avgCost.toFixed(3);
+  } catch (e) {
+    hint.textContent = `Unable to load stock: ${e.message}`;
+  }
+}
+
 // -- Sub-Stores ------------------------------------------
 let _storeSubStoresList = [];
 let _storeBillingStoreId = '';
@@ -12312,14 +15195,26 @@ let _manualConsumptionProducts = [];
 let _manualConsumptionStores = [];
 let _manualConsumptionStockMap = new Map();
 
+function mcCanViewCost() {
+  return can('store.consume.cost');
+}
+
 function mcReasonOptions(selected = '') {
   const reasons = ['Treatment Usage', 'Wastage', 'Expired', 'Internal Use', 'Sample', 'Adjustment'];
   return reasons.map(r => `<option value="${r}" ${r === selected ? 'selected' : ''}>${r}</option>`).join('');
 }
 
+function mcAvailableProducts() {
+  return _manualConsumptionProducts.filter((product) => {
+    if (product.active === false) return false;
+    const productId = parseInt(product.id, 10);
+    const availableQty = _manualConsumptionStockMap.get(productId)?.qty || 0;
+    return availableQty > 0;
+  });
+}
+
 function mcProductOptions(selectedId = '') {
-  return _manualConsumptionProducts
-    .filter(p => p.active !== false)
+  return mcAvailableProducts()
     .map(p => `<option value="${p.id}" ${String(selectedId) === String(p.id) ? 'selected' : ''}>${escHtml(p.name)}${p.sku ? ` (${escHtml(p.sku)})` : ''}</option>`)
     .join('');
 }
@@ -12334,11 +15229,12 @@ function mcStoreOptions(selectedId = '') {
 async function storeManualConsumption() {
   const ca = document.getElementById('contentArea');
   const todayStr = new Date().toLocaleDateString('sv');
+  const canViewCost = mcCanViewCost();
   ca.innerHTML = `${skeletonTable(6)}`;
   try {
     const [stores, products] = await Promise.all([
       apiFetch('/api/store/sub-stores'),
-      apiFetch('/api/store/products')
+      apiFetch('/api/store/products?context=manual-consumption')
     ]);
     _manualConsumptionStores = Array.isArray(stores) ? stores : [];
     _manualConsumptionProducts = Array.isArray(products) ? products : [];
@@ -12352,16 +15248,16 @@ async function storeManualConsumption() {
           <div class="form-group"><label>Date</label><input id="mcDate" type="date" value="${todayStr}"/></div>
         </div>
         <div class="table-wrap"><table class="mc-grid-table">
-          <thead><tr><th style="width:24%">Item *</th><th style="width:9%">Qty *</th><th style="width:10%">Cost</th><th style="width:11%">Total Cost</th><th style="width:16%">Reason</th><th style="width:17%">Remarks</th><th style="width:11%">Stock</th><th style="width:2%"></th></tr></thead>
+          <thead><tr><th style="width:24%">Item *</th><th style="width:9%">Qty *</th>${canViewCost ? '<th style="width:10%">Cost</th><th style="width:11%">Total Cost</th>' : ''}<th style="width:16%">Reason</th><th style="width:17%">Remarks</th><th style="width:11%">Stock</th><th style="width:2%"></th></tr></thead>
           <tbody id="mcRows"></tbody>
         </table></div>
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm btn-primary" onclick="mcAddRow()">${IC.plus} Add Item</button>
-            <span class="text-muted text-sm">Cost auto-fills from store average cost and can be edited.</span>
+            <span class="text-muted text-sm">${canViewCost ? 'Cost auto-fills from store average cost and can be edited.' : 'Cost is applied automatically based on store average cost.'}</span>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <strong>Total Entry Cost: <span id="mcEntryTotal">KD 0.000</span></strong>
+            ${canViewCost ? '<strong>Total Entry Cost: <span id="mcEntryTotal">KD 0.000</span></strong>' : ''}
             <button class="btn btn-success" onclick="saveManualConsumptionEntry()">${IC.check} Save Consumption</button>
           </div>
         </div>
@@ -12384,33 +15280,45 @@ async function mcOnStoreChange(recalcRows = true) {
   const storeId = document.getElementById('mcStore')?.value;
   _manualConsumptionStockMap = new Map();
   if (!storeId) {
+    mcRefreshProductDropdowns();
     if (recalcRows) mcRecalcAllRows();
     return;
   }
   try {
-    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}`);
+    const stockRows = await apiFetch(`/api/store/stock?store_id=${encodeURIComponent(storeId)}&context=manual-consumption`);
     for (const s of (stockRows || [])) {
       _manualConsumptionStockMap.set(parseInt(s.product_id, 10), {
         qty: parseFloat(s.qty || 0) || 0,
         cost: parseFloat(s.avg_cost || 0) || 0
       });
     }
+    mcRefreshProductDropdowns();
     if (recalcRows) mcRecalcAllRows();
   } catch (e) {
     toast(e.message, 'error');
   }
 }
 
+function mcRefreshProductDropdowns() {
+  document.querySelectorAll('#mcRows .mc-item').forEach((selectEl) => {
+    const selectedValue = selectEl.value;
+    const hasSelectedOption = mcAvailableProducts().some((product) => String(product.id) === String(selectedValue));
+    selectEl.innerHTML = `<option value="">— Select Item —</option>${mcProductOptions(hasSelectedOption ? selectedValue : '')}`;
+    if (!hasSelectedOption) selectEl.value = '';
+  });
+}
+
 function mcAddRow(seed = {}) {
   const rows = document.getElementById('mcRows');
   if (!rows) return;
+  const canViewCost = mcCanViewCost();
   const row = document.createElement('tr');
   row.className = 'mc-row';
   row.innerHTML = `
     <td><select class="mc-item" onchange="mcOnProductChange(this)"><option value="">— Select Item —</option>${mcProductOptions(seed.product_id || '')}</select></td>
     <td><input class="mc-qty" type="number" min="0.001" step="0.001" value="${seed.qty != null ? escHtml(String(seed.qty)) : '1'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
-    <td><input class="mc-cost" type="number" min="0" step="0.001" value="${seed.cost != null ? escHtml(String(seed.cost)) : '0.000'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
-    <td><strong class="mc-total">KD 0.000</strong></td>
+    ${canViewCost ? `<td><input class="mc-cost" type="number" min="0" step="0.001" value="${seed.cost != null ? escHtml(String(seed.cost)) : '0.000'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
+    <td><strong class="mc-total">KD 0.000</strong></td>` : ''}
     <td><select class="mc-reason" onchange="mcRecalcRow(this.closest('tr'))">${mcReasonOptions(seed.reason || 'Treatment Usage')}</select></td>
     <td><input class="mc-remarks" placeholder="Optional" value="${escHtml(seed.remarks || '')}"/></td>
     <td><span class="mc-stock-note text-muted text-sm">—</span></td>
@@ -12426,6 +15334,10 @@ function mcAddRow(seed = {}) {
 function mcOnProductChange(sel) {
   const row = sel.closest('tr');
   if (!row) return;
+  if (!mcCanViewCost()) {
+    mcRecalcRow(row);
+    return;
+  }
   const productId = parseInt(sel.value, 10);
   const product = _manualConsumptionProducts.find(p => parseInt(p.id, 10) === productId) || null;
   const stockInfo = _manualConsumptionStockMap.get(productId) || null;
@@ -12439,13 +15351,14 @@ function mcOnProductChange(sel) {
 
 function mcRecalcRow(row) {
   if (!row) return;
+  const canViewCost = mcCanViewCost();
   const productId = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
   const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
-  const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+  const cost = canViewCost ? (parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0) : 0;
   const total = qty * cost;
   const totalEl = row.querySelector('.mc-total');
   const stockEl = row.querySelector('.mc-stock-note');
-  if (totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
+  if (canViewCost && totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
 
   if (!productId || !stockEl) {
     if (stockEl) {
@@ -12474,14 +15387,14 @@ function mcRecalcEntryTotal() {
   let lowCount = 0;
   rows.forEach(row => {
     const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
-    const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+    const cost = mcCanViewCost() ? (parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0) : 0;
     total += (qty * cost);
     const productId = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
     const available = (_manualConsumptionStockMap.get(productId)?.qty) || 0;
     if (productId && qty > available) lowCount += 1;
   });
   const totalEl = document.getElementById('mcEntryTotal');
-  if (totalEl) totalEl.textContent = `KD ${total.toFixed(3)}`;
+  if (totalEl && mcCanViewCost()) totalEl.textContent = `KD ${total.toFixed(3)}`;
 
   const warn = document.getElementById('mcWarningBox');
   if (warn) warn.textContent = lowCount ? `${lowCount} row(s) have insufficient stock.` : '';
@@ -12490,7 +15403,7 @@ function mcRecalcEntryTotal() {
 function mcRecalcAllRows() {
   document.querySelectorAll('#mcRows .mc-row').forEach(row => {
     const productSel = row.querySelector('.mc-item');
-    if (productSel && productSel.value) {
+    if (mcCanViewCost() && productSel && productSel.value) {
       const pid = parseInt(productSel.value, 10);
       const product = _manualConsumptionProducts.find(p => parseInt(p.id, 10) === pid) || null;
       const stockInfo = _manualConsumptionStockMap.get(pid) || null;
@@ -12507,6 +15420,7 @@ function mcRecalcAllRows() {
 }
 
 function mcCollectPayload() {
+  const canViewCost = mcCanViewCost();
   const storeId = document.getElementById('mcStore')?.value;
   const date = document.getElementById('mcDate')?.value || new Date().toLocaleDateString('sv');
   if (!storeId) throw new Error('Store is required');
@@ -12516,12 +15430,12 @@ function mcCollectPayload() {
   const items = rows.map((row, idx) => {
     const product_id = parseInt(row.querySelector('.mc-item')?.value || 0, 10);
     const qty = parseFloat(row.querySelector('.mc-qty')?.value || 0) || 0;
-    const cost = parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0;
+    const cost = canViewCost ? (parseFloat(row.querySelector('.mc-cost')?.value || 0) || 0) : undefined;
     const reason = row.querySelector('.mc-reason')?.value || 'Adjustment';
     const remarks = row.querySelector('.mc-remarks')?.value || '';
     if (!product_id) throw new Error(`Item is required on row ${idx + 1}`);
     if (!(qty > 0)) throw new Error(`Quantity must be greater than 0 on row ${idx + 1}`);
-    return { product_id, qty, cost, reason, remarks };
+    return { product_id, qty, ...(canViewCost ? { cost } : {}), reason, remarks };
   });
 
   return { store_id: parseInt(storeId, 10), date, items };
@@ -12541,6 +15455,7 @@ async function saveManualConsumptionEntry() {
 async function mcLoadRecent() {
   const wrap = document.getElementById('mcRecentWrap');
   if (!wrap) return;
+  const canViewCost = mcCanViewCost();
   try {
     const todayStr = new Date().toLocaleDateString('sv');
     const rows = await apiFetch(`/api/store/manual-consumptions?date_from=${todayStr}&date_to=${todayStr}`);
@@ -12549,17 +15464,368 @@ async function mcLoadRecent() {
       return;
     }
     wrap.innerHTML = `<div class="table-wrap"><table>
-      <thead><tr><th>Date</th><th>Entry</th><th>Store</th><th>Lines</th><th>Total Cost</th><th>Remarks</th></tr></thead>
+      <thead><tr><th>Date</th><th>Entry</th><th>Store</th><th>Lines</th>${canViewCost ? '<th>Total Cost</th>' : ''}<th>Remarks</th></tr></thead>
       <tbody>${rows.slice(0, 20).map(r => `<tr>
         <td>${escHtml(String(r.date || '').slice(0,10) || '—')}</td>
         <td>${escHtml(r.entry_no || ('MC#' + r.id))}</td>
         <td>${escHtml(r.store_name || '—')}</td>
         <td>${(r.items || []).length}</td>
-        <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
+        ${canViewCost ? `<td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>` : ''}
         <td class="text-muted text-sm">${escHtml(r.remarks || '—')}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch (e) {
     wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
   }
+}
+
+// =================== Supplier Returns ===================
+function openModal(html) {
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'modalOverlay';
+  overlay.innerHTML = `<div class="modal">${html}</div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) e.stopPropagation(); });
+  setTimeout(() => {
+    const first = overlay.querySelector('input:not([type=hidden]):not([disabled]), select, textarea');
+    if (first) first.focus();
+  }, 100);
+}
+
+let _supplierReturns = [];
+
+async function storeSupplierReturns() {
+  const ca = document.getElementById('contentArea');
+  const todayStr = new Date().toLocaleDateString('sv');
+  ca.innerHTML = `
+    <div class="action-bar store-action-bar">
+      <div class="search-box"><input id="srSearch" type="text" placeholder="Search returns..." oninput="filterSupplierReturns()"/></div>
+      <div class="bill-filter-group">
+        <input id="srDateFrom" type="date" value="${todayStr}" title="From date"/>
+        <input id="srDateTo"   type="date" value="${todayStr}" title="To date"/>
+        <button class="btn report-apply-btn" onclick="filterSupplierReturns()">${IC.search} Filter</button>
+        <button class="btn report-clear-btn" onclick="clearSRFilters()">Clear</button>
+      </div>
+      <div class="store-action-spacer"></div>
+      ${can('store.purchase') ? `<button type="button" class="btn btn-primary" id="srNewReturnBtn" onclick="openNewSRModal()">${IC.plus} New Return</button>` : ''}
+    </div>
+    <div id="srWrap">${skeletonTable(5)}</div>`;
+  const newReturnBtn = document.getElementById('srNewReturnBtn');
+  if (newReturnBtn) {
+    newReturnBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      openNewSRModal();
+    });
+  }
+  try {
+    _supplierReturns = await apiFetch('/api/store/supplier-returns');
+    filterSupplierReturns();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function clearSRFilters() {
+  const t = new Date().toLocaleDateString('sv');
+  const f = document.getElementById('srDateFrom');
+  const to = document.getElementById('srDateTo');
+  const s = document.getElementById('srSearch');
+  if (f) f.value = t; if (to) to.value = t; if (s) s.value = '';
+  filterSupplierReturns();
+}
+
+function filterSupplierReturns() {
+  const q    = (document.getElementById('srSearch')?.value || '').toLowerCase().trim();
+  const from = document.getElementById('srDateFrom')?.value || '';
+  const to   = document.getElementById('srDateTo')?.value || '';
+  renderSupplierReturns((_supplierReturns || []).filter(r => {
+    const d = String(r.return_date || r.created_at || '').slice(0, 10);
+    const textMatch = !q || [r.return_no, r.supplier_name, r.po_invoice, r.return_reference, r.return_type, r.store_name, r.notes]
+      .map(v => String(v || '').toLowerCase()).some(v => v.includes(q));
+    return textMatch && (!from || d >= from) && (!to || d <= to);
+  }));
+}
+
+function renderSupplierReturns(list) {
+  const wrap = document.getElementById('srWrap'); if (!wrap) return;
+  if (!list.length) { wrap.innerHTML = emptyState(IC.supreturn, 'No supplier returns', 'Create a return against a received purchase order'); return; }
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Return No</th><th>Supplier</th><th>PO Invoice</th><th>Type</th><th>Items</th><th>Total</th><th>Return Date</th><th>Actions</th></tr></thead>
+    <tbody>${list.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td><strong>${escHtml(r.return_no || '—')}</strong></td>
+      <td>${escHtml(r.supplier_name || '—')}</td>
+      <td class="text-muted text-sm">${escHtml(r.po_invoice || '—')}</td>
+      <td>${r.return_type === 'full' ? '<span class="badge badge-paid">Full</span>' : '<span class="badge badge-arrived">Partial</span>'}</td>
+      <td>${(r.items || []).length} item(s)</td>
+      <td><strong>KD ${parseFloat(r.total_amount || 0).toFixed(3)}</strong></td>
+      <td class="text-muted text-sm">${escHtml(r.return_date || '—')}</td>
+      <td class="td-actions">
+        <div class="apt-actions">
+          <button class="btn btn-sm" onclick="viewSRDetails(${r.id})">${IC.eye} View</button>
+          ${can('store.manage') ? `<button class="btn btn-sm btn-danger" onclick="voidSR(${r.id},'${escHtml(r.return_no || '')}')">${IC.trash} Void</button>` : ''}
+        </div>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+async function viewSRDetails(id) {
+  try {
+    const r = await apiFetch(`/api/store/supplier-returns/${id}`);
+    const itemRows = (r.items || []).map(it => `<tr>
+      <td>${escHtml(it.product_name || `Product #${it.product_id}`)}</td>
+      <td>${parseFloat(it.qty || 0).toFixed(3)}</td>
+      <td>KD ${parseFloat(it.cost_price || 0).toFixed(3)}</td>
+      <td><strong>KD ${parseFloat(it.line_total || 0).toFixed(3)}</strong></td>
+    </tr>`).join('');
+    openModal(`
+      <div class="modal-header"><h3>${IC.supreturn} Return Details — ${escHtml(r.return_no || '')}</h3></div>
+      <div class="modal-body">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:14px;">
+          <div><span class="text-muted">Supplier</span><div><strong>${escHtml(r.supplier_name || '—')}</strong></div></div>
+          <div><span class="text-muted">PO Invoice</span><div>${escHtml(r.po_invoice || '—')}</div></div>
+          <div><span class="text-muted">Return Type</span><div>${r.return_type === 'full' ? '<span class="badge badge-paid">Full Return</span>' : '<span class="badge badge-arrived">Partial Return</span>'}</div></div>
+          <div><span class="text-muted">Return Date</span><div>${escHtml(r.return_date || '—')}</div></div>
+          <div><span class="text-muted">Store</span><div>${escHtml(r.store_name || '—')}</div></div>
+          <div><span class="text-muted">Reference</span><div>${escHtml(r.return_reference || '—')}</div></div>
+          ${r.notes ? `<div style="grid-column:1/-1"><span class="text-muted">Notes</span><div>${escHtml(r.notes)}</div></div>` : ''}
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Qty (Base)</th><th>Unit Cost</th><th>Line Total</th></tr></thead>
+          <tbody>${itemRows}</tbody>
+          <tfoot><tr><td colspan="3" style="text-align:right"><strong>Total</strong></td><td><strong>KD ${parseFloat(r.total_amount || 0).toFixed(3)}</strong></td></tr></tfoot>
+        </table></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">Close</button>
+      </div>`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function voidSR(id, returnNo) {
+  if (!confirm(`Void return ${returnNo}? This will restore all items back into stock.`)) return;
+  try {
+    await apiFetch(`/api/store/supplier-returns/${id}`, { method: 'DELETE' });
+    toast('Return voided — stock restored', 'success');
+    storeSupplierReturns();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── New Supplier Return Modal ───────────────────────────
+let _srPOs = [];
+let _srSelectedPO = null;
+
+async function openNewSRModal() {
+  openModal(`
+    <div class="modal-header"><h3>${IC.supreturn} New Supplier Return</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Purchase Order (Received only) <span class="required">*</span></label>
+        <select id="srPOSel" onchange="srLoadPOItems()" style="width:100%">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div id="srItemsSection" style="display:none">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px;">
+          <div class="form-group" style="margin:0">
+            <label>Return Type <span class="required">*</span></label>
+            <select id="srReturnType" onchange="srToggleReturnType()">
+              <option value="partial">Partial Return</option>
+              <option value="full">Full Return</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Return Date</label>
+            <input type="date" id="srReturnDate" value="${new Date().toLocaleDateString('sv')}"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Return Reference #</label>
+            <input type="text" id="srReturnRef" placeholder="e.g. CRN-001"/>
+          </div>
+          <div class="form-group" style="margin:0">
+            <label>Notes</label>
+            <input type="text" id="srNotes" placeholder="Optional notes"/>
+          </div>
+        </div>
+        <div id="srItemsTable"></div>
+        <div style="margin-top:12px;text-align:right">
+          <strong>Total: KD <span id="srTotalDisplay">0.000</span></strong>
+        </div>
+      </div>
+      <div id="srLoadingMsg" class="text-muted" style="display:none">Loading items...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="srSubmitBtn" onclick="submitSR()" style="display:none">${IC.check} Submit Return</button>
+    </div>`);
+
+  const sel = document.getElementById('srPOSel');
+  if (!sel) return;
+  const isReceivedPO = (p) => {
+    const status = String((p && p.status) || '').trim().toLowerCase();
+    const hasReceivedAt = !!String((p && p.received_at) || '').trim();
+    const hasReceivedStore = Number.isFinite(parseInt((p && p.received_store_id), 10));
+    return status === 'received' || hasReceivedAt || hasReceivedStore;
+  };
+
+  try {
+    const [pos, existingReturns] = await Promise.all([
+      apiFetch('/api/store/purchase-orders'),
+      apiFetch('/api/store/supplier-returns').catch(() => [])
+    ]);
+    const fetched = Array.isArray(pos) ? pos : [];
+    const fallback = Array.isArray(_storePOs) ? _storePOs : [];
+    const allPOs = fetched.length ? fetched : fallback;
+    // Build set of PO ids that are already fully returned (and not voided)
+    const fullyReturnedPoIds = new Set(
+      (Array.isArray(existingReturns) ? existingReturns : [])
+        .filter(r => String(r.return_type || '').toLowerCase() === 'full' && !r.voided)
+        .map(r => parseInt(r.purchase_order_id))
+    );
+    _srPOs = allPOs.filter(p => {
+      if (!isReceivedPO(p)) return false;
+      if (fullyReturnedPoIds.has(parseInt(p.id))) return false;
+      // Only allow fully paid POs
+      const payStatus = String(p.payment_status || '').toLowerCase();
+      return payStatus === 'paid';
+    })
+      .sort((a, b) => (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0));
+    if (!_srPOs.length) {
+      sel.innerHTML = `<option value="">No eligible purchase orders (must be Received &amp; Paid)</option>`;
+      return;
+    }
+    sel.innerHTML = `<option value="">— Select Purchase Order —</option>${_srPOs.map(p =>
+      `<option value="${p.id}">${escHtml(p.invoice_number || `PO #${p.id}`)} — ${escHtml(p.supplier_name || '—')} (${escHtml(p.order_date || '')})</option>`
+    ).join('')}`;
+  } catch (e) {
+    const fallback = Array.isArray(_storePOs) ? _storePOs : [];
+    _srPOs = fallback.filter(isReceivedPO).sort((a, b) => (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0));
+    if (_srPOs.length) {
+      sel.innerHTML = `<option value="">— Select Purchase Order —</option>${_srPOs.map(p =>
+        `<option value="${p.id}">${escHtml(p.invoice_number || `PO #${p.id}`)} — ${escHtml(p.supplier_name || '—')} (${escHtml(p.order_date || '')})</option>`
+      ).join('')}`;
+      toast('Loaded received POs from local cache', 'warn');
+      return;
+    }
+    sel.innerHTML = `<option value="">Unable to load purchase orders: ${escHtml(e.message || 'Unknown error')}</option>`;
+    toast(e.message, 'error');
+  }
+}
+
+function srLoadPOItems() {
+  const poId = parseInt(document.getElementById('srPOSel')?.value || 0);
+  const section  = document.getElementById('srItemsSection');
+  const loadMsg  = document.getElementById('srLoadingMsg');
+  const submitBtn = document.getElementById('srSubmitBtn');
+  if (!poId) {
+    if (section)  section.style.display = 'none';
+    if (submitBtn) submitBtn.style.display = 'none';
+    return;
+  }
+  _srSelectedPO = _srPOs.find(p => parseInt(p.id) === poId) || null;
+  if (!_srSelectedPO) return;
+  if (section)  section.style.display = 'block';
+  if (submitBtn) submitBtn.style.display = '';
+  srRenderItemRows();
+}
+
+function srToggleReturnType() {
+  const type = document.getElementById('srReturnType')?.value;
+  if (type === 'full') {
+    const po = _srSelectedPO;
+    if (!po) return;
+    document.querySelectorAll('.sr-qty-input').forEach((inp, idx) => {
+      const item = (po.items || [])[idx];
+      if (item) {
+        inp.value = parseFloat(item.qty || item.base_qty || 0).toFixed(3);
+        inp.readOnly = true;
+      }
+    });
+  } else {
+    document.querySelectorAll('.sr-qty-input').forEach(inp => { inp.readOnly = false; inp.value = ''; });
+  }
+  srRecalcTotal();
+}
+
+function srRenderItemRows() {
+  const po = _srSelectedPO;
+  const wrap = document.getElementById('srItemsTable'); if (!wrap || !po) return;
+  const isFull = document.getElementById('srReturnType')?.value === 'full';
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Product</th><th>Ordered Qty</th><th>Unit Cost</th><th>Return Qty <span class="required">*</span></th><th>Line Total</th></tr></thead>
+    <tbody>${(po.items || []).map((it, idx) => {
+      const ordQty = parseFloat(it.qty || it.base_qty || 0);
+      const cost   = parseFloat(it.cost_price || 0);
+      const defQty = isFull ? ordQty.toFixed(3) : '';
+      const pName  = it.product_name || `Product #${it.product_id}`;
+      return `<tr data-pidx="${idx}" data-cost="${cost}">
+        <td>${escHtml(pName)}<input type="hidden" class="sr-pid" value="${it.product_id}"/></td>
+        <td class="text-muted">${ordQty.toFixed(3)}</td>
+        <td>KD ${cost.toFixed(3)}</td>
+        <td><input type="number" class="sr-qty-input form-control" style="width:100px" min="0.001" max="${ordQty}" step="0.001" value="${defQty}" ${isFull ? 'readonly' : ''} oninput="srRecalcTotal()"/></td>
+        <td class="sr-line-total">KD 0.000</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+  srRecalcTotal();
+}
+
+function srRecalcTotal() {
+  let total = 0;
+  document.querySelectorAll('#srItemsTable tbody tr').forEach(row => {
+    const qty  = parseFloat(row.querySelector('.sr-qty-input')?.value || 0) || 0;
+    const cost = parseFloat(row.dataset.cost || 0) || 0;
+    const lineTotal = qty * cost;
+    total += lineTotal;
+    const ltCell = row.querySelector('.sr-line-total');
+    if (ltCell) ltCell.textContent = `KD ${lineTotal.toFixed(3)}`;
+  });
+  const disp = document.getElementById('srTotalDisplay');
+  if (disp) disp.textContent = total.toFixed(3);
+}
+
+async function submitSR() {
+  const poId = parseInt(document.getElementById('srPOSel')?.value || 0);
+  const returnType = document.getElementById('srReturnType')?.value || 'partial';
+  const returnDate = document.getElementById('srReturnDate')?.value || '';
+  const returnRef  = document.getElementById('srReturnRef')?.value?.trim() || '';
+  const notes      = document.getElementById('srNotes')?.value?.trim() || '';
+  if (!poId) { toast('Select a purchase order', 'error'); return; }
+
+  const items = [];
+  document.querySelectorAll('#srItemsTable tbody tr').forEach(row => {
+    const pid = parseInt(row.querySelector('.sr-pid')?.value || 0);
+    const qty = parseFloat(row.querySelector('.sr-qty-input')?.value || 0);
+    const cost = parseFloat(row.dataset.cost || 0);
+    if (pid > 0 && qty > 0) {
+      items.push({ product_id: pid, qty, base_qty: qty, cost_price: cost });
+    }
+  });
+
+  if (!items.length) { toast('Enter return quantity for at least one item', 'error'); return; }
+
+  const btn = document.getElementById('srSubmitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving...'; }
+
+  try {
+    await apiFetch('/api/store/supplier-returns', {
+      method: 'POST',
+      body: JSON.stringify({ purchase_order_id: poId, return_type: returnType, return_date: returnDate, return_reference: returnRef, notes, items })
+    });
+    toast('Supplier return created successfully', 'success');
+    closeModal();
+    storeSupplierReturns();
+  } catch (e) {
+    toast(e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = `${IC.check} Submit Return`; }
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.storeSupplierReturns = storeSupplierReturns;
+  window.openNewSRModal = openNewSRModal;
+  window.srLoadPOItems = srLoadPOItems;
+  window.srToggleReturnType = srToggleReturnType;
+  window.submitSR = submitSR;
 }
