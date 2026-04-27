@@ -3058,13 +3058,12 @@ tbody tr:last-child td { border-bottom: none; }
    ═══════════════════════════════════════════════════════════ */
 @page { size: auto; margin: 5mm; }
 @media print {
-  html, body { height: auto; margin: 0; padding: 0; }
-  body * { visibility: hidden; }
-  #printArea, #printArea * { visibility: visible; }
+  html, body { margin: 0; padding: 0; height: auto; }
+  /* Collapse everything — visibility:hidden still occupies space and creates blank pages */
+  body > *:not(#printArea) { display: none !important; }
   #printArea {
-    position: absolute;
-    top: 0;
-    left: 0;
+    display: block !important;
+    position: static !important;
     width: 100%;
     height: auto;
     padding: 8px 8px 12px 8px;
