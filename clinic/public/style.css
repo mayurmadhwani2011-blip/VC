@@ -3058,15 +3058,13 @@ tbody tr:last-child td { border-bottom: none; }
    ═══════════════════════════════════════════════════════════ */
 @page { size: auto; margin: 5mm; }
 @media print {
-  html, body { height: auto; }
+  html, body { height: auto; margin: 0; padding: 0; }
   body * { visibility: hidden; }
   #printArea, #printArea * { visibility: visible; }
   #printArea {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
     width: 100%;
     height: auto;
     padding: 8px 8px 12px 8px;
@@ -3075,7 +3073,6 @@ tbody tr:last-child td { border-bottom: none; }
     color: #000;
     background: #fff;
     box-sizing: border-box;
-    zoom: 1;
   }
   #printArea h2 { font-size: 28px !important; margin: 0 0 3px !important; }
   #printArea table { border-collapse: collapse; width: 100%; }
