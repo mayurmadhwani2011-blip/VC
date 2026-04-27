@@ -1,4 +1,6 @@
-﻿// =====================================================
+﻿// ...existing code...
+
+// =====================================================
 //  Clinic Management System - Server (JSON file DB)
 //  Node.js + Express  |  Zero native dependencies
 // =====================================================
@@ -11,7 +13,12 @@ const bcrypt  = require('bcryptjs');
 const Database = require('better-sqlite3');
 
 const app  = express();
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5050;
+const APP_STARTED_AT = nowIso();
+
+function nowIso() {
+  return new Date().toISOString();
+}
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DB_FILE = path.join(DATA_DIR, 'clinic-data.json');
@@ -40,6 +47,7 @@ const ALL_PERMISSIONS = [
   'billing.view','billing.create','billing.edit','billing.delete','billing.print_history',
   'billing.discount.view','billing.discount.apply','billing.discount.open','billing.discount.override',
   'billing.refund.view','billing.refund.initiate',
+  'expenses.view','expenses.create','expenses.edit','expenses.delete',
   'reports.view',
   'users.view','users.create','users.edit','users.delete',
   'services.view','services.create','services.edit','services.delete','services.import','services.export',
@@ -47,7 +55,7 @@ const ALL_PERMISSIONS = [
   'setup.view','setup.edit',
   'role_permissions.view','role_permissions.edit',
   'store.view','store.manage','store.purchase','store.transfer'
-  ,'store.consume'
+  ,'store.consume','store.consume.cost','store.adjust'
 ];
 const DEFAULT_PERMISSIONS = {
   admin: ALL_PERMISSIONS,
@@ -59,6 +67,7 @@ const DEFAULT_PERMISSIONS = {
     'patient_packages.view',
     'prescriptions.view','prescriptions.create','prescriptions.delete',
     'billing.view',
+    'expenses.view',
     'reports.view',
     'services.view','packages.view',
     'store.view'
@@ -70,8 +79,9 @@ const DEFAULT_PERMISSIONS = {
     'scheduler.view',
     'patient_packages.view','patient_packages.create','patient_packages.edit',
     'billing.view','billing.create','billing.edit',
+    'expenses.view','expenses.create','expenses.edit',
     'services.view','services.import','services.export','packages.view',
-    'store.view','store.consume'
+    'store.view','store.consume','store.consume.cost','store.adjust'
   ]
 };
 
@@ -90,10 +100,10 @@ function hasPermission(db, role, perm) {
 function blankDB() {
   return {
     users:[], patients:[], appointments:[], prescriptions:[], bills:[], services:[], packages:[],
-    payment_methods:[], patient_packages:[], service_categories:[], doctor_departments:[], role_permissions:{}, custom_roles:[], _seq:{},
-    discounts:[], refunds:[],
+    payment_methods:[], patient_packages:[], service_categories:[], expense_categories:[], doctor_departments:[], role_permissions:{}, custom_roles:[], _seq:{},
+    discounts:[], refunds:[], expenses:[],
     store_products:[], store_suppliers:[], store_sub_stores:[], store_stock:[],
-    store_purchase_orders:[], store_transfers:[], store_service_products:[], store_service_consumptions:[], store_manual_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
+    store_purchase_orders:[], store_supplier_invoice_payments:[], store_supplier_returns:[], store_transfers:[], store_adjustments:[], store_service_products:[], store_service_consumptions:[], store_manual_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
     activity_logs:[], doctor_schedules:[], clinic_profile:null, follow_ups:[]
   };
 }
@@ -108,10 +118,25 @@ function upsertState(dataObj) {
   `).run(payload, ts);
 }
 
+function ensureCollections(data) {
+  // Automatically add any new collections/fields introduced in blankDB() to existing data.
+  // This means adding a new array/field to blankDB() is sufficient — no manual migration needed.
+  const blank = blankDB();
+  let changed = false;
+  for (const key of Object.keys(blank)) {
+    if (data[key] === undefined || data[key] === null) {
+      data[key] = blank[key];
+      changed = true;
+    }
+  }
+  if (changed) upsertState(data);
+  return data;
+}
+
 function readDB() {
   const row = sqlite.prepare('SELECT data FROM app_state WHERE id = 1').get();
   if (row && row.data) {
-    try { return JSON.parse(row.data); }
+    try { return ensureCollections(JSON.parse(row.data)); }
     catch { return initDB(); }
   }
 
@@ -120,7 +145,7 @@ function readDB() {
     try {
       const jsonData = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
       upsertState(jsonData);
-      return jsonData;
+      return ensureCollections(jsonData);
     } catch {
       return initDB();
     }
@@ -198,6 +223,498 @@ async function createDbBackup(triggeredBy = 'system') {
     counts: manifest.counts
   };
 }
+
+const RESET_JOB_KEEP_LIMIT = 20;
+function getSystemResetState(db) {
+  if (!db.system_reset || typeof db.system_reset !== 'object') {
+    db.system_reset = {
+      in_progress: false,
+      active_job_id: null,
+      started_at: null,
+      started_by: null,
+      phase: null,
+      message: null,
+      progress: 0,
+      updated_at: now(),
+      last_completed_at: null,
+      last_failed_at: null,
+      jobs: [],
+      security_events: []
+    };
+  }
+  if (!Array.isArray(db.system_reset.jobs)) db.system_reset.jobs = [];
+  if (!Array.isArray(db.system_reset.security_events)) db.system_reset.security_events = [];
+  return db.system_reset;
+}
+
+function getSystemRestoreState(db) {
+  if (!db.system_restore || typeof db.system_restore !== 'object') {
+    db.system_restore = {
+      in_progress: false,
+      active_job_id: null,
+      started_at: null,
+      started_by: null,
+      phase: null,
+      message: null,
+      progress: 0,
+      updated_at: now(),
+      last_completed_at: null,
+      last_failed_at: null,
+      jobs: [],
+      security_events: []
+    };
+  }
+  if (!Array.isArray(db.system_restore.jobs)) db.system_restore.jobs = [];
+  if (!Array.isArray(db.system_restore.security_events)) db.system_restore.security_events = [];
+  return db.system_restore;
+}
+
+function loadBackupStateById(backupId) {
+  const cleanId = String(backupId || '').trim();
+  if (!/^db-backup-/.test(cleanId)) throw new Error('Invalid backup id');
+  const backupPath = path.join(BACKUP_DIR, cleanId);
+  if (!fs.existsSync(backupPath)) throw new Error('Backup folder not found');
+
+  const jsonPath = path.join(backupPath, 'clinic-data.json');
+  const sqlitePath = path.join(backupPath, 'clinic-data.sqlite');
+
+  if (fs.existsSync(jsonPath)) {
+    const jsonData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    if (!jsonData || typeof jsonData !== 'object') throw new Error('Invalid JSON backup');
+    return {
+      source: 'json',
+      backup_id: cleanId,
+      data: jsonData,
+      files: {
+        sqlite: `/api/admin/db-backups/${encodeURIComponent(cleanId)}/clinic-data.sqlite`,
+        json: `/api/admin/db-backups/${encodeURIComponent(cleanId)}/clinic-data.json`,
+        manifest: `/api/admin/db-backups/${encodeURIComponent(cleanId)}/manifest.json`
+      }
+    };
+  }
+
+  if (fs.existsSync(sqlitePath)) {
+    const restoreDb = new Database(sqlitePath, { readonly: true, fileMustExist: true });
+    try {
+      const row = restoreDb.prepare('SELECT data FROM app_state WHERE id = 1').get();
+      if (!row || !row.data) throw new Error('No app_state data found in sqlite backup');
+      const data = JSON.parse(row.data);
+      if (!data || typeof data !== 'object') throw new Error('Invalid sqlite backup payload');
+      return {
+        source: 'sqlite',
+        backup_id: cleanId,
+        data,
+        files: {
+          sqlite: `/api/admin/db-backups/${encodeURIComponent(cleanId)}/clinic-data.sqlite`,
+          json: `/api/admin/db-backups/${encodeURIComponent(cleanId)}/clinic-data.json`,
+          manifest: `/api/admin/db-backups/${encodeURIComponent(cleanId)}/manifest.json`
+        }
+      };
+    } finally {
+      try { restoreDb.close(); } catch (_) {}
+    }
+  }
+
+  throw new Error('No restorable backup file found (JSON/SQLite)');
+}
+
+function isSuperAdminUser(db, userId) {
+  const uid = parseInt(userId, 10);
+  const u = (db.users || []).find(x => parseInt(x.id, 10) === uid);
+  if (!u) return false;
+  if (u.role !== 'admin') return false;
+  return parseInt(u.id, 10) === 1 || String(u.username || '').toLowerCase() === 'admin';
+}
+
+function buildResetSummary(db, includeAuditLogs = false) {
+  const safeLen = (arr) => Array.isArray(arr) ? arr.length : 0;
+  return {
+    patients: safeLen(db.patients),
+    appointments: safeLen(db.appointments),
+    follow_ups: safeLen(db.follow_ups),
+    prescriptions: safeLen(db.prescriptions),
+    bills: safeLen(db.bills),
+    refunds: safeLen(db.refunds),
+    expenses: safeLen(db.expenses),
+    services: safeLen(db.services),
+    packages: safeLen(db.packages),
+    patient_packages: safeLen(db.patient_packages),
+    inventory_transactions: safeLen(db.store_purchase_orders) + safeLen(db.store_transfers) + safeLen(db.store_adjustments) + safeLen(db.store_service_consumptions) + safeLen(db.store_manual_consumptions),
+    report_cache_logs: safeLen(db.reports_cache) + safeLen(db.report_cache) + safeLen(db.report_logs),
+    audit_logs: includeAuditLogs ? safeLen(db.activity_logs) : 0
+  };
+}
+
+function pushResetSecurityEvent(db, event) {
+  const state = getSystemResetState(db);
+  state.security_events.push({
+    id: nextId(db, 'system_reset_security_events'),
+    at: now(),
+    ...event
+  });
+  if (state.security_events.length > 200) {
+    state.security_events = state.security_events.slice(-200);
+  }
+}
+
+function updateResetJob(db, jobId, patch = {}) {
+  const state = getSystemResetState(db);
+  const idx = state.jobs.findIndex(j => j.job_id === jobId);
+  if (idx < 0) return null;
+  state.jobs[idx] = { ...state.jobs[idx], ...patch, updated_at: now() };
+  if (patch.phase) state.phase = patch.phase;
+  if (patch.message) state.message = patch.message;
+  if (typeof patch.progress === 'number') state.progress = patch.progress;
+  return state.jobs[idx];
+}
+
+function finalizeResetState(db, jobId, status) {
+  const state = getSystemResetState(db);
+  state.in_progress = false;
+  state.active_job_id = null;
+  state.phase = status === 'completed' ? 'done' : 'failed';
+  state.message = status === 'completed' ? 'Reset completed' : 'Reset failed';
+  state.progress = status === 'completed' ? 100 : state.progress || 0;
+  state.updated_at = now();
+  if (status === 'completed') state.last_completed_at = now();
+  if (status === 'failed') state.last_failed_at = now();
+  state.jobs = state.jobs.slice(-RESET_JOB_KEEP_LIMIT);
+}
+
+function updateRestoreJob(db, jobId, patch = {}) {
+  const state = getSystemRestoreState(db);
+  const idx = state.jobs.findIndex(j => j.job_id === jobId);
+  if (idx < 0) return null;
+  state.jobs[idx] = { ...state.jobs[idx], ...patch, updated_at: now() };
+  if (patch.phase) state.phase = patch.phase;
+  if (patch.message) state.message = patch.message;
+  if (typeof patch.progress === 'number') state.progress = patch.progress;
+  return state.jobs[idx];
+}
+
+function finalizeRestoreState(db, status) {
+  const state = getSystemRestoreState(db);
+  state.in_progress = false;
+  state.active_job_id = null;
+  state.phase = status === 'completed' ? 'done' : 'failed';
+  state.message = status === 'completed' ? 'Restore completed' : 'Restore failed';
+  state.progress = status === 'completed' ? 100 : (state.progress || 0);
+  state.updated_at = now();
+  if (status === 'completed') state.last_completed_at = now();
+  if (status === 'failed') state.last_failed_at = now();
+  state.jobs = state.jobs.slice(-RESET_JOB_KEEP_LIMIT);
+}
+
+function healStaleMaintenanceLocks(db) {
+  const terminal = new Set(['completed', 'failed', 'cancelled']);
+  const staleMs = 20 * 60 * 1000;
+  const nowMs = Date.now();
+  let changed = false;
+  const restoreState = getSystemRestoreState(db);
+
+  const maybeTimedOut = (ts) => {
+    const at = Date.parse(String(ts || ''));
+    if (!Number.isFinite(at)) return false;
+    return (nowMs - at) > staleMs;
+  };
+
+  const resetState = getSystemResetState(db);
+  if (resetState.in_progress) {
+    const job = (resetState.jobs || []).find(j => j.job_id === resetState.active_job_id);
+    const status = String(job?.status || '').toLowerCase();
+    const timedOut = !terminal.has(status) && maybeTimedOut(job?.updated_at || job?.started_at || resetState.updated_at);
+    const restoreAfterReset = (() => {
+      const restoreDone = Date.parse(String(restoreState.last_completed_at || ''));
+      const resetUpdated = Date.parse(String(job?.updated_at || job?.started_at || resetState.updated_at || ''));
+      return Number.isFinite(restoreDone) && Number.isFinite(resetUpdated) && restoreDone >= resetUpdated;
+    })();
+    if (!job || terminal.has(status) || timedOut || restoreAfterReset) {
+      if (job && timedOut) {
+        job.status = 'failed';
+        job.phase = 'failed';
+        job.error = job.error || 'Stale reset lock auto-cleared';
+        job.message = 'Maintenance lock auto-cleared after timeout';
+        job.completed_at = now();
+        job.updated_at = now();
+      }
+      if (job && restoreAfterReset) {
+        job.status = 'cancelled';
+        job.phase = 'cancelled';
+        job.error = job.error || 'Reset superseded by completed restore';
+        job.message = 'Reset cancelled because a restore completed later';
+        job.completed_at = now();
+        job.updated_at = now();
+      }
+      finalizeResetState(db, resetState.active_job_id || null, status === 'completed' ? 'completed' : 'failed');
+      changed = true;
+    }
+  }
+
+  if (restoreState.in_progress) {
+    const job = (restoreState.jobs || []).find(j => j.job_id === restoreState.active_job_id);
+    const status = String(job?.status || '').toLowerCase();
+    const timedOut = !terminal.has(status) && maybeTimedOut(job?.updated_at || job?.started_at || restoreState.updated_at);
+    if (!job || terminal.has(status) || timedOut) {
+      if (job && timedOut) {
+        job.status = 'failed';
+        job.phase = 'failed';
+        job.error = job.error || 'Stale restore lock auto-cleared';
+        job.message = 'Maintenance lock auto-cleared after timeout';
+        job.completed_at = now();
+        job.updated_at = now();
+      }
+      finalizeRestoreState(db, status === 'completed' ? 'completed' : 'failed');
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
+async function executeSystemRestoreJob(jobId) {
+  let db = readDB();
+  const restoreState = getSystemRestoreState(db);
+  const job = restoreState.jobs.find(j => j.job_id === jobId);
+  if (!job) return;
+  try {
+    updateRestoreJob(db, jobId, { status: 'running', phase: 'backup', progress: 10, message: 'Creating safety backup before restore' });
+    writeDB(db);
+
+    const safetyBackup = await createDbBackup(`pre-restore:${job.started_by || 'admin'}`);
+
+    db = readDB();
+    updateRestoreJob(db, jobId, { phase: 'loading_backup', progress: 35, message: 'Loading selected backup file', safety_backup: safetyBackup });
+    writeDB(db);
+
+    const loaded = loadBackupStateById(job.backup_id);
+
+    db = readDB();
+    const existingRestoreState = getSystemRestoreState(db);
+    const existingJobs = Array.isArray(existingRestoreState.jobs) ? existingRestoreState.jobs.slice(-RESET_JOB_KEEP_LIMIT) : [];
+    const existingEvents = Array.isArray(existingRestoreState.security_events) ? existingRestoreState.security_events.slice(-200) : [];
+
+    let restoredDb = loaded.data;
+    if (!restoredDb || typeof restoredDb !== 'object') throw new Error('Backup data is invalid');
+    if (!Array.isArray(restoredDb.users)) throw new Error('Backup data missing users');
+
+    ensureClinicProfile(restoredDb);
+
+    // Never carry over active maintenance locks from backup snapshots.
+    const restoredResetState = getSystemResetState(restoredDb);
+    restoredResetState.in_progress = false;
+    restoredResetState.active_job_id = null;
+    restoredResetState.phase = 'done';
+    restoredResetState.message = 'Reset state cleared during restore';
+    restoredResetState.progress = 100;
+    restoredResetState.updated_at = now();
+
+    const restoredRestoreState = getSystemRestoreState(restoredDb);
+    restoredRestoreState.in_progress = false;
+    restoredRestoreState.active_job_id = null;
+    restoredRestoreState.phase = 'applying';
+    restoredRestoreState.message = 'Applying restored database state';
+    restoredRestoreState.progress = 75;
+    restoredRestoreState.updated_at = now();
+
+    const rs = getSystemRestoreState(restoredDb);
+    rs.jobs = existingJobs;
+    rs.security_events = existingEvents;
+
+    updateRestoreJob(restoredDb, jobId, {
+      status: 'running',
+      phase: 'applying',
+      progress: 75,
+      message: 'Applying restored database state',
+      source: loaded.source,
+      backup_files: loaded.files,
+      safety_backup: safetyBackup
+    });
+
+    rs.security_events.push({
+      id: nextId(restoredDb, 'system_restore_security_events'),
+      at: now(),
+      actor_id: job.started_by_user_id || null,
+      actor_name: job.started_by || 'admin',
+      action: 'system_restore_completed',
+      backup_id: job.backup_id,
+      source: loaded.source,
+      notes: 'Database restored from backup file'
+    });
+    if (rs.security_events.length > 200) rs.security_events = rs.security_events.slice(-200);
+
+    finalizeRestoreState(restoredDb, 'completed');
+    updateRestoreJob(restoredDb, jobId, {
+      status: 'completed',
+      phase: 'done',
+      progress: 100,
+      message: 'Restore completed successfully',
+      completed_at: now(),
+      source: loaded.source,
+      backup_files: loaded.files,
+      safety_backup: safetyBackup
+    });
+
+    writeDB(restoredDb);
+  } catch (e) {
+    db = readDB();
+    updateRestoreJob(db, jobId, {
+      status: 'failed',
+      phase: 'failed',
+      message: `Restore failed: ${e.message}`,
+      error: String(e.message || e),
+      completed_at: now()
+    });
+    const rs = getSystemRestoreState(db);
+    rs.security_events.push({
+      id: nextId(db, 'system_restore_security_events'),
+      at: now(),
+      actor_id: job.started_by_user_id || null,
+      actor_name: job.started_by || 'admin',
+      action: 'system_restore_failed',
+      backup_id: job.backup_id,
+      notes: String(e.message || e)
+    });
+    if (rs.security_events.length > 200) rs.security_events = rs.security_events.slice(-200);
+    finalizeRestoreState(db, 'failed');
+    writeDB(db);
+  }
+}
+
+async function executeSystemResetJob(jobId) {
+  let db = readDB();
+  const state = getSystemResetState(db);
+  const job = state.jobs.find(j => j.job_id === jobId);
+  if (!job) return;
+  const includeAuditLogs = !!job.include_audit_logs;
+
+  try {
+    updateResetJob(db, jobId, { status: 'running', phase: 'backup', progress: 8, message: 'Creating backup before reset' });
+    writeDB(db);
+
+    const backup = await createDbBackup(job.started_by || 'admin');
+
+    db = readDB();
+    updateResetJob(db, jobId, { backup, phase: 'lockdown', progress: 16, message: 'Backup completed. Starting cleanup' });
+    writeDB(db);
+
+    db = readDB();
+    const phase = (name, progress, message) => {
+      updateResetJob(db, jobId, { phase: name, progress, message });
+    };
+
+    phase('deleting_patients', 28, 'Deleting patients and package subscriptions');
+    db.patients = [];
+    db.patient_packages = [];
+
+    phase('deleting_schedule', 40, 'Deleting appointments and follow-ups');
+    db.appointments = [];
+    db.follow_ups = [];
+
+    phase('deleting_emr', 52, 'Deleting EMR data');
+    db.prescriptions = [];
+    if (Array.isArray(db.clinical_notes)) db.clinical_notes = [];
+    if (Array.isArray(db.lab_records)) db.lab_records = [];
+
+    phase('deleting_billing', 64, 'Deleting billing, payments and refunds');
+    db.bills = [];
+    db.refunds = [];
+
+    phase('deleting_expenses', 72, 'Deleting expenses');
+    db.expenses = [];
+
+    phase('deleting_inventory', 82, 'Deleting inventory transactions');
+    db.store_purchase_orders = [];
+    db.store_supplier_invoice_payments = [];
+    db.store_transfers = [];
+    db.store_adjustments = [];
+    db.store_service_consumptions = [];
+    db.store_manual_consumptions = [];
+    db.store_supplier_returns = [];
+    db.store_stock = [];
+    if (Array.isArray(db.store_service_products)) db.store_service_products = [];
+
+    phase('deleting_services_packages', 88, 'Deleting service and package masters');
+    db.services = [];
+    db.packages = [];
+
+    phase('deleting_reports', 90, 'Deleting report caches and logs');
+    if (Array.isArray(db.reports_cache)) db.reports_cache = [];
+    if (Array.isArray(db.report_cache)) db.report_cache = [];
+    if (Array.isArray(db.report_logs)) db.report_logs = [];
+    if (includeAuditLogs) db.activity_logs = [];
+
+    phase('resetting_sequences', 95, 'Resetting transactional counters');
+    if (!db._seq || typeof db._seq !== 'object') db._seq = {};
+    [
+      'patients','appointments','follow_ups','prescriptions','bills','refunds','expenses','services','packages','patient_packages',
+      'store_purchase_orders','store_supplier_invoice_payments','store_transfers','store_adjustments',
+      'store_service_consumptions','store_manual_consumptions','store_stock','store_service_products','clinical_notes','lab_records',
+      'reports_cache','report_cache','report_logs'
+    ].forEach((k) => { db._seq[k] = 0; });
+
+    const finishedAt = now();
+    db.last_reset = {
+      at: finishedAt,
+      by_user_id: job.started_by_user_id || null,
+      by: job.started_by || 'admin',
+      scope: job.scope,
+      include_audit_logs: includeAuditLogs,
+      backup_id: backup && backup.backup_id ? backup.backup_id : null,
+      summary_before: job.summary_before || null
+    };
+
+    pushResetSecurityEvent(db, {
+      actor_id: job.started_by_user_id || null,
+      actor_name: job.started_by || 'admin',
+      action: 'system_reset_completed',
+      scope: job.scope,
+      include_audit_logs: includeAuditLogs,
+      backup_id: backup && backup.backup_id ? backup.backup_id : null,
+      notes: 'Transactional data reset completed'
+    });
+
+    // Keep a reset timestamp in activity log when logs are retained.
+    if (!includeAuditLogs) {
+      logActivity(db, null, {
+        module: 'system',
+        action: 'tenant_reset',
+        notes: `Transactional data reset completed by ${job.started_by || 'admin'}`,
+        meta: { job_id: jobId, backup_id: backup && backup.backup_id ? backup.backup_id : null }
+      });
+    }
+
+    updateResetJob(db, jobId, {
+      status: 'completed',
+      phase: 'done',
+      progress: 100,
+      message: 'Reset completed successfully',
+      completed_at: finishedAt,
+      backup
+    });
+    finalizeResetState(db, jobId, 'completed');
+    writeDB(db);
+  } catch (e) {
+    db = readDB();
+    updateResetJob(db, jobId, {
+      status: 'failed',
+      phase: 'failed',
+      message: `Reset failed: ${e.message}`,
+      error: String(e.message || e),
+      completed_at: now()
+    });
+    pushResetSecurityEvent(db, {
+      actor_id: job.started_by_user_id || null,
+      actor_name: job.started_by || 'admin',
+      action: 'system_reset_failed',
+      scope: job.scope,
+      include_audit_logs: includeAuditLogs,
+      notes: String(e.message || e)
+    });
+    finalizeResetState(db, jobId, 'failed');
+    writeDB(db);
+  }
+}
+
 function now()   { return new Date().toLocaleString('sv').replace('T',' '); }
 function today() { return new Date().toLocaleDateString('sv'); }
 function enrichBillLineItems(db, lineItems) {
@@ -282,6 +799,12 @@ function ensureClinicProfile(db) {
     let changed = false;
     if (profile.receipt_header === undefined) { profile.receipt_header = ''; changed = true; }
     if (profile.receipt_footer === undefined) { profile.receipt_footer = 'Thank you for visiting our clinic. Get well soon!'; changed = true; }
+    if (profile.printer_type === undefined) { profile.printer_type = ''; changed = true; }
+    if (profile.printer_name === undefined) { profile.printer_name = ''; changed = true; }
+    if (profile.printer_ip === undefined) { profile.printer_ip = ''; changed = true; }
+    if (profile.printer_port === undefined) { profile.printer_port = 9100; changed = true; }
+    if (!profile.printer_terminals || typeof profile.printer_terminals !== 'object') { profile.printer_terminals = {}; changed = true; }
+    if (profile.print_mode === undefined) { profile.print_mode = 'auto'; changed = true; }
     return changed;
   };
 
@@ -301,6 +824,12 @@ function ensureClinicProfile(db) {
       billing_store_id: null,
       max_users: 25,
       no_show_booking_limit: 5,
+      printer_type: '',
+      printer_name: '',
+      printer_ip: '',
+      printer_port: 9100,
+      printer_terminals: {},
+      print_mode: 'auto',
       setup_completed: false,
       subscription: {
         plan: 'trial',
@@ -351,10 +880,85 @@ function getBillingProductStore(db) {
   return stores.find((s) => s.is_main && s.active !== false) || stores.find((s) => s.active !== false) || null;
 }
 
-function getClinicSystemStatus(db) {
+function normalizeTerminalId(value) {
+  return String(value || '').trim().replace(/[^a-zA-Z0-9_.:-]/g, '').slice(0, 96);
+}
+
+function getTerminalIdFromReq(req) {
+  if (!req) return '';
+  const fromHeader = req.get ? req.get('x-terminal-id') : '';
+  const fromBody = req.body && req.body.terminal_id;
+  const fromQuery = req.query && req.query.terminal_id;
+  return normalizeTerminalId(fromHeader || fromBody || fromQuery);
+}
+
+function resolvePrinterConfig(profile, terminalId = '') {
+  const fallback = {
+    printer_type: String(profile.printer_type || '').trim(),
+    printer_name: String(profile.printer_name || '').trim(),
+    printer_ip: String(profile.printer_ip || '').trim(),
+    printer_port: parseInt(profile.printer_port || 9100, 10) || 9100,
+    terminal_id: ''
+  };
+  const tid = normalizeTerminalId(terminalId);
+  if (!tid) return fallback;
+  const map = (profile.printer_terminals && typeof profile.printer_terminals === 'object') ? profile.printer_terminals : {};
+  const hit = map[tid];
+  if (!hit || typeof hit !== 'object') return fallback;
+  return {
+    printer_type: String(hit.printer_type || fallback.printer_type || '').trim(),
+    printer_name: String(hit.printer_name || fallback.printer_name || '').trim(),
+    printer_ip: String(hit.printer_ip || '').trim(),
+    printer_port: parseInt(hit.printer_port || 9100, 10) || 9100,
+    terminal_id: tid
+  };
+}
+
+// Cache git commit hash once at startup to avoid spawning git.exe on every request
+let _cachedGitCommit = '';
+try {
+  _cachedGitCommit = require('child_process').execSync('git rev-parse --short HEAD', { cwd: __dirname, timeout: 3000 }).toString().trim();
+} catch (_) {}
+
+function getAppBuildInfo() {
+  let version = '0.0.0';
+  let packageMtime = '';
+  let serverMtime = '';
+  let appJsMtime = '';
+  try {
+    const pkgPath = path.join(__dirname, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+      version = String(pkg.version || version);
+      packageMtime = fs.statSync(pkgPath).mtime.toISOString();
+    }
+  } catch (_) {}
+  try {
+    const p = path.join(__dirname, 'server.js');
+    if (fs.existsSync(p)) serverMtime = fs.statSync(p).mtime.toISOString();
+  } catch (_) {}
+  try {
+    const p = path.join(__dirname, 'public', 'app.js');
+    if (fs.existsSync(p)) appJsMtime = fs.statSync(p).mtime.toISOString();
+  } catch (_) {}
+  const latestFileMtime = [appJsMtime, serverMtime, packageMtime].filter(Boolean).sort().slice(-1)[0] || '';
+  const gitCommit = _cachedGitCommit;
+  return {
+    version,
+    git_commit: gitCommit,
+    started_at: APP_STARTED_AT,
+    latest_file_mtime: latestFileMtime,
+    server_js_mtime: serverMtime,
+    app_js_mtime: appJsMtime,
+    package_json_mtime: packageMtime
+  };
+}
+
+function getClinicSystemStatus(db, terminalId = '') {
   ensureClinicProfile(db);
   const profile = db.clinic_profile;
   const billingStore = getBillingProductStore(db);
+  const printerCfg = resolvePrinterConfig(profile, terminalId);
   const sub = profile.subscription || {};
   const plan = String(sub.plan || 'trial').toLowerCase();
   const forced = String(sub.status || '').toLowerCase();
@@ -399,10 +1003,12 @@ function getClinicSystemStatus(db) {
       setup_completed: !!profile.setup_completed
     },
     printer: {
-      printer_type: profile.printer_type || '',
-      printer_name: profile.printer_name || '',
-      printer_ip: profile.printer_ip || '',
-      printer_port: profile.printer_port || 9100
+      printer_type: printerCfg.printer_type || '',
+      printer_name: printerCfg.printer_name || '',
+      printer_ip: printerCfg.printer_ip || '',
+      printer_port: printerCfg.printer_port || 9100,
+      terminal_id: printerCfg.terminal_id || '',
+      print_mode: ['auto', 'manual'].includes(profile.print_mode) ? profile.print_mode : 'auto'
     },
     subscription: {
       plan,
@@ -416,6 +1022,7 @@ function getClinicSystemStatus(db) {
       notes: String(sub.notes || ''),
       last_verified_at: String(sub.last_verified_at || now())
     },
+    build: getAppBuildInfo(),
     setup_required: !profile.setup_completed,
     blocked: status === 'expired' || status === 'suspended',
     blocked_reason: status === 'expired' ? 'subscription_expired' : (status === 'suspended' ? 'subscription_suspended' : '')
@@ -902,6 +1509,22 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
     db._seq.service_categories = 5;
     didSeed = true;
   }
+  if (!db.expense_categories) db.expense_categories = [];
+  if (db.expense_categories.length === 0) {
+    const ec = (id, name) => db.expense_categories.push({ id, name, created_at: now() });
+    ec(1, 'Utilities');
+    ec(2, 'Travel');
+    ec(3, 'Pantry');
+    ec(4, 'Maintenance');
+    ec(5, 'Marketing');
+    ec(6, 'Miscellaneous');
+    db._seq.expense_categories = 6;
+    didSeed = true;
+  }
+  if (!(db.expense_categories || []).some(c => String(c.name || '').toLowerCase() === 'supplier invoice payment')) {
+    db.expense_categories.push({ id: nextId(db, 'expense_categories'), name: 'Supplier Invoice Payment', created_at: now() });
+    didSeed = true;
+  }
   if (!db.doctor_departments) db.doctor_departments = [];
   if (db.doctor_departments.length === 0) {
     const dd = (id, name) => db.doctor_departments.push({ id, name, active:true, created_at: now() });
@@ -1017,10 +1640,10 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
   // Seed default role permissions
   if (!db.role_permissions) db.role_permissions = {};
   const ensureRolePerms = (roleName, defaults) => {
-    const existing = Array.isArray(db.role_permissions[roleName]) ? db.role_permissions[roleName] : [];
-    const merged = Array.from(new Set([...(existing || []), ...(defaults || [])]));
-    if (merged.length !== existing.length) didSeed = true;
-    db.role_permissions[roleName] = merged;
+    const existing = db.role_permissions[roleName];
+    if (Array.isArray(existing)) return;
+    db.role_permissions[roleName] = Array.isArray(defaults) ? [...defaults] : [];
+    didSeed = true;
   };
   ensureRolePerms('admin', DEFAULT_PERMISSIONS.admin);
   ensureRolePerms('doctor', DEFAULT_PERMISSIONS.doctor);
@@ -1028,6 +1651,8 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
   if (!db.activity_logs) db.activity_logs = [];
   if (!db.store_service_consumptions) db.store_service_consumptions = [];
   if (!db.store_manual_consumptions) db.store_manual_consumptions = [];
+  if (!db.expenses) db.expenses = [];
+  if (!db.expense_categories) db.expense_categories = [];
   if (!db.custom_roles) db.custom_roles = [];
   writeDB(db);
   if (didSeed) console.log('Sample data initialized.');
@@ -1282,6 +1907,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
 function requireLogin(req, res, next) {
   if (!req.session.user) return res.status(401).json({ error:'Not authenticated' });
   const db = readDB();
+  if (healStaleMaintenanceLocks(db)) {
+    writeDB(db);
+  }
   const me = (db.users || []).find(u => u.id === req.session.user.id);
   if (!me || me.active === false) {
     req.session.destroy(() => res.status(401).json({ error:'Account inactive. Contact admin.' }));
@@ -1299,6 +1927,37 @@ function requireLogin(req, res, next) {
       code: 'LICENSE_BLOCKED',
       system
     });
+  }
+
+  const resetState = getSystemResetState(db);
+  const restoreState = getSystemRestoreState(db);
+  if (resetState.in_progress || restoreState.in_progress) {
+    const allowedDuringReset = [
+      '/api/logout',
+      '/api/me',
+      '/api/system/status',
+      '/api/system-reset/status',
+      '/api/system-reset/jobs/',
+      '/api/system-reset/precheck',
+      '/api/system-reset/start',
+      '/api/system-restore/status',
+      '/api/system-restore/jobs/',
+      '/api/system-restore/start'
+    ];
+    const isAllowed = allowedDuringReset.some((p) => pathName === p || pathName.startsWith(p));
+    if (!isAllowed) {
+      const active = resetState.in_progress ? resetState : restoreState;
+      return res.status(423).json({
+        error: 'System maintenance job is in progress. Please wait until completion.',
+        code: 'MAINTENANCE_IN_PROGRESS',
+        reset: {
+          job_id: active.active_job_id || null,
+          phase: active.phase || 'running',
+          progress: parseInt(active.progress || 0, 10) || 0,
+          message: active.message || 'Maintenance in progress'
+        }
+      });
+    }
   }
 
   next();
@@ -1334,9 +1993,78 @@ function requirePermission(perm) {
   };
 }
 
+function sanitizeManualConsumptionEntryForUser(db, req, entry) {
+  if (!entry || hasPermission(db, req.session.user.role, 'store.consume.cost')) return entry;
+  return {
+    ...entry,
+    total_cost: undefined,
+    items: (entry.items || []).map((item) => ({
+      ...item,
+      cost: undefined,
+      total_cost: undefined,
+    })),
+  };
+}
+
 function getSessionUserRecord(db, req) {
   if (!req || !req.session || !req.session.user) return null;
   return (db.users || []).find(u => u.id === req.session.user.id) || null;
+}
+
+function normalizeUserStoreIds(user) {
+  if (!user || !Array.isArray(user.store_ids)) return [];
+  return [...new Set(user.store_ids.map((id) => parseInt(id, 10)).filter((id) => id > 0))];
+}
+
+function getAccessibleStoreIds(db, req) {
+  if (!req || !req.session || !req.session.user) return null;
+  if (req.session.user.role === 'admin') return null;
+  const user = getSessionUserRecord(db, req);
+  const storeIds = normalizeUserStoreIds(user);
+  return storeIds.length ? new Set(storeIds) : null;
+}
+
+function filterStoresForUser(db, req, stores) {
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+  if (!allowedStoreIds) return stores;
+  return (stores || []).filter((store) => allowedStoreIds.has(parseInt(store.id, 10)));
+}
+
+function assertStoreAccess(db, req, storeId, label = 'store') {
+  const normalizedStoreId = parseInt(storeId, 10);
+  if (!normalizedStoreId) return false;
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+  if (!allowedStoreIds) return true;
+  return allowedStoreIds.has(normalizedStoreId);
+}
+
+function parseSubmittedStoreIds(db, storeIds) {
+  ensureStore(db);
+  if (storeIds === undefined || storeIds === null) return [];
+  let rawIds = [];
+  if (Array.isArray(storeIds)) {
+    rawIds = storeIds;
+  } else if (typeof storeIds === 'string') {
+    rawIds = storeIds.split(',').map((part) => part.trim()).filter(Boolean);
+  } else if (typeof storeIds === 'number') {
+    rawIds = [storeIds];
+  } else {
+    rawIds = [storeIds];
+  }
+  const validStoreIds = new Set((db.store_sub_stores || []).map((store) => parseInt(store.id, 10)));
+  const normalized = [...new Set(rawIds.map((id) => parseInt(id, 10)).filter((id) => validStoreIds.has(id)))];
+  return normalized;
+}
+
+function getSubmittedStoreIds(body) {
+  if (!body || typeof body !== 'object') return { provided: false, value: [] };
+  const keys = ['store_ids', 'storeIds', 'allowed_store_ids', 'allowedStoreIds', 'store_access_ids', 'storeAccessIds'];
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
+      return { provided: true, value: body[key] };
+    }
+  }
+  return { provided: false, value: [] };
 }
 
 function getVisibleDoctorIds(db, req) {
@@ -1345,9 +2073,15 @@ function getVisibleDoctorIds(db, req) {
   if (role === 'admin') return null;
   const doctors = (db.users || []).filter(u => u.role === 'doctor');
   const me = getSessionUserRecord(db, req);
-  const myDeptId = me ? parseInt(me.department_id) : NaN;
-  if (myDeptId) {
-    return new Set(doctors.filter(d => parseInt(d.department_id) === myDeptId).map(d => d.id));
+  // Support multi-department: use department_ids array if present, fall back to department_id
+  const myDeptIds = new Set(
+    (Array.isArray(me?.department_ids) && me.department_ids.length
+      ? me.department_ids
+      : (me?.department_id ? [me.department_id] : [])
+    ).map(x => parseInt(x)).filter(x => x > 0)
+  );
+  if (myDeptIds.size) {
+    return new Set(doctors.filter(d => myDeptIds.has(parseInt(d.department_id))).map(d => d.id));
   }
   if (role === 'doctor') return new Set([req.session.user.id]);
   // Non-admin staff without department should not see all doctors.
@@ -1371,14 +2105,22 @@ app.post('/api/logout', (req, res) => { req.session.destroy(() => res.json({ suc
 app.get('/api/me', (req, res) => {
   if (!req.session.user) return res.status(401).json({ error:'Not logged in' });
   const db = readDB();
-  const system = getClinicSystemStatus(db);
+  const system = getClinicSystemStatus(db, getTerminalIdFromReq(req));
   const permissions = getPermissions(db, req.session.user.role);
   const full = (db.users || []).find(u => u.id === req.session.user.id) || {};
   const dept = (db.doctor_departments || []).find(d => d.id === parseInt(full.department_id));
+  const accessibleStores = filterStoresForUser(db, req, db.store_sub_stores || []).map((store) => ({ id: parseInt(store.id, 10), name: store.name || '' }));
+  // Multi-department: normalise department_ids
+  const deptIds = Array.isArray(full.department_ids) && full.department_ids.length
+    ? full.department_ids
+    : (full.department_id ? [full.department_id] : []);
   res.json({
     ...req.session.user,
     department_id: full.department_id || null,
+    department_ids: deptIds,
     department_name: dept ? dept.name : '',
+    store_ids: normalizeUserStoreIds(full),
+    accessible_stores: accessibleStores,
     permissions,
     system
   });
@@ -1435,6 +2177,623 @@ app.get('/api/admin/db-backups/:backupId/:fileName', requireRole('admin'), (req,
   res.download(target);
 });
 
+function runUpdateCommand(command, args, options = {}) {
+  const result = spawnSync(command, args, {
+    cwd: options.cwd || __dirname,
+    encoding: 'utf-8',
+    shell: process.platform === 'win32',
+    timeout: options.timeout || 120000
+  });
+  return {
+    status: typeof result.status === 'number' ? result.status : 1,
+    stdout: String(result.stdout || '').trim(),
+    stderr: String(result.stderr || '').trim(),
+    error: result.error ? String(result.error.message || result.error) : ''
+  };
+}
+
+app.post('/api/admin/system-update', requireRole('admin'), async (req, res) => {
+  const db = readDB();
+  const me = getSessionUserRecord(db, req);
+  if (!me || me.role !== 'admin') {
+    return res.status(403).json({ error: 'Only admin can run System Update' });
+  }
+
+  const body = req.body || {};
+  const remote = String(body.remote || 'origin').trim();
+  const branch = String(body.branch || 'main').trim();
+  if (!/^[\w./-]+$/.test(remote) || !/^[\w./-]+$/.test(branch)) {
+    return res.status(400).json({ error: 'Invalid remote or branch name' });
+  }
+
+  const GITHUB_OWNER = String(process.env.CLINIC_GITHUB_OWNER || 'mayurmadhwani2011-blip').trim();
+  const GITHUB_REPO = String(process.env.CLINIC_GITHUB_REPO || 'CMS').trim();
+  const GITHUB_BRANCH = branch;
+  const GITHUB_TOKEN = String(process.env.CLINIC_GITHUB_TOKEN || '').trim();
+
+  const logs = [];
+  const pushLog = (step, result) => {
+    logs.push({
+      step,
+      status: result.status,
+      stdout: String(result.stdout || '').slice(0, 2000),
+      stderr: String(result.stderr || result.error || '').slice(0, 2000)
+    });
+  };
+
+  // --- Safety backup first ---
+  let backup = null;
+  try {
+    backup = await createDbBackup(`pre-system-update:${me.username || me.name || 'admin'}`);
+  } catch (e) {
+    return res.status(500).json({ error: `Failed to create safety backup: ${e.message || e}` });
+  }
+
+  const isGitRepo = runUpdateCommand('git', ['rev-parse', '--is-inside-work-tree']);
+  const useGit = isGitRepo.status === 0 && /true/i.test(isGitRepo.stdout);
+  pushLog('git-repo-check', isGitRepo);
+
+  let beforeCommit = '';
+  let afterCommit = '';
+  let updated = false;
+  let restartRequired = false;
+
+  if (useGit) {
+    // ---- Git path ----
+    const beforeCommitCmd = runUpdateCommand('git', ['rev-parse', '--short', 'HEAD']);
+    pushLog('before-commit', beforeCommitCmd);
+    beforeCommit = beforeCommitCmd.stdout || '';
+
+    const dataFiles = ['data/clinic-data.json', 'data/clinic-data.sqlite', 'data/clinic-data.sqlite-shm', 'data/clinic-data.sqlite-wal'];
+    for (const file of dataFiles) {
+      const trackedCheck = runUpdateCommand('git', ['ls-files', '--error-unmatch', file]);
+      if (trackedCheck.status === 0) {
+        const skip = runUpdateCommand('git', ['update-index', '--skip-worktree', file]);
+        pushLog(`protect-${file}`, skip);
+      }
+    }
+
+    const fetchCmd = runUpdateCommand('git', ['fetch', remote], { timeout: 180000 });
+    pushLog('git-fetch', fetchCmd);
+    if (fetchCmd.status !== 0) {
+      return res.status(500).json({ error: 'Git fetch failed', backup, logs });
+    }
+
+    const pullCmd = runUpdateCommand('git', ['pull', '--ff-only', remote, branch], { timeout: 180000 });
+    pushLog('git-pull', pullCmd);
+    if (pullCmd.status !== 0) {
+      return res.status(409).json({ error: 'Git pull failed. Resolve local repo conflicts, then retry.', backup, logs });
+    }
+
+    const afterCommitCmd = runUpdateCommand('git', ['rev-parse', '--short', 'HEAD']);
+    pushLog('after-commit', afterCommitCmd);
+    afterCommit = afterCommitCmd.stdout || '';
+    updated = !!beforeCommit && !!afterCommit && beforeCommit !== afterCommit;
+
+    if (updated) {
+      const os = require('os');
+      const cp = require('child_process');
+      const appDir = path.resolve(__dirname);
+      const SERVICE_NAME = process.env.CLINIC_SERVICE_NAME || 'ClinicManagementSystem';
+      const stamp = Date.now();
+      const logFile = path.join(appDir, 'update-apply.log');
+      const applyScriptPath = path.join(os.tmpdir(), `clinic-git-apply-${stamp}.ps1`);
+      const applyScript = [
+        "$ErrorActionPreference = 'Continue'",
+        `$log = ${JSON.stringify(logFile)}`,
+        `$dst = ${JSON.stringify(appDir)}`,
+        `$svc = ${JSON.stringify(SERVICE_NAME)}`,
+        `$svcExe = ${JSON.stringify(SERVICE_NAME + '.exe')}`,
+        `$reg = ${JSON.stringify(path.join(appDir, 'scripts', 'register-service.js'))}`,
+        "function Write-Log([string]$m) { Add-Content -Path $log -Value $m }",
+        "Write-Log ('Git apply started ' + (Get-Date))",
+        "Start-Sleep -Seconds 4",
+        "Push-Location $dst",
+        "Write-Log '[1/3] npm install --omit=dev'",
+        "cmd.exe /c \"npm.cmd install --omit=dev >> \"\"$log\"\" 2>&1\"",
+        "Write-Log '[2/3] reinstall better-sqlite3'",
+        "cmd.exe /c \"npm.cmd install better-sqlite3 >> \"\"$log\"\" 2>&1\"",
+        "Write-Log '[3/3] restarting service'",
+        "sc.exe stop \"$svc\" | Out-Null",
+        "sc.exe stop \"$svcExe\" | Out-Null",
+        "taskkill /F /IM node.exe *> $null",
+        "Start-Sleep -Seconds 3",
+        "sc.exe start \"$svc\" | Out-Null",
+        "sc.exe start \"$svcExe\" | Out-Null",
+        "Start-Sleep -Seconds 6",
+        "$running = ((sc.exe query \"$svc\" | Out-String) -match 'RUNNING') -or ((sc.exe query \"$svcExe\" | Out-String) -match 'RUNNING')",
+        "if (-not $running) {",
+        "  Write-Log 'Service not running - trying re-register'",
+        "  cmd.exe /c \"node \"\"$reg\"\" >> \"\"$log\"\" 2>&1\"",
+        "  sc.exe start \"$svc\" | Out-Null",
+        "  sc.exe start \"$svcExe\" | Out-Null",
+        "}",
+        "Write-Log ('Git apply finished ' + (Get-Date))",
+        "Pop-Location"
+      ].join('\r\n');
+
+      try {
+        fs.writeFileSync(applyScriptPath, applyScript, 'utf8');
+        logs.push({ step: 'git-script-created', status: 0, stdout: `Git apply script: ${applyScriptPath}`, stderr: '' });
+        const taskName = `ClinicGitApply_${stamp}`;
+        const schedResult = cp.spawnSync('schtasks.exe', [
+          '/Create', '/F', '/TN', taskName,
+          '/TR', `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${applyScriptPath}"`,
+          '/SC', 'ONCE', '/ST', '00:00', '/RU', 'SYSTEM', '/RL', 'HIGHEST'
+        ], { encoding: 'utf8', timeout: 15000 });
+        if (schedResult.status === 0) {
+          const runResult = cp.spawnSync('schtasks.exe', ['/Run', '/TN', taskName], { encoding: 'utf8', timeout: 10000 });
+          if (runResult.status !== 0) {
+            logs.push({ step: 'git-apply-run-warn', status: 1, stdout: '', stderr: runResult.stderr || runResult.stdout || 'schtasks run failed' });
+          } else {
+            logs.push({ step: 'git-apply-scheduled', status: 0, stdout: `Git apply scheduled (${taskName}).`, stderr: '' });
+          }
+          setTimeout(() => {
+            try { cp.spawnSync('schtasks.exe', ['/Delete', '/TN', taskName, '/F'], { timeout: 5000 }); } catch (_) {}
+          }, 30000);
+        } else {
+          logs.push({ step: 'git-apply-create-warn', status: 1, stdout: '', stderr: schedResult.stderr || schedResult.stdout || 'schtasks create failed' });
+        }
+      } catch (e) {
+        logs.push({ step: 'git-apply-script-warn', status: 1, stdout: '', stderr: String(e.message || e) });
+      }
+
+      restartRequired = true;
+    }
+
+  } else {
+    // ---- Zip download path (no git repo) ----
+    // Download + extract here, then spawn detached bat to stop/copy/restart.
+    // This avoids file-lock errors because copy happens after service stops.
+    const https = require('https');
+    const os = require('os');
+    const cp = require('child_process');
+    const zipUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/zipball/${GITHUB_BRANCH}`;
+    const requestHeaders = {
+      'User-Agent': 'ClinicApp-Updater',
+      'Accept': 'application/vnd.github+json',
+      ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {})
+    };
+    const stamp = Date.now();
+    const tmpZip = path.join(os.tmpdir(), `clinic-update-${stamp}.zip`);
+    const tmpExtract = path.join(os.tmpdir(), `clinic-update-${stamp}`);
+
+    // Download zip
+    logs.push({ step: 'zip-download', status: 0, stdout: `Downloading ${zipUrl}`, stderr: '' });
+    try {
+      await new Promise((resolve, reject) => {
+        const follow = (url, depth) => {
+          if (depth > 5) return reject(new Error('Too many redirects'));
+          https.get(url, { headers: requestHeaders }, res2 => {
+            if (res2.statusCode >= 300 && res2.statusCode < 400 && res2.headers.location) {
+              res2.resume();
+              return follow(res2.headers.location, depth + 1);
+            }
+            if (res2.statusCode !== 200) {
+              res2.resume();
+              return reject(new Error(`Download failed with HTTP ${res2.statusCode}. If repo is private, set CLINIC_GITHUB_TOKEN on the server.`));
+            }
+            const out = fs.createWriteStream(tmpZip);
+            res2.pipe(out);
+            out.on('finish', () => out.close(resolve));
+            out.on('error', reject);
+          }).on('error', reject);
+        };
+        follow(zipUrl, 0);
+      });
+      logs.push({ step: 'zip-download', status: 0, stdout: `Saved to ${tmpZip}`, stderr: '' });
+    } catch (e) {
+      return res.status(500).json({ error: `Failed to download update: ${e.message}`, backup, logs });
+    }
+
+    // Extract zip
+    const extractCmd = runUpdateCommand('powershell', [
+      '-NoProfile', '-Command',
+      `Expand-Archive -Path '${tmpZip}' -DestinationPath '${tmpExtract}' -Force`
+    ], { timeout: 120000 });
+    pushLog('zip-extract', extractCmd);
+    if (extractCmd.status !== 0) {
+      try { fs.unlinkSync(tmpZip); } catch (_) {}
+      return res.status(500).json({ error: 'Failed to extract update zip', backup, logs });
+    }
+    try { fs.unlinkSync(tmpZip); } catch (_) {}
+
+    // Find source dir inside extracted zip
+    const extracted = fs.readdirSync(tmpExtract).find(f => fs.statSync(path.join(tmpExtract, f)).isDirectory());
+    if (!extracted) {
+      return res.status(500).json({ error: 'Extracted zip has no subfolder', backup, logs });
+    }
+    const extractedRoot = path.join(tmpExtract, extracted);
+    const nestedClinic = path.join(extractedRoot, 'clinic');
+    const srcDir = fs.existsSync(path.join(extractedRoot, 'public', 'app.js')) ? extractedRoot : nestedClinic;
+    if (!fs.existsSync(path.join(srcDir, 'public', 'app.js'))) {
+      return res.status(500).json({ error: 'Update package missing public/app.js', backup, logs });
+    }
+
+    const appDir = path.resolve(__dirname);
+    const SERVICE_NAME = process.env.CLINIC_SERVICE_NAME || 'ClinicManagementSystem';
+    const logFile = path.join(appDir, 'update-apply.log');
+    const applyScriptPath = path.join(os.tmpdir(), `clinic-apply-${stamp}.ps1`);
+
+    // Copy files right now inside this node process.
+    // JS/HTML/CSS/JSON files are NOT file-locked on Windows while node is running,
+    // so this works reliably without stopping the service first.
+    // We skip .node native binaries (those ARE locked) and data/node_modules.
+    logs.push({ step: 'file-copy-start', status: 0, stdout: `Copying files from ${srcDir} to ${appDir}`, stderr: '' });
+    const _skipDirs = new Set(['.git', 'node_modules', 'data']);
+    const _skipFiles = new Set(['install.bat', 'uninstall.bat', 'upgrade-preserve-data.bat', 'upgrade-explicit-target.bat', 'safe-update.bat']);
+    const copyErrors = [];
+    function copyDirSync(src, dst) {
+      const items = fs.readdirSync(src, { withFileTypes: true });
+      for (const item of items) {
+        if (_skipDirs.has(item.name)) continue;
+        const srcPath = path.join(src, item.name);
+        const dstPath = path.join(dst, item.name);
+        if (item.isDirectory()) {
+          if (!fs.existsSync(dstPath)) fs.mkdirSync(dstPath, { recursive: true });
+          copyDirSync(srcPath, dstPath);
+        } else {
+          if (_skipFiles.has(item.name)) continue;
+          if (item.name.endsWith('.node')) continue; // skip locked native binaries
+          try { fs.copyFileSync(srcPath, dstPath); }
+          catch (e) { copyErrors.push(`${item.name}: ${e.message}`); }
+        }
+      }
+    }
+    try {
+      copyDirSync(srcDir, appDir);
+      logs.push({ step: 'file-copy', status: 0, stdout: `Files copied${copyErrors.length ? ' (some errors: ' + copyErrors.slice(0, 5).join('; ') + ')' : ' successfully'}`, stderr: copyErrors.join('; ') });
+    } catch (e) {
+      return res.status(500).json({ error: `File copy failed: ${e.message}`, backup, logs });
+    }
+    try { fs.unlinkSync(path.join(os.tmpdir(), `clinic-update-${stamp}.zip`)); } catch (_) {}
+
+    // Files are already updated. Now schedule a simple service restart via schtasks.
+    // The restart script only stops + starts the service — no npm install needed
+    // (avoids PATH issues when running as SYSTEM).
+    const restartScript = [
+      "$ErrorActionPreference = 'Continue'",
+      `$log = ${JSON.stringify(logFile)}`,
+      `$svc = ${JSON.stringify(SERVICE_NAME)}`,
+      `$svcExe = ${JSON.stringify(SERVICE_NAME + '.exe')}`,
+      `$reg = ${JSON.stringify(path.join(appDir, 'scripts', 'register-service.js'))}`,
+      "function Write-Log([string]$m) { Add-Content -Path $log -Value $m }",
+      "Write-Log ('Restart started ' + (Get-Date))",
+      "Write-Log 'Files already copied. Stopping service...'",
+      "sc.exe stop \"$svc\" | Out-Null",
+      "sc.exe stop \"$svcExe\" | Out-Null",
+      "taskkill /F /IM node.exe *> $null",
+      "Start-Sleep -Seconds 4",
+      "Write-Log 'Starting service...'",
+      "sc.exe start \"$svc\" | Out-Null",
+      "sc.exe start \"$svcExe\" | Out-Null",
+      "Start-Sleep -Seconds 6",
+      "$running = ((sc.exe query \"$svc\" | Out-String) -match 'RUNNING') -or ((sc.exe query \"$svcExe\" | Out-String) -match 'RUNNING')",
+      "if (-not $running) {",
+      "  Write-Log 'Service not running - trying to re-register...'",
+      "  cmd.exe /c \"node \"\"$reg\"\" >> \"\"$log\"\" 2>&1\"",
+      "  sc.exe start \"$svc\" | Out-Null",
+      "  sc.exe start \"$svcExe\" | Out-Null",
+      "  Start-Sleep -Seconds 5",
+      "  $running = ((sc.exe query \"$svc\" | Out-String) -match 'RUNNING') -or ((sc.exe query \"$svcExe\" | Out-String) -match 'RUNNING')",
+      "}",
+      "if ($running) { Write-Log 'RESTART COMPLETE - OK' } else { Write-Log 'ERROR: Service not running after restart' }",
+      "Write-Log ('Finished ' + (Get-Date))"
+    ].join('\r\n');
+
+    try {
+      fs.writeFileSync(applyScriptPath, restartScript, 'utf8');
+      logs.push({ step: 'script-created', status: 0, stdout: `Restart script: ${applyScriptPath}`, stderr: '' });
+    } catch (e) {
+      return res.status(500).json({ error: `Failed to create restart script: ${e.message}`, backup, logs });
+    }
+
+    // Use schtasks to run restart as SYSTEM — works from session-0 Windows services
+    try {
+      const taskName = `ClinicUpdate_${stamp}`;
+      const schedResult = cp.spawnSync('schtasks.exe', [
+        '/Create', '/F', '/TN', taskName,
+        '/TR', `powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${applyScriptPath}"`,
+        '/SC', 'ONCE', '/ST', '00:00', '/RU', 'SYSTEM', '/RL', 'HIGHEST'
+      ], { encoding: 'utf8', timeout: 15000 });
+      if (schedResult.status !== 0) {
+        throw new Error(schedResult.stderr || schedResult.stdout || 'schtasks create failed');
+      }
+      const runResult = cp.spawnSync('schtasks.exe', ['/Run', '/TN', taskName], { encoding: 'utf8', timeout: 10000 });
+      if (runResult.status !== 0) {
+        throw new Error(runResult.stderr || runResult.stdout || 'schtasks run failed');
+      }
+      setTimeout(() => {
+        try { cp.spawnSync('schtasks.exe', ['/Delete', '/TN', taskName, '/F'], { timeout: 5000 }); } catch (_) {}
+      }, 30000);
+      logs.push({ step: 'restart-scheduled', status: 0, stdout: `Service restart scheduled (${taskName}). Files already updated.`, stderr: '' });
+    } catch (e) {
+      // Files are copied — service just needs a manual restart
+      logs.push({ step: 'restart-warn', status: 1, stdout: '', stderr: `Could not schedule restart: ${e.message}. Files are updated — restart the service manually.` });
+    }
+
+    afterCommit = 'zip-' + GITHUB_BRANCH;
+    updated = true;
+    restartRequired = true;
+  }
+
+  logActivity(db, req, {
+    module: 'setup',
+    action: 'system_updated',
+    entity_type: 'system',
+    entity_id: 1,
+    notes: `System update initiated from ${beforeCommit || 'unknown'} to ${afterCommit || 'unknown'}`,
+    meta: {
+      remote,
+      branch,
+      before_commit: beforeCommit,
+      after_commit: afterCommit,
+      backup_id: backup && backup.backup_id ? backup.backup_id : null,
+      restart_required: restartRequired
+    }
+  });
+  writeDB(db);
+
+  res.json({
+    ok: true,
+    message: useGit
+      ? (updated
+        ? 'Update pulled and apply task started. Wait ~20 seconds, then refresh the page.'
+        : 'Already up to date. No code changes were pulled.')
+      : 'Update in progress. Service will restart in ~15 seconds. Wait 20 seconds then refresh the page.',
+    remote,
+    branch,
+    before_commit: beforeCommit,
+    after_commit: afterCommit,
+    updated,
+    backup,
+    restart_required: restartRequired,
+    logs
+  });
+});
+
+app.get('/api/system-reset/status', requireLogin, (req, res) => {
+  const db = readDB();
+  const state = getSystemResetState(db);
+  res.json({
+    in_progress: !!state.in_progress,
+    active_job_id: state.active_job_id || null,
+    phase: state.phase || null,
+    progress: parseInt(state.progress || 0, 10) || 0,
+    message: state.message || null,
+    updated_at: state.updated_at || null
+  });
+});
+
+app.post('/api/system-reset/precheck', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const me = getSessionUserRecord(db, req);
+  if (!me || !isSuperAdminUser(db, me.id)) {
+    return res.status(403).json({ error: 'Only Super Admin can access System Reset' });
+  }
+  const includeAuditLogs = !!(req.body && req.body.includeAuditLogs);
+  const summary = buildResetSummary(db, includeAuditLogs);
+  const state = getSystemResetState(db);
+  res.json({
+    ok: true,
+    in_progress: !!state.in_progress,
+    active_job_id: state.active_job_id || null,
+    summary,
+    warning: 'This will permanently delete all patient and transactional data.'
+  });
+});
+
+app.post('/api/system-reset/start', requireRole('admin'), async (req, res) => {
+  const db = readDB();
+  const state = getSystemResetState(db);
+  const me = getSessionUserRecord(db, req);
+  if (!me || !isSuperAdminUser(db, me.id)) {
+    return res.status(403).json({ error: 'Only Super Admin can start System Reset' });
+  }
+  if (state.in_progress) {
+    return res.status(409).json({ error: 'A reset is already in progress', job_id: state.active_job_id || null });
+  }
+
+  const body = req.body || {};
+  const confirmText = String(body.confirmText || '').trim();
+  const password = String(body.password || '');
+  const includeAuditLogs = !!body.includeAuditLogs;
+  const scope = String(body.scope || 'full_transactional');
+
+  if (confirmText !== 'RESET') {
+    return res.status(400).json({ error: 'Confirmation text must be exactly RESET' });
+  }
+  if (!password) {
+    return res.status(400).json({ error: 'Password is required for re-authentication' });
+  }
+  let passOk = false;
+  try {
+    passOk = await bcrypt.compare(password, String(me.password || ''));
+  } catch (_) {
+    passOk = false;
+  }
+  if (!passOk) {
+    return res.status(401).json({ error: 'Password re-authentication failed' });
+  }
+
+  const jobId = `reset-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const summaryBefore = buildResetSummary(db, includeAuditLogs);
+  const job = {
+    job_id: jobId,
+    status: 'queued',
+    phase: 'queued',
+    progress: 1,
+    message: 'Reset queued',
+    scope,
+    include_audit_logs: includeAuditLogs,
+    requested_at: now(),
+    started_at: now(),
+    completed_at: null,
+    started_by_user_id: me.id,
+    started_by: me.username || me.name || 'admin',
+    summary_before: summaryBefore,
+    backup: null,
+    error: null,
+    updated_at: now()
+  };
+
+  state.in_progress = true;
+  state.active_job_id = jobId;
+  state.started_at = now();
+  state.started_by = me.username || me.name || 'admin';
+  state.phase = 'queued';
+  state.message = 'Reset queued';
+  state.progress = 1;
+  state.updated_at = now();
+  state.jobs.push(job);
+  if (state.jobs.length > RESET_JOB_KEEP_LIMIT) state.jobs = state.jobs.slice(-RESET_JOB_KEEP_LIMIT);
+
+  pushResetSecurityEvent(db, {
+    actor_id: me.id,
+    actor_name: me.username || me.name || 'admin',
+    action: 'system_reset_started',
+    scope,
+    include_audit_logs: includeAuditLogs,
+    notes: 'System reset job started'
+  });
+
+  writeDB(db);
+
+  setImmediate(() => {
+    executeSystemResetJob(jobId).catch((e) => {
+      const latest = readDB();
+      updateResetJob(latest, jobId, {
+        status: 'failed',
+        phase: 'failed',
+        message: `Reset failed: ${e.message}`,
+        error: String(e.message || e),
+        completed_at: now()
+      });
+      finalizeResetState(latest, jobId, 'failed');
+      writeDB(latest);
+    });
+  });
+
+  res.json({ ok: true, job_id: jobId, summary: summaryBefore });
+});
+
+app.get('/api/system-reset/jobs/:jobId', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const me = getSessionUserRecord(db, req);
+  if (!me || !isSuperAdminUser(db, me.id)) {
+    return res.status(403).json({ error: 'Only Super Admin can view reset job status' });
+  }
+  const state = getSystemResetState(db);
+  const jobId = String(req.params.jobId || '').trim();
+  const job = (state.jobs || []).find(j => j.job_id === jobId);
+  if (!job) return res.status(404).json({ error: 'Reset job not found' });
+  res.json(job);
+});
+
+app.get('/api/system-restore/status', requireLogin, (req, res) => {
+  const db = readDB();
+  const state = getSystemRestoreState(db);
+  res.json({
+    in_progress: !!state.in_progress,
+    active_job_id: state.active_job_id || null,
+    phase: state.phase || null,
+    progress: parseInt(state.progress || 0, 10) || 0,
+    message: state.message || null,
+    updated_at: state.updated_at || null
+  });
+});
+
+app.post('/api/system-restore/start', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const me = getSessionUserRecord(db, req);
+  if (!me || !isSuperAdminUser(db, me.id)) {
+    return res.status(403).json({ error: 'Only Super Admin can start database restore' });
+  }
+  const resetState = getSystemResetState(db);
+  const restoreState = getSystemRestoreState(db);
+  if (resetState.in_progress || restoreState.in_progress) {
+    return res.status(409).json({ error: 'Another maintenance job is already in progress' });
+  }
+
+  const backupId = String((req.body && req.body.backup_id) || '').trim();
+  if (!backupId) return res.status(400).json({ error: 'backup_id is required' });
+  try {
+    loadBackupStateById(backupId);
+  } catch (e) {
+    return res.status(400).json({ error: e.message || 'Invalid backup selection' });
+  }
+
+  const jobId = `restore-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+  const job = {
+    job_id: jobId,
+    backup_id: backupId,
+    status: 'queued',
+    phase: 'queued',
+    progress: 1,
+    message: 'Restore queued',
+    requested_at: now(),
+    started_at: now(),
+    completed_at: null,
+    started_by_user_id: me.id,
+    started_by: me.username || me.name || 'admin',
+    updated_at: now(),
+    error: null
+  };
+
+  restoreState.in_progress = true;
+  restoreState.active_job_id = jobId;
+  restoreState.started_at = now();
+  restoreState.started_by = me.username || me.name || 'admin';
+  restoreState.phase = 'queued';
+  restoreState.message = 'Restore queued';
+  restoreState.progress = 1;
+  restoreState.updated_at = now();
+  restoreState.jobs.push(job);
+  if (restoreState.jobs.length > RESET_JOB_KEEP_LIMIT) restoreState.jobs = restoreState.jobs.slice(-RESET_JOB_KEEP_LIMIT);
+  restoreState.security_events.push({
+    id: nextId(db, 'system_restore_security_events'),
+    at: now(),
+    actor_id: me.id,
+    actor_name: me.username || me.name || 'admin',
+    action: 'system_restore_started',
+    backup_id: backupId,
+    notes: 'One-click restore started'
+  });
+  if (restoreState.security_events.length > 200) restoreState.security_events = restoreState.security_events.slice(-200);
+  writeDB(db);
+
+  setImmediate(() => {
+    executeSystemRestoreJob(jobId).catch((e) => {
+      const latest = readDB();
+      updateRestoreJob(latest, jobId, {
+        status: 'failed',
+        phase: 'failed',
+        progress: 100,
+        message: `Restore failed: ${e.message}`,
+        error: String(e.message || e),
+        completed_at: now()
+      });
+      finalizeRestoreState(latest, 'failed');
+      writeDB(latest);
+    });
+  });
+
+  res.json({ ok: true, job_id: jobId, backup_id: backupId });
+});
+
+app.get('/api/system-restore/jobs/:jobId', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const me = getSessionUserRecord(db, req);
+  if (!me || !isSuperAdminUser(db, me.id)) {
+    return res.status(403).json({ error: 'Only Super Admin can view restore job status' });
+  }
+  const state = getSystemRestoreState(db);
+  const jobId = String(req.params.jobId || '').trim();
+  const job = (state.jobs || []).find(j => j.job_id === jobId);
+  if (!job) return res.status(404).json({ error: 'Restore job not found' });
+  res.json(job);
+});
+
 app.get('/api/system/public-config', (req, res) => {
   const db = readDB();
   const system = getClinicSystemStatus(db);
@@ -1447,13 +2806,13 @@ app.get('/api/system/public-config', (req, res) => {
 
 app.get('/api/system/status', requireLogin, (req, res) => {
   const db = readDB();
-  const system = getClinicSystemStatus(db);
+  const system = getClinicSystemStatus(db, getTerminalIdFromReq(req));
   res.json(system);
 });
 
 app.get('/api/setup/profile', requireRole('admin'), (req, res) => {
   const db = readDB();
-  const system = getClinicSystemStatus(db);
+  const system = getClinicSystemStatus(db, getTerminalIdFromReq(req));
   res.json(system);
 });
 
@@ -1504,7 +2863,7 @@ app.put('/api/setup/profile', requireRole('admin'), (req, res) => {
   if (body.setup_completed === true || body.setup_completed === 'true') profile.setup_completed = true;
 
   writeDB(db);
-  res.json(getClinicSystemStatus(db));
+  res.json(getClinicSystemStatus(db, getTerminalIdFromReq(req)));
 });
 
 app.post('/api/setup/complete', requireRole('admin'), (req, res) => {
@@ -1514,7 +2873,7 @@ app.post('/api/setup/complete', requireRole('admin'), (req, res) => {
   db.clinic_profile.updated_at = now();
   if (!db.clinic_profile.clinic_name) db.clinic_profile.clinic_name = 'ClinicMS';
   writeDB(db);
-  res.json(getClinicSystemStatus(db));
+  res.json(getClinicSystemStatus(db, getTerminalIdFromReq(req)));
 });
 
 // ===================== PRINTER MANAGEMENT =====================
@@ -1881,20 +3240,37 @@ app.put('/api/setup/printer', requireRole('admin'), (req, res) => {
   const db = readDB();
   ensureClinicProfile(db);
   const profile = db.clinic_profile;
+  const terminalId = getTerminalIdFromReq(req);
   
   const body = req.body || {};
-  if (!body.printer_type || !body.printer_name) {
-    return res.status(400).json({ error: 'Printer type and name are required' });
-  }
+  // Require both type+name only when either one is provided (paired validation).
+  // Allow saving print_mode alone without a printer being configured.
+  const hasType = !!(body.printer_type || '').trim();
+  const hasName = !!(body.printer_name || '').trim();
+  if (hasType && !hasName) return res.status(400).json({ error: 'Printer name is required when printer type is set' });
+  if (!hasType && hasName) return res.status(400).json({ error: 'Printer type is required when printer name is set' });
 
-  profile.printer_type = String(body.printer_type || '').trim();
-  profile.printer_name = String(body.printer_name || '').trim();
-  profile.printer_ip = body.printer_type === 'network' ? String(body.printer_ip || '').trim() : null;
-  profile.printer_port = body.printer_type === 'network' ? (parseInt(body.printer_port || 9100, 10) || 9100) : null;
+  if (hasType && hasName) {
+    const cfg = {
+      printer_type: String(body.printer_type).trim(),
+      printer_name: String(body.printer_name).trim(),
+      printer_ip: body.printer_type === 'network' ? String(body.printer_ip || '').trim() : '',
+      printer_port: body.printer_type === 'network' ? (parseInt(body.printer_port || 9100, 10) || 9100) : 9100
+    };
+    profile.printer_type = cfg.printer_type;
+    profile.printer_name = cfg.printer_name;
+    profile.printer_ip = cfg.printer_ip;
+    profile.printer_port = cfg.printer_port;
+    if (!profile.printer_terminals || typeof profile.printer_terminals !== 'object') profile.printer_terminals = {};
+    if (terminalId) {
+      profile.printer_terminals[terminalId] = { ...cfg, updated_at: now() };
+    }
+  }
+  profile.print_mode = ['auto', 'manual'].includes(body.print_mode) ? body.print_mode : (profile.print_mode || 'auto');
   profile.updated_at = now();
   
   writeDB(db);
-  res.json(getClinicSystemStatus(db));
+  res.json(getClinicSystemStatus(db, terminalId));
 });
 
 app.post('/api/printers/test', requireRole('admin'), async (req, res) => {
@@ -1957,10 +3333,11 @@ app.post('/api/print/bill', requireRole('user'), async (req, res) => {
 
     const db = readDB();
     const profile = db.clinic_profile || {};
-    const printerName = profile.printer_name;
-    const printerType = profile.printer_type;
-    const printerIp = String(profile.printer_ip || '').trim();
-    const printerPort = parseInt(profile.printer_port || 9100, 10) || 9100;
+    const printerCfg = resolvePrinterConfig(profile, getTerminalIdFromReq(req));
+    const printerName = printerCfg.printer_name;
+    const printerType = printerCfg.printer_type;
+    const printerIp = String(printerCfg.printer_ip || '').trim();
+    const printerPort = parseInt(printerCfg.printer_port || 9100, 10) || 9100;
 
     if (!printerName || !printerType) {
       return res.status(400).json({ error: 'Printer not configured' });
@@ -2109,16 +3486,34 @@ app.put('/api/role-permissions', requireRole('admin'), (req, res) => {
 // ===================== USERS =====================
 app.get('/api/users', requireRole('admin'), (req, res) => {
   const db = readDB();
+  ensureStore(db);
   const deptById = new Map((db.doctor_departments || []).map(d => [d.id, d]));
+  const storesById = new Map((db.store_sub_stores || []).map((store) => [parseInt(store.id, 10), store]));
   res.json(db.users.map(({ password, ...u }) => {
-    const dep = deptById.get(parseInt(u.department_id));
-    return { ...u, department_name: dep ? dep.name : '' };
+    const departmentIds = Array.isArray(u.department_ids) && u.department_ids.length
+      ? u.department_ids.map((id) => parseInt(id, 10)).filter((id) => id > 0)
+      : (u.department_id ? [parseInt(u.department_id, 10)] : []);
+    const departmentNames = departmentIds
+      .map((id) => deptById.get(id)?.name || '')
+      .filter(Boolean);
+    const storeIds = normalizeUserStoreIds(u);
+    return {
+      ...u,
+      department_ids: departmentIds,
+      department_names: departmentNames,
+      store_ids: storeIds,
+      store_names: storeIds.map((id) => storesById.get(id)?.name || `Store #${id}`),
+      department_name: departmentNames[0] || ''
+    };
   }));
 });
 app.post('/api/users', requireRole('admin'), (req, res) => {
   const { name, username, password, role, slot_duration, department_id, active } = req.body;
+  const submittedStores = getSubmittedStoreIds(req.body || {});
+  const rawDeptIdsPost = req.body.department_ids;
   if (!name||!username||!password||!role) return res.status(400).json({ error:'All fields required' });
   const db = readDB();
+  ensureStore(db);
   const builtInRoles = ['admin','doctor','receptionist'];
   const customRoleNames = (db.custom_roles || []).map(r => r.name);
   const allValidRoles = [...builtInRoles, ...customRoleNames];
@@ -2126,12 +3521,13 @@ app.post('/api/users', requireRole('admin'), (req, res) => {
   if (db.users.find(u => u.username === username)) return res.status(400).json({ error:'Username exists' });
   const id = nextId(db,'users');
   const user = { id, name, username, password:bcrypt.hashSync(password,10), role, active: active !== false && active !== 'false' };
-  if (role === 'doctor' || role === 'receptionist') {
-    const depId = parseInt(department_id);
-    if (!depId) return res.status(400).json({ error:`Department is required for ${role}` });
-    const dep = (db.doctor_departments || []).find(d => d.id === depId && d.active !== false);
-    if (!dep) return res.status(400).json({ error:'Invalid department' });
-    user.department_id = depId;
+  if (role !== 'admin') user.store_ids = parseSubmittedStoreIds(db, submittedStores.value);
+  // Multi-department support on create
+  if (role !== 'admin') {
+    const deptIds = (Array.isArray(rawDeptIdsPost) ? rawDeptIdsPost : (rawDeptIdsPost ? [rawDeptIdsPost] : []))
+      .map(x => parseInt(x)).filter(x => x > 0 && (db.doctor_departments||[]).some(d => d.id === x && d.active !== false));
+    user.department_ids = deptIds;
+    user.department_id = deptIds.length ? deptIds[0] : (department_id ? parseInt(department_id) : null);
   }
   if (role === 'doctor') {
     user.slot_duration = parseInt(slot_duration) || 30;
@@ -2141,8 +3537,10 @@ app.post('/api/users', requireRole('admin'), (req, res) => {
 });
 app.put('/api/users/:id', requireRole('admin'), (req, res) => {
   const db = readDB(); const idx = db.users.findIndex(u => u.id === parseInt(req.params.id));
+  ensureStore(db);
   if (idx === -1) return res.status(404).json({ error:'Not found' });
   const { name, slot_duration, department_id, active } = req.body;
+  const submittedStores = getSubmittedStoreIds(req.body || {});
   if (name) db.users[idx].name = name;
   if (db.users[idx].role === 'doctor' && slot_duration) db.users[idx].slot_duration = parseInt(slot_duration) || 30;
   if (active !== undefined) {
@@ -2152,11 +3550,25 @@ app.put('/api/users/:id', requireRole('admin'), (req, res) => {
     }
     db.users[idx].active = !(active === false || active === 'false');
   }
-  if ((db.users[idx].role === 'doctor' || db.users[idx].role === 'receptionist') && department_id !== undefined) {
+  // Multi-department support: accept department_ids array from body
+  const rawDeptIds = req.body.department_ids;
+  if (rawDeptIds !== undefined && db.users[idx].role !== 'admin') {
+    const ids = (Array.isArray(rawDeptIds) ? rawDeptIds : [rawDeptIds])
+      .map(x => parseInt(x)).filter(x => x > 0);
+    const validIds = ids.filter(id => (db.doctor_departments || []).some(d => d.id === id && d.active !== false));
+    db.users[idx].department_ids = validIds;
+    // keep legacy single field in sync (first selection)
+    db.users[idx].department_id = validIds.length ? validIds[0] : null;
+  } else if (department_id !== undefined && db.users[idx].role !== 'admin') {
     const depId = parseInt(department_id);
     const dep = (db.doctor_departments || []).find(d => d.id === depId && d.active !== false);
-    if (!dep) return res.status(400).json({ error:'Invalid department' });
-    db.users[idx].department_id = depId;
+    if (dep) {
+      db.users[idx].department_id = depId;
+      db.users[idx].department_ids = [depId];
+    }
+  }
+  if (db.users[idx].role !== 'admin' && submittedStores.provided) {
+    db.users[idx].store_ids = parseSubmittedStoreIds(db, submittedStores.value);
   }
   writeDB(db); const { password:_, ...safe } = db.users[idx]; res.json(safe);
 });
@@ -2951,6 +4363,23 @@ app.get('/api/appointments', requireLogin, (req, res) => {
   const db = readDB();
   if (autoMarkMissedAppointmentsAsNoShow(db)) writeDB(db);
   const { date, date_from, date_to, status, doctor_id, name, mr_number, civil_id } = req.query;
+  const usersById = new Map((db.users || []).map(u => [parseInt(u.id, 10), u]));
+  const bookedByByAptId = new Map();
+  const paidByByAptId = new Map();
+  (db.activity_logs || []).forEach(log => {
+    const aptId = parseInt(log.appointment_id || ((log.entity_type === 'appointment') ? log.entity_id : null), 10);
+    if (!aptId) return;
+    const action = String(log.action || '').toLowerCase();
+    const actor = usersById.get(parseInt(log.actor_id, 10)) || null;
+    const actorName = (actor ? (actor.name || actor.username || '') : '') || String(log.actor_name || '').trim();
+    if (!actorName) return;
+    if ((action === 'booked' || action === 'confirmed') && !bookedByByAptId.has(aptId)) {
+      bookedByByAptId.set(aptId, actorName);
+    }
+    if (action === 'payment_received') {
+      paidByByAptId.set(aptId, actorName);
+    }
+  });
   const visibleDoctorIds = getVisibleDoctorIds(db, req);
   if (doctor_id && visibleDoctorIds && !visibleDoctorIds.has(parseInt(doctor_id))) {
     return res.status(403).json({ error:'Forbidden for this department' });
@@ -2959,7 +4388,17 @@ app.get('/api/appointments', requireLogin, (req, res) => {
     const pat = db.patients.find(p=>p.id===a.patient_id)||{};
     const doc = db.users.find(u=>u.id===a.doctor_id)||{};
     const dep = (db.doctor_departments || []).find(d => d.id === parseInt(doc.department_id)) || {};
-    return { ...a, patient_name: pat.name || pat.mr_number || 'Unknown', patient_phone:pat.phone, doctor_name:doc.name, doctor_department_name: dep.name || '', mr_number:pat.mr_number, civil_id:pat.civil_id||null };
+    return {
+      ...a,
+      patient_name: pat.name || pat.mr_number || 'Unknown',
+      patient_phone:pat.phone,
+      doctor_name:doc.name,
+      doctor_department_name: dep.name || '',
+      mr_number:pat.mr_number,
+      civil_id:pat.civil_id||null,
+      booked_by_name: bookedByByAptId.get(parseInt(a.id, 10)) || '',
+      paid_by_name: paidByByAptId.get(parseInt(a.id, 10)) || ''
+    };
   });
   if (visibleDoctorIds) list = list.filter(a => visibleDoctorIds.has(parseInt(a.doctor_id)));
   if (doctor_id) list=list.filter(a=>a.doctor_id===parseInt(doctor_id));
@@ -2982,7 +4421,20 @@ app.get('/api/appointments/:id', requireLogin, (req, res) => {
   if (visibleDoctorIds && !visibleDoctorIds.has(parseInt(a.doctor_id))) return res.status(403).json({ error:'Forbidden for this department' });
   const pat = db.patients.find(p=>p.id===a.patient_id)||{}; const doc = db.users.find(u=>u.id===a.doctor_id)||{};
   const dep = (db.doctor_departments || []).find(d => d.id === parseInt(doc.department_id)) || {};
-  res.json({ ...a, patient_name:pat.name, doctor_name:doc.name, doctor_department_name: dep.name || '' });
+  const usersById = new Map((db.users || []).map(u => [parseInt(u.id, 10), u]));
+  let bookedByName = '';
+  let paidByName = '';
+  (db.activity_logs || []).forEach(log => {
+    const aptId = parseInt(log.appointment_id || ((log.entity_type === 'appointment') ? log.entity_id : null), 10);
+    if (aptId !== parseInt(a.id, 10)) return;
+    const actor = usersById.get(parseInt(log.actor_id, 10)) || null;
+    const actorName = (actor ? (actor.name || actor.username || '') : '') || String(log.actor_name || '').trim();
+    if (!actorName) return;
+    const action = String(log.action || '').toLowerCase();
+    if ((action === 'booked' || action === 'confirmed') && !bookedByName) bookedByName = actorName;
+    if (action === 'payment_received') paidByName = actorName;
+  });
+  res.json({ ...a, patient_name:pat.name, doctor_name:doc.name, doctor_department_name: dep.name || '', booked_by_name: bookedByName, paid_by_name: paidByName });
 });
 app.post('/api/appointments', requireRole('admin','receptionist','doctor'), (req, res) => {
   const { patient_id, doctor_id, date, time, notes } = req.body;
@@ -3485,7 +4937,12 @@ app.put('/api/prescriptions/:id', requireRole('doctor','admin'), (req, res) => {
 // ===================== BILLING =====================
 app.get('/api/bills', requireLogin, (req, res) => {
   const db=readDB(); const { patient_id,payment_status,date:fd,appointment_id } = req.query;
-  let list=db.bills.map(b=>{ const pat=db.patients.find(p=>p.id===b.patient_id)||{}; return { ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'' }; });
+  const visibleDoctorIds = getVisibleDoctorIds(db, req);
+  let list=db.bills.map(b=>{ const pat=db.patients.find(p=>p.id===b.patient_id)||{}; const doc=db.users.find(u=>u.id===parseInt(b.doctor_id))||{}; return { ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'', doctor_name: doc.name || '' }; });
+  if (visibleDoctorIds) list = list.filter(b => {
+    const did = parseInt(b.doctor_id, 10);
+    return did && visibleDoctorIds.has(did);
+  });
   if (patient_id)     list=list.filter(b=>b.patient_id===parseInt(patient_id));
   if (payment_status) list=list.filter(b=>b.payment_status===payment_status);
   if (fd)             list=list.filter(b=>(b.created_at||'').startsWith(fd));
@@ -3496,10 +4953,18 @@ app.get('/api/bills', requireLogin, (req, res) => {
 app.get('/api/bills/:id', requireLogin, (req, res) => {
   const db=readDB(); const b=db.bills.find(b=>b.id===parseInt(req.params.id));
   if (!b) return res.status(404).json({ error:'Not found' });
+  const visibleDoctorIds = getVisibleDoctorIds(db, req);
+  if (visibleDoctorIds) {
+    const did = parseInt(b.doctor_id, 10);
+    if (!did || !visibleDoctorIds.has(did)) {
+      return res.status(403).json({ error:'Forbidden for this doctor scope' });
+    }
+  }
   const pat=db.patients.find(p=>p.id===b.patient_id)||{};
-  res.json({ ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'' });
+  const doc=db.users.find(u=>u.id===parseInt(b.doctor_id,10))||{};
+  res.json({ ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'', doctor_name: doc.name || '' });
 });
-app.post('/api/bills', requireRole('admin','receptionist'), (req, res) => {
+app.post('/api/bills', requirePermission('billing.create'), (req, res) => {
   const { patient_id,appointment_id,doctor_id,line_items,consultation_fee,medicine_charge,other_charges,payment_method,payment_status,pkg_sessions,payment_splits,discount_id,discount_type,discount_value,discount_label,discount_amount } = req.body;
   if (!patient_id) return res.status(400).json({ error:'patient_id required' });
   const db=readDB();
@@ -3515,7 +4980,16 @@ app.post('/api/bills', requireRole('admin','receptionist'), (req, res) => {
   let items=[], cf=0, mc=0, oc=0, total=0;
   ensureStore(db);
   if (Array.isArray(line_items) && line_items.length>0) {
-    items = line_items.map(i => ({ ...i }));
+    items = line_items.map(i => {
+      const item = { ...i };
+      if (item.type !== 'package') {
+        const validStatuses = ['Pending', 'In Progress', 'Completed'];
+        const status = validStatuses.includes(item.service_status) ? item.service_status : 'Completed';
+        item.service_status = status;
+        item.completion_date = status === 'Completed' ? (item.completion_date || now()) : (item.completion_date || null);
+      }
+      return item;
+    });
     const billingStore = getBillingProductStore(db);
     if (!billingStore) return res.status(400).json({ error:'Billing product store not configured' });
 
@@ -3607,9 +5081,13 @@ app.post('/api/bills', requireRole('admin','receptionist'), (req, res) => {
     });
   }
   // Auto-complete appointment when paid
+  let updatedApt = null;
   if (ps === 'Paid' && appointment_id) {
     const ai = db.appointments.findIndex(a => a.id === parseInt(appointment_id));
-    if (ai !== -1 && db.appointments[ai].status !== 'Completed') db.appointments[ai].status = 'Completed';
+    if (ai !== -1 && db.appointments[ai].status !== 'Completed') {
+      db.appointments[ai].status = 'Completed';
+      updatedApt = db.appointments[ai];
+    }
   }
   // Auto-create patient_package subscriptions for package line items
   const pkgLineItems = items.filter(i => i.type === 'package');
@@ -3690,24 +5168,57 @@ app.post('/api/bills', requireRole('admin','receptionist'), (req, res) => {
     visit_id,
     line_items: items
   });
-  writeDB(db); res.json({ id, total });
+  writeDB(db);
+  res.json({ id, bill_number, appointment: updatedApt });
 });
-app.put('/api/bills/:id', requireRole('admin','receptionist'), (req, res) => {
+app.put('/api/bills/:id', requirePermission('billing.edit'), (req, res) => {
   const db=readDB(); const idx=db.bills.findIndex(b=>b.id===parseInt(req.params.id));
   if (idx===-1) return res.status(404).json({ error:'Not found' });
   const hasRefund = (db.refunds || []).some(r => r.bill_id === parseInt(req.params.id));
   if (hasRefund) return res.status(400).json({ error:'This bill cannot be edited because a refund has already been recorded.' });
   if (String(db.bills[idx].payment_status || '') === 'Cancelled') return res.status(400).json({ error:'Cancelled bills cannot be edited.' });
   const before = { ...db.bills[idx] };
-  const { line_items,consultation_fee,medicine_charge,other_charges,payment_method,payment_status,payment_splits } = req.body;
-  let items=db.bills[idx].line_items||[], cf, mc, oc, total;
-  if (Array.isArray(line_items) && line_items.length>0) {
-    items=line_items; total=items.reduce((s,i)=>s+(parseFloat(i.amount)||0),0); cf=0; mc=0; oc=0;
+  const { line_items, consultation_fee, medicine_charge, other_charges, payment_method, payment_status, payment_splits,
+    discount_id, discount_type, discount_label, discount_amount } = req.body;
+  let items = db.bills[idx].line_items || [], cf, mc, oc, subtotal, total, discAmt = 0;
+  if (Array.isArray(line_items) && line_items.length > 0) {
+    items = line_items.map(i => {
+      const item = { ...i };
+      if (item.type !== 'package') {
+        const validStatuses = ['Pending', 'In Progress', 'Completed'];
+        const status = validStatuses.includes(item.service_status) ? item.service_status : 'Completed';
+        item.service_status = status;
+        item.completion_date = status === 'Completed' ? (item.completion_date || now()) : (item.completion_date || null);
+      }
+      return item;
+    });
+    subtotal = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
+    cf = 0; mc = 0; oc = 0;
   } else {
-    cf=parseFloat(consultation_fee)||0; mc=parseFloat(medicine_charge)||0; oc=parseFloat(other_charges)||0; total=cf+mc+oc;
+    cf = parseFloat(consultation_fee) || 0;
+    mc = parseFloat(medicine_charge) || 0;
+    oc = parseFloat(other_charges) || 0;
+    subtotal = cf + mc + oc;
   }
+  discAmt = parseFloat(discount_amount) || 0;
+  total = Math.max(0, subtotal - discAmt);
   const splits = Array.isArray(payment_splits) ? payment_splits : db.bills[idx].payment_splits || [];
-  db.bills[idx]={ ...db.bills[idx], line_items:items, consultation_fee:cf||0, medicine_charge:mc||0, other_charges:oc||0, total, payment_method:payment_method||db.bills[idx].payment_method, payment_status:payment_status||db.bills[idx].payment_status, payment_splits:splits };
+  db.bills[idx] = {
+    ...db.bills[idx],
+    line_items: items,
+    consultation_fee: cf || 0,
+    medicine_charge: mc || 0,
+    other_charges: oc || 0,
+    subtotal,
+    discount_id: discount_id ? parseInt(discount_id) : null,
+    discount_type: discount_type || null,
+    discount_label: discount_label || null,
+    discount_amount: discAmt,
+    total,
+    payment_method: payment_method || db.bills[idx].payment_method,
+    payment_status: payment_status || db.bills[idx].payment_status,
+    payment_splits: splits
+  };
   // Auto-complete appointment when marked Paid
   const apt_id = db.bills[idx].appointment_id;
   if (before.payment_status !== db.bills[idx].payment_status) {
@@ -3728,10 +5239,11 @@ app.put('/api/bills/:id', requireRole('admin','receptionist'), (req, res) => {
     const ai = db.appointments.findIndex(a => a.id === apt_id);
     if (ai !== -1 && db.appointments[ai].status !== 'Completed') db.appointments[ai].status = 'Completed';
   }
-  writeDB(db); res.json({ success:true, total });
+  writeDB(db);
+  res.json({ success:true, bill: db.bills[idx] });
 });
 
-app.post('/api/bills/:id/cancel', requireRole('admin','receptionist'), (req, res) => {
+app.post('/api/bills/:id/cancel', requirePermission('billing.delete'), (req, res) => {
   const db = readDB();
   const idx = db.bills.findIndex(b => b.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error:'Bill not found' });
@@ -3762,6 +5274,152 @@ app.post('/api/bills/:id/cancel', requireRole('admin','receptionist'), (req, res
 
   writeDB(db);
   res.json({ success:true, id: bill.id, payment_status: bill.payment_status });
+});
+
+// ===================== SERVICE COMPLETION =====================
+
+// PATCH /api/bills/:id/items/:idx/status — mark a line item complete/pending
+app.patch('/api/bills/:id/items/:itemIdx/status', requireLogin, (req, res) => {
+  const db = readDB();
+  const billId = parseInt(req.params.id, 10);
+  const itemIdx = parseInt(req.params.itemIdx, 10);
+  const bill = db.bills.find(b => b.id === billId);
+  if (!bill) return res.status(404).json({ error: 'Bill not found' });
+  if (String(bill.payment_status || '') === 'Cancelled') return res.status(400).json({ error: 'Cannot update cancelled bill' });
+  if (!Array.isArray(bill.line_items) || itemIdx < 0 || itemIdx >= bill.line_items.length) {
+    return res.status(404).json({ error: 'Line item not found' });
+  }
+  const item = bill.line_items[itemIdx];
+  // Only allow on normal services (not packages)
+  if (item.type === 'package') return res.status(400).json({ error: 'Use package session tracking for packages' });
+
+  const { status, provider_id } = req.body;
+  const validStatuses = ['Pending', 'In Progress', 'Completed'];
+  if (!validStatuses.includes(status)) return res.status(400).json({ error: `status must be one of: ${validStatuses.join(', ')}` });
+
+  const me = req.session && req.session.user;
+
+  item.service_status = status;
+  item.completion_date = status === 'Completed' ? now() : null;
+  item.provider_id = provider_id !== undefined ? (provider_id ? parseInt(provider_id, 10) : null) : (item.provider_id || (me ? me.id : null));
+
+  logActivity(db, req, {
+    module: 'billing',
+    action: 'service_status_changed',
+    entity_type: 'bill',
+    entity_id: bill.id,
+    bill_id: bill.id,
+    patient_id: bill.patient_id,
+    visit_id: bill.visit_id,
+    notes: `Service "${item.name}" marked ${status} on bill ${bill.bill_number || bill.id}`,
+    meta: { item_index: itemIdx, service_name: item.name, status }
+  });
+
+  writeDB(db);
+  res.json({ success: true, item: bill.line_items[itemIdx] });
+});
+
+// GET /api/patients/:id/pending-services — pending services for a patient
+app.get('/api/patients/:id/pending-services', requireLogin, (req, res) => {
+  const db = readDB();
+  const patientId = parseInt(req.params.id, 10);
+  const patient = (db.patients || []).find(p => p.id === patientId);
+  if (!patient) return res.status(404).json({ error: 'Patient not found' });
+
+  const usersById = new Map((db.users || []).map(u => [u.id, u]));
+  const pending = [];
+  (db.bills || [])
+    .filter(b => b.patient_id === patientId && String(b.payment_status || '') !== 'Cancelled')
+    .forEach(bill => {
+      (bill.line_items || []).forEach((item, idx) => {
+        if (item.type === 'package') return;
+        const svcStatus = item.service_status || 'Completed';
+        if (svcStatus !== 'Completed') {
+          const provider = usersById.get(item.provider_id) || null;
+          pending.push({
+            bill_id: bill.id,
+            bill_number: bill.bill_number,
+            visit_id: bill.visit_id,
+            bill_date: String(bill.created_at || '').slice(0, 10),
+            item_index: idx,
+            service_name: item.name,
+            service_status: svcStatus,
+            completion_date: item.completion_date || null,
+            provider_id: item.provider_id || null,
+            provider_name: provider ? (provider.name || provider.username) : null,
+            amount: item.amount || 0
+          });
+        }
+      });
+    });
+
+  res.json({ patient_id: patientId, pending_count: pending.length, items: pending });
+});
+
+// GET /api/reports/pending-services — clinic-wide pending services report
+app.get('/api/reports/pending-services', requireLogin, (req, res) => {
+  const db = readDB();
+  const me = req.session && req.session.user;
+  const userRole = me && me.role;
+  if (userRole !== 'admin' && !((db.role_permissions || []).find(rp => rp.role === userRole && (rp.permissions || []).includes('reports.view')))) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo = String(req.query.date_to || '').slice(0, 10);
+  const filterPatientId = req.query.patient_id ? parseInt(req.query.patient_id, 10) : null;
+  const filterProviderId = req.query.provider_id ? parseInt(req.query.provider_id, 10) : null;
+  const filterStatus = req.query.status || '';
+
+  const patientsById = new Map((db.patients || []).map(p => [p.id, p]));
+  const usersById = new Map((db.users || []).map(u => [u.id, u]));
+
+  const rows = [];
+  (db.bills || [])
+    .filter(b => String(b.payment_status || '') !== 'Cancelled')
+    .forEach(bill => {
+      const billDate = String(bill.created_at || '').slice(0, 10);
+      if (dateFrom && billDate < dateFrom) return;
+      if (dateTo && billDate > dateTo) return;
+      if (filterPatientId && bill.patient_id !== filterPatientId) return;
+
+      const patient = patientsById.get(bill.patient_id) || {};
+      (bill.line_items || []).forEach((item, idx) => {
+        if (item.type === 'package') return;
+        const svcStatus = item.service_status || 'Completed';
+        if (filterStatus && svcStatus !== filterStatus) return;
+        if (filterProviderId && item.provider_id !== filterProviderId) return;
+
+        const provider = usersById.get(item.provider_id) || null;
+        rows.push({
+          bill_id: bill.id,
+          bill_number: bill.bill_number,
+          visit_id: bill.visit_id,
+          bill_date: billDate,
+          item_index: idx,
+          patient_id: bill.patient_id,
+          patient_name: patient.name || '',
+          mr_number: patient.mr_number || '',
+          service_name: item.name,
+          service_status: svcStatus,
+          completion_date: item.completion_date || null,
+          provider_id: item.provider_id || null,
+          provider_name: provider ? (provider.name || provider.username) : null,
+          amount: item.amount || 0
+        });
+      });
+    });
+
+  rows.sort((a, b) => String(a.bill_date).localeCompare(String(b.bill_date)));
+
+  const summary = {
+    total: rows.length,
+    pending: rows.filter(r => r.service_status === 'Pending').length,
+    in_progress: rows.filter(r => r.service_status === 'In Progress').length,
+    completed: rows.filter(r => r.service_status === 'Completed').length,
+  };
+
+  res.json({ summary, rows });
 });
 
 // ===================== REPORTS =====================
@@ -4609,6 +6267,148 @@ app.get('/api/reports/manual-consumption-cost', requireRole('admin','doctor','re
   });
 });
 
+// ── Supplier Ledger Report ────────────────────────────────
+app.get('/api/reports/supplier-ledger', requireRole('admin', 'receptionist'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+
+  const supplierId = req.query.supplier_id ? parseInt(req.query.supplier_id, 10) : null;
+  const dateFrom   = String(req.query.date_from || '').slice(0, 10);
+  const dateTo     = String(req.query.date_to   || '').slice(0, 10);
+  const q          = String(req.query.search    || '').trim().toLowerCase();
+
+  const suppliersById = new Map((db.store_suppliers || []).map(s => [parseInt(s.id), s]));
+
+  // Build per-supplier ledger
+  const ledgers = new Map(); // supplierId -> { supplier, entries[], totalDebit, totalCredit }
+
+  const getOrCreate = (sid) => {
+    if (!ledgers.has(sid)) {
+      const s = suppliersById.get(sid) || {};
+      ledgers.set(sid, {
+        supplier_id: sid,
+        supplier_name: s.name || `Supplier #${sid}`,
+        supplier_phone: s.phone || '',
+        supplier_email: s.email || '',
+        entries: [],
+        total_debit: 0,
+        total_credit: 0,
+        total_returns: 0
+      });
+    }
+    return ledgers.get(sid);
+  };
+
+  // CREDITS — Purchase Orders (received) — supplier is owed money; liability increases
+  for (const po of (db.store_purchase_orders || [])) {
+    const sid = parseInt(po.supplier_id, 10);
+    if (!sid) continue;
+    if (supplierId && sid !== supplierId) continue;
+    const day = String(po.received_at || po.order_date || po.created_at || '').slice(0, 10);
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo   && day > dateTo)   continue;
+    const amount = parseFloat(po.total_cost || 0) || 0;
+    const ref    = po.invoice_number || `PO#${po.id}`;
+    const blob   = [day, 'purchase', ref, po.notes].map(v => String(v || '').toLowerCase()).join(' ');
+    if (q && !blob.includes(q)) continue;
+    const ledger = getOrCreate(sid);
+    ledger.entries.push({
+      date: day || String(po.created_at || '').slice(0, 10),
+      type: 'Purchase',
+      reference: ref,
+      description: `PO Invoice: ${ref}`,
+      debit: 0,
+      credit: parseFloat(amount.toFixed(3)),
+      source: 'purchase_order',
+      source_id: po.id
+    });
+    ledger.total_credit += amount;
+  }
+
+  // DEBITS — Supplier Invoice Payments — reduces liability
+  for (const p of (db.store_supplier_invoice_payments || [])) {
+    const sid = parseInt(p.supplier_id, 10);
+    if (!sid) continue;
+    if (supplierId && sid !== supplierId) continue;
+    const day = String(p.payment_date || p.created_at || '').slice(0, 10);
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo   && day > dateTo)   continue;
+    const amount = parseFloat(p.amount || 0) || 0;
+    const blob   = [day, 'payment', p.invoice_number, p.payment_method, p.reference_no, p.notes].map(v => String(v || '').toLowerCase()).join(' ');
+    if (q && !blob.includes(q)) continue;
+    const ledger = getOrCreate(sid);
+    ledger.entries.push({
+      date: day,
+      type: 'Payment',
+      reference: p.reference_no || p.invoice_number || `PAY#${p.id}`,
+      description: `Payment · ${p.invoice_number || '—'} · ${p.payment_method || ''}`,
+      debit: parseFloat(amount.toFixed(3)),
+      credit: 0,
+      source: 'payment',
+      source_id: p.id
+    });
+    ledger.total_debit += amount;
+  }
+
+  // CREDIT REDUCTIONS — Supplier Returns — reduce purchase-side credit without counting as debit
+  for (const sr of (db.store_supplier_returns || [])) {
+    const sid = parseInt(sr.supplier_id, 10);
+    if (!sid) continue;
+    if (supplierId && sid !== supplierId) continue;
+    const day = String(sr.return_date || sr.created_at || '').slice(0, 10);
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo   && day > dateTo)   continue;
+    const amount = parseFloat(sr.total_amount || 0) || 0;
+    const blob   = [day, 'return', sr.return_no, sr.po_invoice, sr.return_reference, sr.notes].map(v => String(v || '').toLowerCase()).join(' ');
+    if (q && !blob.includes(q)) continue;
+    const ledger = getOrCreate(sid);
+    ledger.entries.push({
+      date: day,
+      type: 'Return',
+      reference: sr.return_no || `SR#${sr.id}`,
+      description: `Return · PO Invoice: ${sr.po_invoice || '—'} · ${sr.return_type === 'full' ? 'Full' : 'Partial'}`,
+      debit: 0,
+      credit: parseFloat((-amount).toFixed(3)),
+      source: 'supplier_return',
+      source_id: sr.id
+    });
+    ledger.total_returns += amount;
+    ledger.total_credit -= amount;
+  }
+
+  // Sort entries within each ledger by date, compute running balance
+  // Balance = Credit (owed) - Debit (paid/returned) = outstanding payable
+  const result = [];
+  for (const [, ledger] of ledgers) {
+    ledger.entries.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    let balance = 0;
+    for (const e of ledger.entries) {
+      balance += e.credit - e.debit;
+      e.balance = parseFloat(balance.toFixed(3));
+    }
+    ledger.total_debit  = parseFloat(ledger.total_debit.toFixed(3));
+    ledger.total_credit = parseFloat(ledger.total_credit.toFixed(3));
+    ledger.total_returns = parseFloat(ledger.total_returns.toFixed(3));
+    ledger.balance      = parseFloat((ledger.total_credit - ledger.total_debit).toFixed(3));
+    result.push(ledger);
+  }
+
+  result.sort((a, b) => String(a.supplier_name).localeCompare(String(b.supplier_name)));
+
+  res.json({
+    suppliers: result,
+    summary: {
+      total_suppliers: result.length,
+      total_debit:  parseFloat(result.reduce((s, l) => s + l.total_debit,  0).toFixed(3)),
+      total_credit: parseFloat(result.reduce((s, l) => s + l.total_credit, 0).toFixed(3)),
+      total_returns: parseFloat(result.reduce((s, l) => s + (l.total_returns || 0), 0).toFixed(3)),
+      total_balance: parseFloat(result.reduce((s, l) => s + l.balance,     0).toFixed(3))
+    },
+    filters: {
+      suppliers: (db.store_suppliers || []).map(s => ({ id: parseInt(s.id), name: s.name || '' }))
+    }
+  });
+});
+
 app.get('/api/reports/stock-movement', requireRole('admin','doctor','receptionist'), (req, res) => {
   const db = readDB();
   ensureStore(db);
@@ -4834,6 +6634,103 @@ app.get('/api/reports/stock-movement', requireRole('admin','doctor','receptionis
     }
   }
 
+  for (const adj of (db.store_adjustments || [])) {
+    const at = String(adj.created_at || `${adj.date || ''} 00:00:00`);
+    const day = String(adj.date || at).slice(0,10);
+    if (!day) continue;
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo && day > dateTo) continue;
+    if (typeFilter && !['adjustment', 'adjustments'].includes(typeFilter)) continue;
+
+    const sid = parseInt(adj.store_id || 0, 10) || null;
+    if (storeFilter && sid !== storeFilter) continue;
+    const store = storesById.get(sid) || {};
+
+    const pid = parseInt(adj.product_id || 0, 10);
+    const p = productsById.get(pid) || {};
+    const direction = String(adj.adjustment_type || '').toUpperCase() === 'IN' ? 'IN' : 'OUT';
+    const qty = parseFloat(adj.qty || 0) || 0;
+    const unitCost = parseFloat(adj.unit_cost || 0) || 0;
+    const totalCost = parseFloat(adj.total_cost != null ? adj.total_cost : (qty * unitCost)) || 0;
+
+    const blob = [
+      day,
+      'Stock Adjustment',
+      direction,
+      store.name,
+      p.name,
+      p.sku,
+      adj.adjustment_no || `ADJ#${adj.id || ''}`,
+      adj.reason,
+      adj.remarks,
+      adj.reversal_of_id ? `Reversal of ADJ#${adj.reversal_of_id}` : '',
+      adj.reversed_by_adjustment_id ? `Reversed by ADJ#${adj.reversed_by_adjustment_id}` : ''
+    ].map(v => String(v || '').toLowerCase()).join(' ');
+    if (q && !blob.includes(q)) continue;
+
+    rows.push({
+      at,
+      date: day,
+      movement_type: 'Adjustment',
+      direction,
+      store_id: sid,
+      store_name: store.name || 'Unknown',
+      product_id: pid,
+      product_name: p.name || `Product #${pid}`,
+      product_sku: p.sku || '',
+      qty: parseFloat(qty.toFixed(3)),
+      unit: p.unit || '',
+      unit_cost: parseFloat(unitCost.toFixed(3)),
+      total_cost: parseFloat(totalCost.toFixed(3)),
+      reference: adj.adjustment_no || `ADJ#${adj.id}`,
+      note: [adj.reason, String(adj.remarks || '').trim()].filter(Boolean).join(' | ')
+    });
+  }
+
+  for (const sr of (db.store_supplier_returns || [])) {
+    const at = String(sr.return_date ? `${sr.return_date} 00:00:00` : sr.created_at || '');
+    const day = String(sr.return_date || at).slice(0, 10);
+    if (!day) continue;
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo && day > dateTo) continue;
+    if (typeFilter && typeFilter !== 'supplier-return') continue;
+
+    const sid = parseInt(sr.store_id || (mainStore ? mainStore.id : 0)) || null;
+    if (storeFilter && sid !== storeFilter) continue;
+    const store = storesById.get(sid) || {};
+
+    for (const item of (sr.items || [])) {
+      const pid = parseInt(item.product_id);
+      const p = productsById.get(pid) || {};
+      const qty = parseFloat(item.base_qty != null ? item.base_qty : item.qty || 0) || 0;
+      const unitCost = parseFloat(item.cost_price || 0) || 0;
+      const totalCost = parseFloat((qty * unitCost).toFixed(3));
+
+      const blob = [day, 'Supplier Return', 'OUT', store.name, p.name, p.sku,
+        sr.return_no, sr.return_reference, sr.supplier_name, sr.po_invoice, sr.notes
+      ].map(v => String(v || '').toLowerCase()).join(' ');
+      if (q && !blob.includes(q)) continue;
+
+      rows.push({
+        at,
+        date: day,
+        movement_type: 'Supplier Return',
+        direction: 'OUT',
+        store_id: sid,
+        store_name: store.name || 'Main Store',
+        product_id: pid,
+        product_name: p.name || `Product #${pid}`,
+        product_sku: p.sku || '',
+        qty: parseFloat(qty.toFixed(3)),
+        unit: p.unit || '',
+        unit_cost: parseFloat(unitCost.toFixed(3)),
+        total_cost: totalCost,
+        reference: sr.return_no || `SR#${sr.id}`,
+        note: [sr.supplier_name, sr.po_invoice ? `PO Invoice: ${sr.po_invoice}` : '', sr.return_reference ? `Ref: ${sr.return_reference}` : ''].filter(Boolean).join(' | ')
+      });
+    }
+  }
+
   rows.sort((a, b) => {
     const ad = String(a.at || a.date || '');
     const bd = String(b.at || b.date || '');
@@ -4980,10 +6877,24 @@ app.get('/api/activity-logs', requireRole('admin','receptionist','doctor'), (req
   list.sort((a,b) => String(b.at || '').localeCompare(String(a.at || '')));
   res.json(list);
 });
+
+app.get('/api/activity-logs/actions', requireRole('admin','receptionist','doctor'), (req, res) => {
+  const db = readDB();
+  let list = [...(db.activity_logs || [])];
+  if (req.session.user.role === 'doctor') {
+    list = list.filter(l => l.actor_id === req.session.user.id);
+  }
+  const actions = [...new Set(list.map(l => String(l.action || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+  res.json(actions);
+});
+
 app.get('/api/reports/top-patients', requireRole('admin'), (req, res) => {
   const db=readDB();
   res.json(db.patients.map(p=>({ name:p.name, phone:p.phone, visits:db.appointments.filter(a=>a.patient_id===p.id).length })).sort((a,b)=>b.visits-a.visits).slice(0,10));
 });
+
+// WhatsApp Campaign API removed
 
 // ===================== PAYMENT METHODS =====================
 app.get('/api/service-categories', requireLogin, (req, res) => {
@@ -5019,6 +6930,53 @@ app.delete('/api/service-categories/:id', requireRole('admin'), (req, res) => {
   if (idx === -1) return res.status(404).json({ error:'Not found' });
   db.service_categories.splice(idx, 1);
   writeDB(db); res.json({ success:true });
+});
+
+// ===================== EXPENSE CATEGORIES =====================
+app.get('/api/expense-categories', requireLogin, (req, res) => {
+  const db = readDB();
+  res.json(db.expense_categories || []);
+});
+app.post('/api/expense-categories', requireRole('admin'), (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error:'name required' });
+  const db = readDB();
+  if ((db.expense_categories || []).some(c => String(c.name || '').toLowerCase() === String(name).toLowerCase())) {
+    return res.status(400).json({ error:'Category already exists' });
+  }
+  if (!db.expense_categories) db.expense_categories = [];
+  const id = nextId(db, 'expense_categories');
+  const cat = { id, name, created_at: now() };
+  db.expense_categories.push(cat);
+  writeDB(db);
+  res.json(cat);
+});
+app.put('/api/expense-categories/:id', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const idx = (db.expense_categories || []).findIndex(c => c.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error:'Not found' });
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error:'name required' });
+  const dup = (db.expense_categories || []).find((c, i) => i !== idx && String(c.name || '').toLowerCase() === String(name).toLowerCase());
+  if (dup) return res.status(400).json({ error:'Category already exists' });
+  const currentName = String(db.expense_categories[idx].name || '');
+  db.expense_categories[idx].name = name;
+  for (const expense of (db.expenses || [])) {
+    if (String(expense.category || '') === currentName) expense.category = name;
+  }
+  writeDB(db);
+  res.json(db.expense_categories[idx]);
+});
+app.delete('/api/expense-categories/:id', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const idx = (db.expense_categories || []).findIndex(c => c.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error:'Not found' });
+  const categoryName = String(db.expense_categories[idx].name || '');
+  const inUse = (db.expenses || []).some(expense => String(expense.category || '') === categoryName);
+  if (inUse) return res.status(400).json({ error:'Cannot delete category already used in expenses' });
+  db.expense_categories.splice(idx, 1);
+  writeDB(db);
+  res.json({ success:true });
 });
 
 // ===================== DOCTOR DEPARTMENTS =====================
@@ -5093,6 +7051,188 @@ app.delete('/api/payment-methods/:id', requireRole('admin'), (req, res) => {
   const idx = db.payment_methods.findIndex(m => m.id === parseInt(req.params.id));
   if (idx === -1) return res.status(404).json({ error:'Not found' });
   db.payment_methods.splice(idx, 1); writeDB(db); res.json({ success:true });
+});
+
+// ===================== EXPENSES =====================
+app.get('/api/expenses', requirePermission('expenses.view'), (req, res) => {
+  const db = readDB();
+  if (!db.expenses) db.expenses = [];
+  if (!db.expense_categories) db.expense_categories = [];
+
+  const q = String(req.query.search || '').trim().toLowerCase();
+  const category = String(req.query.category || '').trim();
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo = String(req.query.date_to || '').slice(0, 10);
+  const usersById = new Map((db.users || []).map((u) => [parseInt(u.id, 10), u]));
+
+  let rows = db.expenses.map((entry) => {
+    const createdBy = usersById.get(parseInt(entry.created_by, 10)) || {};
+    const updatedBy = usersById.get(parseInt(entry.updated_by, 10)) || {};
+    return {
+      ...entry,
+      created_by_name: createdBy.name || createdBy.username || '—',
+      updated_by_name: updatedBy.name || updatedBy.username || '—'
+    };
+  });
+
+  if (dateFrom) rows = rows.filter((row) => String(row.expense_date || '').slice(0, 10) >= dateFrom);
+  if (dateTo) rows = rows.filter((row) => String(row.expense_date || '').slice(0, 10) <= dateTo);
+  if (category) rows = rows.filter((row) => String(row.category || '') === category);
+  if (q) {
+    rows = rows.filter((row) => [
+      row.title,
+      row.category,
+      row.payment_method,
+      row.vendor,
+      row.notes,
+      row.reference_no,
+      row.created_by_name,
+      row.updated_by_name
+    ].map((v) => String(v || '').toLowerCase()).join(' ').includes(q));
+  }
+
+  rows.sort((a, b) => {
+    const ad = `${String(a.expense_date || '')} ${String(a.created_at || '')}`;
+    const bd = `${String(b.expense_date || '')} ${String(b.created_at || '')}`;
+    return ad < bd ? 1 : -1;
+  });
+
+  const categories = (db.expense_categories || []).map((row) => String(row.name || '').trim()).filter(Boolean).sort((a, b) => a.localeCompare(b));
+  const totalAmount = rows.reduce((sum, row) => sum + (parseFloat(row.amount || 0) || 0), 0);
+  const todayAmount = rows.filter((row) => String(row.expense_date || '').slice(0, 10) === today()).reduce((sum, row) => sum + (parseFloat(row.amount || 0) || 0), 0);
+
+  res.json({
+    rows,
+    summary: {
+      total_amount: parseFloat(totalAmount.toFixed(3)),
+      today_amount: parseFloat(todayAmount.toFixed(3)),
+      rows_count: rows.length,
+      categories_count: categories.length
+    },
+    filters: {
+      categories,
+      payment_methods: (db.payment_methods || []).filter((m) => m.active !== false).map((m) => m.name)
+    }
+  });
+});
+
+app.post('/api/expenses', requirePermission('expenses.create'), (req, res) => {
+  const db = readDB();
+  if (!db.expenses) db.expenses = [];
+  if (!db.expense_categories) db.expense_categories = [];
+
+  const title = String(req.body.title || '').trim();
+  const category = String(req.body.category || '').trim();
+  const amount = parseFloat(req.body.amount || 0);
+  const expenseDate = String(req.body.expense_date || today()).slice(0, 10);
+  const paymentMethod = String(req.body.payment_method || '').trim();
+  const vendor = String(req.body.vendor || '').trim();
+  const referenceNo = String(req.body.reference_no || '').trim();
+  const notes = String(req.body.notes || '').trim();
+  const actorId = (req.session && req.session.user && req.session.user.id) || req.session.userId || null;
+
+  if (!title) return res.status(400).json({ error:'Expense title is required' });
+  if (!category) return res.status(400).json({ error:'Expense category is required' });
+  if (!(db.expense_categories || []).some((item) => String(item.name || '') === category)) {
+    return res.status(400).json({ error:'Select a valid expense category from setup master' });
+  }
+  if (!(amount > 0)) return res.status(400).json({ error:'Amount must be greater than 0' });
+
+  const entry = {
+    id: nextId(db, 'expenses'),
+    title,
+    category,
+    amount: parseFloat(amount.toFixed(3)),
+    expense_date: expenseDate,
+    payment_method: paymentMethod,
+    vendor,
+    reference_no: referenceNo,
+    notes,
+    created_by: actorId,
+    updated_by: actorId,
+    created_at: now(),
+    updated_at: now()
+  };
+
+  db.expenses.push(entry);
+  logActivity(db, req, {
+    module: 'finance',
+    action: 'expense_created',
+    entity_type: 'expense',
+    entity_id: entry.id,
+    notes: `Expense ${entry.title} recorded for KD ${entry.amount.toFixed(3)}`,
+    meta: { category: entry.category, amount: entry.amount, expense_date: entry.expense_date }
+  });
+  writeDB(db);
+  res.json(entry);
+});
+
+app.put('/api/expenses/:id', requirePermission('expenses.edit'), (req, res) => {
+  const db = readDB();
+  if (!db.expenses) db.expenses = [];
+  if (!db.expense_categories) db.expense_categories = [];
+  const idx = db.expenses.findIndex((row) => parseInt(row.id, 10) === parseInt(req.params.id, 10));
+  if (idx === -1) return res.status(404).json({ error:'Expense not found' });
+
+  const current = db.expenses[idx];
+  const title = String(req.body.title !== undefined ? req.body.title : current.title).trim();
+  const category = String(req.body.category !== undefined ? req.body.category : current.category).trim();
+  const amount = parseFloat(req.body.amount !== undefined ? req.body.amount : current.amount);
+  const expenseDate = String(req.body.expense_date !== undefined ? req.body.expense_date : current.expense_date).slice(0, 10);
+  const paymentMethod = String(req.body.payment_method !== undefined ? req.body.payment_method : current.payment_method || '').trim();
+  const vendor = String(req.body.vendor !== undefined ? req.body.vendor : current.vendor || '').trim();
+  const referenceNo = String(req.body.reference_no !== undefined ? req.body.reference_no : current.reference_no || '').trim();
+  const notes = String(req.body.notes !== undefined ? req.body.notes : current.notes || '').trim();
+
+  if (!title) return res.status(400).json({ error:'Expense title is required' });
+  if (!category) return res.status(400).json({ error:'Expense category is required' });
+  if (!(db.expense_categories || []).some((item) => String(item.name || '') === category)) {
+    return res.status(400).json({ error:'Select a valid expense category from setup master' });
+  }
+  if (!(amount > 0)) return res.status(400).json({ error:'Amount must be greater than 0' });
+
+  db.expenses[idx] = {
+    ...current,
+    title,
+    category,
+    amount: parseFloat(amount.toFixed(3)),
+    expense_date: expenseDate,
+    payment_method: paymentMethod,
+    vendor,
+    reference_no: referenceNo,
+    notes,
+    updated_by: (req.session && req.session.user && req.session.user.id) || req.session.userId || null,
+    updated_at: now()
+  };
+  logActivity(db, req, {
+    module: 'finance',
+    action: 'expense_updated',
+    entity_type: 'expense',
+    entity_id: db.expenses[idx].id,
+    notes: `Expense ${db.expenses[idx].title} updated`,
+    meta: { category: db.expenses[idx].category, amount: db.expenses[idx].amount, expense_date: db.expenses[idx].expense_date }
+  });
+  writeDB(db);
+  res.json(db.expenses[idx]);
+});
+
+app.delete('/api/expenses/:id', requirePermission('expenses.delete'), (req, res) => {
+  const db = readDB();
+  if (!db.expenses) db.expenses = [];
+  const idx = db.expenses.findIndex((row) => parseInt(row.id, 10) === parseInt(req.params.id, 10));
+  if (idx === -1) return res.status(404).json({ error:'Expense not found' });
+  const removed = db.expenses[idx];
+  db.expenses.splice(idx, 1);
+  logActivity(db, req, {
+    module: 'finance',
+    action: 'expense_deleted',
+    entity_type: 'expense',
+    entity_id: removed.id,
+    notes: `Expense ${removed.title} deleted`,
+    meta: { category: removed.category, amount: removed.amount, expense_date: removed.expense_date }
+  });
+  writeDB(db);
+  res.json({ success:true });
 });
 
 // ===================== STORE PRODUCT CATEGORIES =====================
@@ -5452,10 +7592,15 @@ function ensureStore(db) {
   db.store_sub_stores      = db.store_sub_stores      || [];
   db.store_stock           = db.store_stock           || [];
   db.store_purchase_orders = db.store_purchase_orders || [];
+  db.store_supplier_invoice_payments = db.store_supplier_invoice_payments || [];
   db.store_transfers       = db.store_transfers       || [];
+  db.store_adjustments     = db.store_adjustments     || [];
   db.store_service_products= db.store_service_products|| [];
   db.store_service_consumptions = db.store_service_consumptions || [];
   db.store_manual_consumptions = db.store_manual_consumptions || [];
+  db.store_supplier_returns = db.store_supplier_returns || [];
+  db.expenses              = db.expenses              || [];
+  db.expense_categories    = db.expense_categories    || [];
   db.uoms                  = db.uoms                  || [];
   db.store_product_categories = db.store_product_categories || [];
   db.store_product_uoms    = db.store_product_uoms    || [];
@@ -5525,7 +7670,7 @@ function getProductExpiryInfo(db, productId, storeId = null) {
 // ── Sub-stores ──────────────────────────────────────────
 app.get('/api/store/sub-stores', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  res.json(db.store_sub_stores);
+  res.json(filterStoresForUser(db, req, db.store_sub_stores));
 });
 app.post('/api/store/sub-stores', requireRole('admin'), (req,res) => {
   const db = readDB(); ensureStore(db);
@@ -5579,11 +7724,16 @@ app.delete('/api/store/suppliers/:id', requireRole('admin'), (req,res) => {
 // ── Products ────────────────────────────────────────────
 app.get('/api/store/products', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
+  const isManualConsumptionContext = String(req.query.context || '') === 'manual-consumption';
+  const includeCostPrice = !isManualConsumptionContext || hasPermission(db, req.session.user.role, 'store.consume.cost');
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
   const products = db.store_products.map(p => {
-    const totalStock = db.store_stock.filter(s=>s.product_id===p.id).reduce((t,s)=>t+s.qty,0);
+    const totalStock = db.store_stock
+      .filter((s) => s.product_id === p.id && (!allowedStoreIds || allowedStoreIds.has(parseInt(s.store_id, 10))))
+      .reduce((t, s) => t + s.qty, 0);
     const uom = getUomById(db, p.uom_id);
     const expiryInfo = getProductExpiryInfo(db, p.id);
-    return { ...p, total_stock: totalStock, uom_symbol: uom ? uom.symbol : (p.unit || ''), uom_name: uom ? uom.name : (p.unit || ''), uom_options: getProductUomOptions(db, p), ...expiryInfo };
+    return { ...p, cost_price: includeCostPrice ? p.cost_price : undefined, total_stock: totalStock, uom_symbol: uom ? uom.symbol : (p.unit || ''), uom_name: uom ? uom.name : (p.unit || ''), uom_options: getProductUomOptions(db, p), ...expiryInfo };
   });
   res.json(products);
 });
@@ -5654,14 +7804,19 @@ app.delete('/api/store/products/:id', requireRole('admin'), (req,res) => {
 app.get('/api/store/stock', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
   const { store_id } = req.query;
+  const includeAvgCost = String(req.query.context || '') !== 'manual-consumption'
+    || hasPermission(db, req.session.user.role, 'store.consume.cost');
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+  if (store_id && !assertStoreAccess(db, req, store_id)) return res.status(403).json({ error:'Store access denied' });
   let stock = db.store_stock;
+  if (allowedStoreIds) stock = stock.filter((s) => allowedStoreIds.has(parseInt(s.store_id, 10)));
   if (store_id) stock = stock.filter(s => s.store_id===parseInt(store_id));
   const enriched = stock.map(s => {
     const product = db.store_products.find(p => p.id===s.product_id) || {};
     const store   = db.store_sub_stores.find(st => st.id===s.store_id) || {};
     const uom = getUomById(db, product.uom_id);
     const expiryInfo = getProductExpiryInfo(db, s.product_id, s.store_id);
-    return { ...s, avg_cost: parseFloat(s.avg_cost || 0) || 0, product_name:product.name, product_unit:(uom ? uom.symbol : product.unit), product_sku:product.sku, reorder_level:product.reorder_level||0, store_name:store.name, ...expiryInfo };
+    return { ...s, avg_cost: includeAvgCost ? (parseFloat(s.avg_cost || 0) || 0) : undefined, product_name:product.name, product_unit:(uom ? uom.symbol : product.unit), product_sku:product.sku, reorder_level:product.reorder_level||0, store_name:store.name, ...expiryInfo };
   });
   res.json(enriched);
 });
@@ -5669,10 +7824,33 @@ app.get('/api/store/stock', requireLogin, (req,res) => {
 // ── Purchase Orders ─────────────────────────────────────
 app.get('/api/store/purchase-orders', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  const orders = db.store_purchase_orders.map(o => {
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+  const paidByPo = new Map();
+  for (const p of (db.store_supplier_invoice_payments || [])) {
+    const pid = parseInt(p.po_id, 10);
+    if (!pid) continue;
+    paidByPo.set(pid, (paidByPo.get(pid) || 0) + (parseFloat(p.amount || 0) || 0));
+  }
+  const orders = db.store_purchase_orders.filter((order) => {
+    if (!allowedStoreIds) return true;
+    const receivedStoreId = parseInt(order.received_store_id, 10);
+    if (!receivedStoreId) return true;
+    return allowedStoreIds.has(receivedStoreId);
+  }).map(o => {
     const supplier = db.store_suppliers.find(s=>s.id===o.supplier_id)||{};
     const receivedStore = db.store_sub_stores.find(st => st.id === parseInt(o.received_store_id)) || {};
-    return { ...o, supplier_name: supplier.name||'—', received_store_name: receivedStore.name || '' };
+    const totalAmount = parseFloat(o.total_cost || 0) || 0;
+    const paidAmount = parseFloat((paidByPo.get(parseInt(o.id, 10)) || 0).toFixed(3));
+    const dueAmount = parseFloat(Math.max(0, totalAmount - paidAmount).toFixed(3));
+    const paymentStatus = dueAmount <= 0.0005 ? 'Paid' : (paidAmount > 0 ? 'Partially Paid' : 'Unpaid');
+    return {
+      ...o,
+      supplier_name: supplier.name||'—',
+      received_store_name: receivedStore.name || '',
+      paid_amount: paidAmount,
+      due_amount: dueAmount,
+      payment_status: paymentStatus
+    };
   });
   res.json(orders.sort((a,b)=>b.id-a.id));
 });
@@ -5680,6 +7858,7 @@ app.get('/api/store/purchase-orders/:id', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
   const o = db.store_purchase_orders.find(x=>x.id===parseInt(req.params.id));
   if (!o) return res.status(404).json({ error:'Not found' });
+  if (o.received_store_id && !assertStoreAccess(db, req, o.received_store_id)) return res.status(403).json({ error:'Store access denied' });
   const supplier = db.store_suppliers.find(s=>s.id===o.supplier_id)||{};
   const receivedStore = db.store_sub_stores.find(st => st.id === parseInt(o.received_store_id)) || {};
   const items = (o.items||[]).map(i => {
@@ -5783,10 +7962,206 @@ app.delete('/api/store/purchase-orders/:id', requireRole('admin'), (req,res) => 
   writeDB(db); res.json({ success:true });
 });
 
+// ── Supplier Invoice Payments (Expense Integration) ─────
+app.get('/api/store/supplier-invoices', requirePermission('expenses.view'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const q = String(req.query.search || '').trim().toLowerCase();
+  const dueOnly = ['1', 'true', 'yes'].includes(String(req.query.due_only || '').toLowerCase());
+  const supplierId = req.query.supplier_id ? parseInt(req.query.supplier_id, 10) : null;
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+
+  const paidByPo = new Map();
+  for (const p of (db.store_supplier_invoice_payments || [])) {
+    const pid = parseInt(p.po_id, 10);
+    if (!pid) continue;
+    paidByPo.set(pid, (paidByPo.get(pid) || 0) + (parseFloat(p.amount || 0) || 0));
+  }
+
+  let rows = (db.store_purchase_orders || []).filter((po) => {
+    if (!po || !po.supplier_id) return false;
+    if (supplierId && parseInt(po.supplier_id, 10) !== supplierId) return false;
+    if (allowedStoreIds && po.received_store_id && !allowedStoreIds.has(parseInt(po.received_store_id, 10))) return false;
+    return true;
+  }).map((po) => {
+    const supplier = (db.store_suppliers || []).find((s) => parseInt(s.id, 10) === parseInt(po.supplier_id, 10)) || {};
+    const totalAmount = parseFloat(po.total_cost || 0) || 0;
+    const paidAmount = parseFloat((paidByPo.get(parseInt(po.id, 10)) || 0).toFixed(3));
+    const dueAmount = parseFloat(Math.max(0, totalAmount - paidAmount).toFixed(3));
+    const paymentStatus = dueAmount <= 0.0005 ? 'Paid' : (paidAmount > 0 ? 'Partially Paid' : 'Unpaid');
+    return {
+      po_id: po.id,
+      supplier_id: po.supplier_id,
+      supplier_name: supplier.name || '—',
+      invoice_number: String(po.invoice_number || '').trim() || `PO-${po.id}`,
+      order_date: po.order_date || '',
+      purchase_status: po.status || 'Pending',
+      total_amount: parseFloat(totalAmount.toFixed(3)),
+      paid_amount: paidAmount,
+      due_amount: dueAmount,
+      payment_status: paymentStatus
+    };
+  });
+
+  if (dueOnly) rows = rows.filter((r) => (parseFloat(r.due_amount || 0) || 0) > 0.0005);
+  if (q) {
+    rows = rows.filter((r) => [
+      r.po_id,
+      r.supplier_name,
+      r.invoice_number,
+      r.order_date,
+      r.purchase_status,
+      r.payment_status
+    ].map((v) => String(v || '').toLowerCase()).join(' ').includes(q));
+  }
+
+  rows.sort((a, b) => {
+    const ad = String(a.order_date || '');
+    const bd = String(b.order_date || '');
+    if (ad !== bd) return ad < bd ? 1 : -1;
+    return parseInt(b.po_id || 0, 10) - parseInt(a.po_id || 0, 10);
+  });
+
+  res.json(rows);
+});
+
+app.get('/api/store/supplier-invoices/:id/payments', requirePermission('expenses.view'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const poId = parseInt(req.params.id, 10);
+  const po = (db.store_purchase_orders || []).find((x) => parseInt(x.id, 10) === poId);
+  if (!po) return res.status(404).json({ error:'Supplier invoice not found' });
+  if (po.received_store_id && !assertStoreAccess(db, req, po.received_store_id)) return res.status(403).json({ error:'Store access denied' });
+
+  const usersById = new Map((db.users || []).map((u) => [parseInt(u.id, 10), u]));
+  const rows = (db.store_supplier_invoice_payments || [])
+    .filter((p) => parseInt(p.po_id, 10) === poId)
+    .map((p) => {
+      const actor = usersById.get(parseInt(p.created_by, 10)) || {};
+      return {
+        ...p,
+        created_by_name: actor.name || actor.username || '—'
+      };
+    })
+    .sort((a, b) => {
+      const ad = `${String(a.payment_date || '')} ${String(a.created_at || '')}`;
+      const bd = `${String(b.payment_date || '')} ${String(b.created_at || '')}`;
+      if (ad !== bd) return ad < bd ? 1 : -1;
+      return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
+    });
+
+  res.json(rows);
+});
+
+app.post('/api/store/supplier-invoices/:id/payments', requirePermission('expenses.create'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const poId = parseInt(req.params.id, 10);
+  const po = (db.store_purchase_orders || []).find((x) => parseInt(x.id, 10) === poId);
+  if (!po) return res.status(404).json({ error:'Supplier invoice not found' });
+  if (po.received_store_id && !assertStoreAccess(db, req, po.received_store_id)) return res.status(403).json({ error:'Store access denied' });
+
+  const supplier = (db.store_suppliers || []).find((s) => parseInt(s.id, 10) === parseInt(po.supplier_id, 10)) || {};
+  const invoiceNumber = String(po.invoice_number || '').trim() || `PO-${po.id}`;
+  const totalAmount = parseFloat(po.total_cost || 0) || 0;
+  const paidSoFar = (db.store_supplier_invoice_payments || [])
+    .filter((p) => parseInt(p.po_id, 10) === poId)
+    .reduce((sum, p) => sum + (parseFloat(p.amount || 0) || 0), 0);
+  const dueAmount = parseFloat(Math.max(0, totalAmount - paidSoFar).toFixed(3));
+
+  const amount = parseFloat(req.body.amount || 0);
+  const paymentMethod = String(req.body.payment_method || '').trim();
+  const paymentDate = String(req.body.payment_date || today()).slice(0, 10);
+  const referenceNo = String(req.body.reference_no || '').trim();
+  const notes = String(req.body.notes || '').trim();
+  const categoryName = String(req.body.expense_category || 'Supplier Invoice Payment').trim() || 'Supplier Invoice Payment';
+  const actorId = (req.session && req.session.user && req.session.user.id) || req.session.userId || null;
+
+  if (!(amount > 0)) return res.status(400).json({ error:'Payment amount must be greater than 0' });
+  if (!(dueAmount > 0)) return res.status(400).json({ error:'This invoice is already fully paid' });
+  if (amount - dueAmount > 0.0005) return res.status(400).json({ error:`Amount exceeds due (KD ${dueAmount.toFixed(3)})` });
+
+  if (!db.expense_categories) db.expense_categories = [];
+  if (!(db.expense_categories || []).some((c) => String(c.name || '') === categoryName)) {
+    db.expense_categories.push({ id: nextId(db, 'expense_categories'), name: categoryName, created_at: now() });
+  }
+
+  const payment = {
+    id: nextId(db, 'store_supplier_invoice_payments'),
+    po_id: poId,
+    supplier_id: parseInt(po.supplier_id, 10) || null,
+    invoice_number: invoiceNumber,
+    amount: parseFloat(amount.toFixed(3)),
+    payment_method: paymentMethod,
+    payment_date: paymentDate,
+    reference_no: referenceNo,
+    notes,
+    expense_id: null,
+    created_by: actorId,
+    created_at: now()
+  };
+
+  const expense = {
+    id: nextId(db, 'expenses'),
+    title: `Supplier Invoice Payment · ${supplier.name || 'Supplier'} · ${invoiceNumber}`,
+    category: categoryName,
+    amount: payment.amount,
+    expense_date: paymentDate,
+    payment_method: paymentMethod,
+    vendor: supplier.name || '',
+    reference_no: referenceNo || invoiceNumber,
+    notes: notes || `Payment for supplier invoice ${invoiceNumber}`,
+    source_type: 'supplier_invoice_payment',
+    source_id: payment.id,
+    supplier_invoice_id: poId,
+    created_by: actorId,
+    updated_by: actorId,
+    created_at: now(),
+    updated_at: now()
+  };
+
+  payment.expense_id = expense.id;
+  db.store_supplier_invoice_payments.push(payment);
+  db.expenses.push(expense);
+
+  const paidAfter = paidSoFar + payment.amount;
+  const dueAfter = parseFloat(Math.max(0, totalAmount - paidAfter).toFixed(3));
+  const paymentStatus = dueAfter <= 0.0005 ? 'Paid' : (paidAfter > 0 ? 'Partially Paid' : 'Unpaid');
+
+  logActivity(db, req, {
+    module: 'finance',
+    action: 'supplier_invoice_payment_recorded',
+    entity_type: 'store_purchase_order',
+    entity_id: poId,
+    notes: `Supplier invoice ${invoiceNumber} payment of KD ${payment.amount.toFixed(3)} recorded (${paymentStatus})`,
+    meta: {
+      supplier_name: supplier.name || '',
+      invoice_number: invoiceNumber,
+      total_amount: parseFloat(totalAmount.toFixed(3)),
+      paid_amount: parseFloat(paidAfter.toFixed(3)),
+      due_amount: dueAfter,
+      payment_method: paymentMethod
+    }
+  });
+
+  writeDB(db);
+  res.json({
+    payment,
+    expense,
+    summary: {
+      total_amount: parseFloat(totalAmount.toFixed(3)),
+      paid_amount: parseFloat(paidAfter.toFixed(3)),
+      due_amount: dueAfter,
+      payment_status: paymentStatus
+    }
+  });
+});
+
 // ── Stock Transfers ─────────────────────────────────────
 app.get('/api/store/transfers', requireLogin, (req,res) => {
   const db = readDB(); ensureStore(db);
-  const transfers = db.store_transfers.map(t => {
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+  const transfers = db.store_transfers.filter((transfer) => {
+    if (!allowedStoreIds) return true;
+    return allowedStoreIds.has(parseInt(transfer.from_store_id, 10)) || allowedStoreIds.has(parseInt(transfer.to_store_id, 10));
+  }).map(t => {
     const from = db.store_sub_stores.find(s=>s.id===t.from_store_id)||{};
     const to   = db.store_sub_stores.find(s=>s.id===t.to_store_id)||{};
     return { ...t, from_store_name:from.name||'—', to_store_name:to.name||'—' };
@@ -5798,6 +8173,7 @@ app.post('/api/store/transfers', requireRole('admin','receptionist'), (req,res) 
   const { from_store_id, to_store_id, items, notes } = req.body;
   if (!from_store_id || !to_store_id || !items || !items.length) return res.status(400).json({ error:'From, to store and items required' });
   if (parseInt(from_store_id)===parseInt(to_store_id)) return res.status(400).json({ error:'From and to store must differ' });
+  if (!assertStoreAccess(db, req, from_store_id) || !assertStoreAccess(db, req, to_store_id)) return res.status(403).json({ error:'Store access denied' });
   // validate stock availability
   for (const item of items) {
     const factor = resolveLineFactor(db, item.product_id, item.uom_id, item.factor || 1);
@@ -5834,13 +8210,234 @@ app.post('/api/store/transfers', requireRole('admin','receptionist'), (req,res) 
   db.store_transfers.push(t); writeDB(db); res.json(t);
 });
 
-// ── Manual Consumption ─────────────────────────────────
-app.get('/api/store/manual-consumptions', requireLogin, (req, res) => {
+// ── Stock Adjustments (IN / OUT) ───────────────────────
+app.get('/api/store/adjustments', requirePermission('store.adjust'), (req, res) => {
   const db = readDB(); ensureStore(db);
   const dateFrom = String(req.query.date_from || '').slice(0, 10);
   const dateTo = String(req.query.date_to || '').slice(0, 10);
   const storeFilter = req.query.store_id ? parseInt(req.query.store_id, 10) : null;
   const q = String(req.query.search || '').trim().toLowerCase();
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
+  if (storeFilter && !assertStoreAccess(db, req, storeFilter)) return res.status(403).json({ error:'Store access denied' });
+
+  const storesById = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id, 10), s]));
+  const productsById = new Map((db.store_products || []).map(p => [parseInt(p.id, 10), p]));
+  const usersById = new Map((db.users || []).map(u => [parseInt(u.id, 10), u]));
+  const adjustmentNoById = new Map((db.store_adjustments || []).map(a => [parseInt(a.id, 10), a.adjustment_no || `ADJ-${String(a.id || '').padStart(6, '0')}`]));
+
+  let rows = (db.store_adjustments || []).map((entry) => {
+    const store = storesById.get(parseInt(entry.store_id, 10)) || {};
+    const product = productsById.get(parseInt(entry.product_id, 10)) || {};
+    const user = usersById.get(parseInt(entry.created_by, 10)) || {};
+    return {
+      ...entry,
+      store_name: store.name || 'Unknown',
+      product_name: product.name || `Product #${entry.product_id}`,
+      product_sku: product.sku || '',
+      created_by_name: user.name || user.username || '—',
+      reversal_of_adjustment_no: entry.reversal_of_id ? (adjustmentNoById.get(parseInt(entry.reversal_of_id, 10)) || null) : null,
+      reversed_by_adjustment_no: entry.reversed_by_adjustment_id ? (adjustmentNoById.get(parseInt(entry.reversed_by_adjustment_id, 10)) || null) : null
+    };
+  });
+
+  if (allowedStoreIds) rows = rows.filter(r => allowedStoreIds.has(parseInt(r.store_id, 10)));
+  if (dateFrom) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0,10) >= dateFrom);
+  if (dateTo) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0,10) <= dateTo);
+  if (storeFilter) rows = rows.filter(r => parseInt(r.store_id, 10) === storeFilter);
+  if (q) {
+    rows = rows.filter(r => [
+      r.adjustment_no,
+      r.store_name,
+      r.product_name,
+      r.product_sku,
+      r.reason,
+      r.remarks,
+      r.adjustment_type,
+      r.created_by_name,
+      r.created_at
+    ].map(v => String(v || '').toLowerCase()).join(' ').includes(q));
+  }
+
+  rows.sort((a,b) => {
+    const ad = String(a.date || a.created_at || '');
+    const bd = String(b.date || b.created_at || '');
+    if (ad !== bd) return ad < bd ? 1 : -1;
+    return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
+  });
+
+  res.json(rows);
+});
+
+app.post('/api/store/adjustments', requirePermission('store.adjust'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const { store_id, product_id, adjustment_type, qty, unit_cost, reason, remarks, date } = req.body || {};
+  const sid = parseInt(store_id, 10);
+  const pid = parseInt(product_id, 10);
+  const type = String(adjustment_type || '').toUpperCase();
+  const quantity = parseFloat(qty || 0);
+  const note = String(remarks || '').trim();
+  const why = String(reason || '').trim() || 'Adjustment';
+  const normalizedDate = String(date || today()).slice(0, 10);
+
+  if (!sid) return res.status(400).json({ error:'Store is required' });
+  if (!assertStoreAccess(db, req, sid)) return res.status(403).json({ error:'Store access denied' });
+  if (!pid) return res.status(400).json({ error:'Product is required' });
+  if (!['IN','OUT'].includes(type)) return res.status(400).json({ error:'Adjustment type must be IN or OUT' });
+  if (!(quantity > 0)) return res.status(400).json({ error:'Quantity must be greater than 0' });
+
+  const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
+  if (!store || store.active === false) return res.status(400).json({ error:'Invalid store' });
+  const product = (db.store_products || []).find(p => parseInt(p.id, 10) === pid);
+  if (!product || product.active === false) return res.status(400).json({ error:'Invalid product' });
+
+  const stock = getStock(db, pid, sid);
+  const stockBefore = parseFloat(stock.qty || 0) || 0;
+  if (type === 'OUT' && stockBefore < quantity) {
+    return res.status(400).json({ error:`Insufficient stock (available: ${stockBefore.toFixed(3)})` });
+  }
+
+  let resolvedUnitCost = parseFloat(unit_cost || 0);
+  if (!(resolvedUnitCost >= 0)) resolvedUnitCost = 0;
+  if (!(resolvedUnitCost > 0)) {
+    resolvedUnitCost = parseFloat(stock.avg_cost || product.cost_price || 0) || 0;
+  }
+
+  if (type === 'IN') {
+    stock.avg_cost = computeWac(stock.qty, stock.avg_cost, quantity, resolvedUnitCost);
+    stock.qty = parseFloat((stock.qty + quantity).toFixed(3));
+    product.cost_price = parseFloat(stock.avg_cost || 0) || 0;
+  } else {
+    stock.qty = parseFloat((stock.qty - quantity).toFixed(3));
+  }
+
+  const stockAfter = parseFloat(stock.qty || 0) || 0;
+  const totalCost = parseFloat((quantity * resolvedUnitCost).toFixed(3));
+  const id = nextId(db, 'store_adjustments');
+  const entry = {
+    id,
+    adjustment_no: `ADJ-${String(id).padStart(6, '0')}`,
+    date: normalizedDate,
+    store_id: sid,
+    product_id: pid,
+    adjustment_type: type,
+    qty: parseFloat(quantity.toFixed(3)),
+    unit_cost: parseFloat(resolvedUnitCost.toFixed(3)),
+    total_cost: totalCost,
+    stock_before: parseFloat(stockBefore.toFixed(3)),
+    stock_after: parseFloat(stockAfter.toFixed(3)),
+    reversal_of_id: null,
+    reversed_by_adjustment_id: null,
+    reason: why,
+    remarks: note,
+    created_by: (req.session && req.session.user && req.session.user.id) || req.session.userId || null,
+    created_at: now()
+  };
+
+  db.store_adjustments.push(entry);
+  logActivity(db, req, {
+    module: 'store',
+    action: 'stock_adjusted',
+    entity_type: 'store_adjustment',
+    entity_id: id,
+    notes: `${type} ${entry.qty.toFixed(3)} of ${product.name || ('Product #' + pid)} at ${store.name || ('Store #' + sid)} (${entry.adjustment_no})`,
+    meta: { store_id: sid, product_id: pid, adjustment_type: type, qty: entry.qty, total_cost: entry.total_cost }
+  });
+  writeDB(db);
+  res.json(entry);
+});
+
+app.post('/api/store/adjustments/:id/reverse', requirePermission('store.adjust'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const actor = (req.session && req.session.user) || {};
+  if (String(actor.role || '').toLowerCase() !== 'admin') {
+    return res.status(403).json({ error:'Only admin can reverse adjustments' });
+  }
+
+  const targetId = parseInt(req.params.id, 10);
+  const target = (db.store_adjustments || []).find(a => parseInt(a.id, 10) === targetId);
+  if (!target) return res.status(404).json({ error:'Adjustment not found' });
+
+  const sid = parseInt(target.store_id, 10);
+  if (!assertStoreAccess(db, req, sid)) return res.status(403).json({ error:'Store access denied' });
+  if (target.reversal_of_id) return res.status(400).json({ error:'Reversal entry cannot be reversed again' });
+  if (target.reversed_by_adjustment_id) return res.status(400).json({ error:'Adjustment already reversed' });
+
+  const pid = parseInt(target.product_id, 10);
+  const qty = parseFloat(target.qty || 0) || 0;
+  if (!(qty > 0)) return res.status(400).json({ error:'Invalid adjustment quantity' });
+
+  const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
+  const product = (db.store_products || []).find(p => parseInt(p.id, 10) === pid);
+  if (!store || store.active === false) return res.status(400).json({ error:'Invalid store' });
+  if (!product || product.active === false) return res.status(400).json({ error:'Invalid product' });
+
+  const reverseType = String(target.adjustment_type || '').toUpperCase() === 'IN' ? 'OUT' : 'IN';
+  const stock = getStock(db, pid, sid);
+  const stockBefore = parseFloat(stock.qty || 0) || 0;
+  if (reverseType === 'OUT' && stockBefore < qty) {
+    return res.status(400).json({ error:`Cannot reverse: available stock is ${stockBefore.toFixed(3)}, required ${qty.toFixed(3)}` });
+  }
+
+  const sourceUnitCost = parseFloat(target.unit_cost || 0) || 0;
+  if (reverseType === 'IN') {
+    stock.avg_cost = computeWac(stock.qty, stock.avg_cost, qty, sourceUnitCost);
+    stock.qty = parseFloat((stock.qty + qty).toFixed(3));
+    product.cost_price = parseFloat(stock.avg_cost || 0) || 0;
+  } else {
+    stock.qty = parseFloat((stock.qty - qty).toFixed(3));
+  }
+
+  const stockAfter = parseFloat(stock.qty || 0) || 0;
+  const reversalId = nextId(db, 'store_adjustments');
+  const reversalNo = `ADJ-${String(reversalId).padStart(6, '0')}`;
+  const reasonNote = String((req.body && req.body.reason) || '').trim();
+  const entry = {
+    id: reversalId,
+    adjustment_no: reversalNo,
+    date: String(today()).slice(0, 10),
+    store_id: sid,
+    product_id: pid,
+    adjustment_type: reverseType,
+    qty: parseFloat(qty.toFixed(3)),
+    unit_cost: parseFloat(sourceUnitCost.toFixed(3)),
+    total_cost: parseFloat((qty * sourceUnitCost).toFixed(3)),
+    stock_before: parseFloat(stockBefore.toFixed(3)),
+    stock_after: parseFloat(stockAfter.toFixed(3)),
+    reversal_of_id: target.id,
+    reversed_by_adjustment_id: null,
+    reason: `Reversal of ${target.adjustment_no || ('ADJ#' + target.id)}`,
+    remarks: reasonNote,
+    created_by: actor.id || req.session.userId || null,
+    created_at: now()
+  };
+
+  target.reversed_by_adjustment_id = reversalId;
+  target.reversed_at = now();
+  target.reversed_by = actor.id || req.session.userId || null;
+  target.reversal_reason = reasonNote;
+
+  db.store_adjustments.push(entry);
+  logActivity(db, req, {
+    module: 'store',
+    action: 'stock_adjustment_reversed',
+    entity_type: 'store_adjustment',
+    entity_id: target.id,
+    notes: `Reversed ${target.adjustment_no || ('ADJ#' + target.id)} with ${reversalNo}`,
+    meta: { source_adjustment_id: target.id, reversal_adjustment_id: reversalId, reverse_type: reverseType, qty: entry.qty }
+  });
+  writeDB(db);
+  res.json({ success: true, source: target, reversal: entry });
+});
+
+// ── Manual Consumption ─────────────────────────────────
+app.get('/api/store/manual-consumptions', requirePermission('store.consume'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo = String(req.query.date_to || '').slice(0, 10);
+  const storeFilter = req.query.store_id ? parseInt(req.query.store_id, 10) : null;
+  const q = String(req.query.search || '').trim().toLowerCase();
+  if (storeFilter && !assertStoreAccess(db, req, storeFilter)) return res.status(403).json({ error:'Store access denied' });
+  const allowedStoreIds = getAccessibleStoreIds(db, req);
 
   const storesById = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id, 10), s]));
   const productsById = new Map((db.store_products || []).map(p => [parseInt(p.id, 10), p]));
@@ -5866,6 +8463,8 @@ app.get('/api/store/manual-consumptions', requireLogin, (req, res) => {
     };
   });
 
+  if (allowedStoreIds) rows = rows.filter((row) => allowedStoreIds.has(parseInt(row.store_id, 10)));
+
   if (dateFrom) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0, 10) >= dateFrom);
   if (dateTo) rows = rows.filter(r => String(r.date || r.created_at || '').slice(0, 10) <= dateTo);
   if (storeFilter) rows = rows.filter(r => parseInt(r.store_id, 10) === storeFilter);
@@ -5888,13 +8487,15 @@ app.get('/api/store/manual-consumptions', requireLogin, (req, res) => {
     return parseInt(b.id || 0, 10) - parseInt(a.id || 0, 10);
   });
 
-  res.json(rows);
+  res.json(rows.map((row) => sanitizeManualConsumptionEntryForUser(db, req, row)));
 });
 
-app.post('/api/store/manual-consumptions', requireRole('admin','receptionist'), (req, res) => {
+app.post('/api/store/manual-consumptions', requirePermission('store.consume'), (req, res) => {
   const db = readDB(); ensureStore(db);
+  const canViewCost = hasPermission(db, req.session.user.role, 'store.consume.cost');
   const { store_id, date, remarks, items } = req.body || {};
   const sid = parseInt(store_id, 10);
+  if (!assertStoreAccess(db, req, sid)) return res.status(403).json({ error:'Store access denied' });
   const store = (db.store_sub_stores || []).find(s => parseInt(s.id, 10) === sid);
   if (!sid || !store) return res.status(400).json({ error:'Store is required' });
   if (store.active === false) return res.status(400).json({ error:'Selected store is inactive' });
@@ -5908,7 +8509,7 @@ app.post('/api/store/manual-consumptions', requireRole('admin','receptionist'), 
     const row = items[i] || {};
     const productId = parseInt(row.product_id, 10);
     const qty = parseFloat(row.qty || 0);
-    const providedCost = row.cost !== undefined && row.cost !== null && String(row.cost).trim() !== '';
+    const providedCost = canViewCost && row.cost !== undefined && row.cost !== null && String(row.cost).trim() !== '';
     const cost = providedCost ? parseFloat(row.cost || 0) : null;
     const reason = normalizeManualConsumptionReason(row.reason);
     const lineRemarks = String(row.remarks || '').trim();
@@ -5992,7 +8593,7 @@ app.post('/api/store/manual-consumptions', requireRole('admin','receptionist'), 
 
   db.store_manual_consumptions.push(entry);
   writeDB(db);
-  res.json(entry);
+  res.json(sanitizeManualConsumptionEntryForUser(db, req, entry));
 });
 
 // ── Service–Product links ───────────────────────────────
@@ -6622,10 +9223,216 @@ app.get('/api/reports/cancelled-bills', requireRole('admin','receptionist'), (re
   });
 });
 
+// ===================== Supplier Returns =====================
+
+app.get('/api/store/supplier-returns', requirePermission('store.purchase'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const q = String(req.query.search || '').trim().toLowerCase();
+  const from = String(req.query.from || '').slice(0, 10);
+  const to   = String(req.query.to   || '').slice(0, 10);
+  const supplierId = req.query.supplier_id ? parseInt(req.query.supplier_id, 10) : null;
+
+  const supplierMap = new Map((db.store_suppliers || []).map(s => [parseInt(s.id), s]));
+  const productMap  = new Map((db.store_products  || []).map(p => [parseInt(p.id), p]));
+  const poMap       = new Map((db.store_purchase_orders || []).map(o => [parseInt(o.id), o]));
+  const storeMap    = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id), s]));
+  const userMap     = new Map((db.users || []).map(u => [parseInt(u.id), u]));
+
+  let rows = (db.store_supplier_returns || []).map(r => {
+    const sup  = supplierMap.get(parseInt(r.supplier_id)) || {};
+    const po   = poMap.get(parseInt(r.purchase_order_id)) || {};
+    const st   = storeMap.get(parseInt(r.store_id)) || {};
+    const usr  = userMap.get(parseInt(r.created_by)) || {};
+    return {
+      ...r,
+      supplier_name:  sup.name || '—',
+      po_invoice:     po.invoice_number || '—',
+      store_name:     st.name || '—',
+      created_by_name: usr.name || usr.username || '—',
+      items: (r.items || []).map(it => {
+        const p = productMap.get(parseInt(it.product_id)) || {};
+        return { ...it, product_name: it.product_name || p.name || `Product #${it.product_id}` };
+      })
+    };
+  });
+
+  if (supplierId) rows = rows.filter(r => parseInt(r.supplier_id) === supplierId);
+  if (from) rows = rows.filter(r => String(r.return_date || r.created_at || '').slice(0, 10) >= from);
+  if (to)   rows = rows.filter(r => String(r.return_date || r.created_at || '').slice(0, 10) <= to);
+  if (q) {
+    rows = rows.filter(r =>
+      [r.return_no, r.supplier_name, r.po_invoice, r.return_reference, r.notes, r.return_type, r.store_name]
+        .map(v => String(v || '').toLowerCase()).some(v => v.includes(q))
+    );
+  }
+
+  rows.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+  res.json(rows);
+});
+
+app.get('/api/store/supplier-returns/:id', requirePermission('store.purchase'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const id = parseInt(req.params.id, 10);
+  const r  = (db.store_supplier_returns || []).find(x => parseInt(x.id) === id);
+  if (!r) return res.status(404).json({ error: 'Supplier return not found' });
+
+  const supplierMap = new Map((db.store_suppliers || []).map(s => [parseInt(s.id), s]));
+  const productMap  = new Map((db.store_products  || []).map(p => [parseInt(p.id), p]));
+  const poMap       = new Map((db.store_purchase_orders || []).map(o => [parseInt(o.id), o]));
+  const storeMap    = new Map((db.store_sub_stores || []).map(s => [parseInt(s.id), s]));
+  const sup  = supplierMap.get(parseInt(r.supplier_id)) || {};
+  const po   = poMap.get(parseInt(r.purchase_order_id)) || {};
+  const st   = storeMap.get(parseInt(r.store_id)) || {};
+  res.json({
+    ...r,
+    supplier_name: sup.name || '—',
+    po_invoice: po.invoice_number || '—',
+    store_name: st.name || '—',
+    items: (r.items || []).map(it => {
+      const p = productMap.get(parseInt(it.product_id)) || {};
+      return { ...it, product_name: it.product_name || p.name || `Product #${it.product_id}` };
+    })
+  });
+});
+
+app.post('/api/store/supplier-returns', requirePermission('store.purchase'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const body = req.body || {};
+  const poId = parseInt(body.purchase_order_id, 10);
+  if (!poId) return res.status(400).json({ error: 'Purchase order is required' });
+
+  const po = (db.store_purchase_orders || []).find(x => parseInt(x.id) === poId);
+  if (!po) return res.status(404).json({ error: 'Purchase order not found' });
+  if (String(po.status || '').toLowerCase() !== 'received') {
+    return res.status(400).json({ error: 'Can only return items from a Received purchase order' });
+  }
+
+  const storeId = parseInt(po.received_store_id || (db.store_sub_stores.find(s => s.is_main) || {}).id);
+  const store = (db.store_sub_stores || []).find(s => parseInt(s.id) === storeId);
+  if (!store || store.active === false) return res.status(400).json({ error: 'Source store not found or inactive' });
+
+  const inputItems = Array.isArray(body.items) ? body.items : [];
+  if (!inputItems.length) return res.status(400).json({ error: 'At least one item is required' });
+
+  const productMap = new Map((db.store_products || []).map(p => [parseInt(p.id), p]));
+
+  const returnItems = [];
+  for (const it of inputItems) {
+    const pid = parseInt(it.product_id, 10);
+    if (!pid) return res.status(400).json({ error: 'Each item must have a product_id' });
+    const qty = parseFloat(it.qty);
+    if (!(qty > 0)) return res.status(400).json({ error: `Return quantity must be > 0 for product #${pid}` });
+
+    const poItem = (po.items || []).find(i => parseInt(i.product_id) === pid);
+    if (!poItem) return res.status(400).json({ error: `Product #${pid} was not in the original purchase order` });
+
+    const baseQty = parseFloat(it.base_qty || qty);
+    const stock = getStock(db, pid, storeId);
+    const available = parseFloat(stock.qty || 0) || 0;
+    const product = productMap.get(pid) || {};
+    if (available < baseQty) {
+      return res.status(400).json({ error: `Insufficient stock for ${product.name || `Product #${pid}`}: available ${available.toFixed(3)}, requested ${baseQty.toFixed(3)}` });
+    }
+
+    const costPrice = parseFloat(it.cost_price || poItem.cost_price || stock.avg_cost || 0);
+    returnItems.push({
+      product_id: pid,
+      product_name: product.name || `Product #${pid}`,
+      qty: parseFloat(qty.toFixed(3)),
+      base_qty: parseFloat(baseQty.toFixed(3)),
+      cost_price: parseFloat(costPrice.toFixed(3)),
+      line_total: parseFloat((baseQty * costPrice).toFixed(3))
+    });
+  }
+
+  // Deduct stock for each returned item
+  for (const it of returnItems) {
+    const stock = getStock(db, it.product_id, storeId);
+    stock.qty = parseFloat((stock.qty - it.base_qty).toFixed(3));
+  }
+
+  const totalAmount = parseFloat(returnItems.reduce((s, i) => s + i.line_total, 0).toFixed(3));
+  const id = nextId(db, 'store_supplier_returns');
+  const returnNo = `SR-${String(id).padStart(6, '0')}`;
+  const returnType = String(body.return_type || 'partial').trim();
+  const actor = (req.session && req.session.user) || {};
+
+  const entry = {
+    id,
+    return_no: returnNo,
+    purchase_order_id: poId,
+    supplier_id: parseInt(po.supplier_id),
+    store_id: storeId,
+    return_type: returnType,
+    return_date: String(body.return_date || today()).slice(0, 10),
+    return_reference: String(body.return_reference || '').trim(),
+    notes: String(body.notes || '').trim(),
+    items: returnItems,
+    total_amount: totalAmount,
+    status: 'Completed',
+    created_by: actor.id || null,
+    created_at: now(),
+    updated_at: now()
+  };
+
+  db.store_supplier_returns.push(entry);
+  logActivity(db, req, {
+    module: 'store',
+    action: 'supplier_return_created',
+    entity_type: 'store_supplier_return',
+    entity_id: id,
+    notes: `Supplier return ${returnNo} (${returnType}) for PO ${po.invoice_number || `#${poId}`} — KD ${totalAmount.toFixed(3)}`,
+    meta: { return_no: returnNo, po_id: poId, supplier_id: entry.supplier_id, total_amount: totalAmount }
+  });
+  writeDB(db);
+  res.json(entry);
+});
+
+app.delete('/api/store/supplier-returns/:id', requireRole('admin'), (req, res) => {
+  const db = readDB(); ensureStore(db);
+  const id = parseInt(req.params.id, 10);
+  const r  = (db.store_supplier_returns || []).find(x => parseInt(x.id) === id);
+  if (!r) return res.status(404).json({ error: 'Supplier return not found' });
+  if (r.voided) return res.status(400).json({ error: 'Already voided' });
+
+  // Restore stock
+  for (const it of (r.items || [])) {
+    const pid = parseInt(it.product_id);
+    const baseQty = parseFloat(it.base_qty || it.qty || 0);
+    if (pid > 0 && baseQty > 0) {
+      const stock = getStock(db, pid, parseInt(r.store_id));
+      const costPrice = parseFloat(it.cost_price || 0);
+      stock.avg_cost = computeWac(stock.qty, stock.avg_cost, baseQty, costPrice);
+      stock.qty = parseFloat((stock.qty + baseQty).toFixed(3));
+    }
+  }
+
+  db.store_supplier_returns = db.store_supplier_returns.filter(x => parseInt(x.id) !== id);
+  logActivity(db, req, {
+    module: 'store',
+    action: 'supplier_return_voided',
+    entity_type: 'store_supplier_return',
+    entity_id: id,
+    notes: `Supplier return ${r.return_no} voided — stock restored`,
+    meta: { return_no: r.return_no, po_id: r.purchase_order_id }
+  });
+  writeDB(db);
+  res.json({ success: true });
+});
+
 // ===================== SPA fallback =====================
 app.get('*', (req,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
 app.listen(PORT, () => {
   console.log(`\nClinic Management System -> http://localhost:${PORT}`);
   console.log(`Logins: admin/admin123  |  doctor1/doctor123  |  receptionist1/recep123\n`);
+
+  // Periodic WAL checkpoint every 10 minutes to prevent WAL from growing too large
+  setInterval(() => {
+    try {
+      sqlite.pragma('wal_checkpoint(PASSIVE)');
+    } catch (e) {
+      // Non-fatal — skip if busy
+    }
+  }, 10 * 60 * 1000);
 });
