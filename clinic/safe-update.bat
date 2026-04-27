@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 title Clinic - Safe Update
 color 0B
@@ -16,7 +16,7 @@ if %errorlevel% neq 0 (
 )
 
 if not defined CLINIC_GITHUB_OWNER set "CLINIC_GITHUB_OWNER=mayurmadhwani2011-blip"
-if not defined CLINIC_GITHUB_REPO  set "CLINIC_GITHUB_REPO=CMS"
+if not defined CLINIC_GITHUB_REPO  set "CLINIC_GITHUB_REPO=VC"
 if not defined CLINIC_GITHUB_BRANCH set "CLINIC_GITHUB_BRANCH=main"
 if not defined INSTALL_DIR set "INSTALL_DIR=D:\clinic"
 
@@ -112,3 +112,4 @@ echo ============================================================
 echo   UPDATE COMPLETE - Hard refresh browser: Ctrl+Shift+R
 echo ============================================================
 pause
+

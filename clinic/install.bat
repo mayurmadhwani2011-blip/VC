@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 title Clinic Management System - Installer
 color 0A
@@ -84,7 +84,7 @@ if %RC% GEQ 8 (
 echo File copy completed. Robocopy code: %RC%
 echo.
 echo Pulling latest app.js from GitHub to ensure correct API URL...
-powershell -NoProfile -Command "try { Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/mayurmadhwani2011-blip/CMS/main/public/app.js' -OutFile '%INSTALL_DIR%\public\app.js' } catch { Write-Host 'Could not download latest app.js - using local copy' }"
+powershell -NoProfile -Command "try { Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/mayurmadhwani2011-blip/VC/main/clinic/public/app.js' -OutFile '%INSTALL_DIR%\public\app.js' } catch { Write-Host 'Could not download latest app.js - using local copy' }"
 echo.
 
 echo [5/8] Installing dependencies...
@@ -172,3 +172,5 @@ echo   Install folder: %INSTALL_DIR%
 echo ============================================================
 echo.
 pause
+
+
