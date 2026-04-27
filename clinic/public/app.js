@@ -943,6 +943,7 @@ function navigate(page) {
 
   localStorage.setItem('lastNavPage', page);
   ensurePageTab(page);
+  const renderSeq = beginPageRender(page);
   renderPageTabs();
   const modules = getSidebarModules();
   const activeModule = modules.find(m => m.items.some(i => i.id === page));
@@ -967,8 +968,6 @@ function navigate(page) {
   ca.style.animation = 'none';
   ca.offsetHeight; // trigger reflow
   ca.style.animation = '';
-
-  const renderSeq = beginPageRender(page);
 
   const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, expenses, reports, users, services, packages, setup, 'owner-control': ownerControl, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
     store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-adjustments': storeAdjustments, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster, 'store-supplier-returns': storeSupplierReturns };
