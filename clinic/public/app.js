@@ -7580,7 +7580,7 @@ async function printBill(id) {
         <td style="padding:6px 3px;font-size:15px;color:#000">${descHtml}</td>
         <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000;white-space:nowrap">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
         <td style="padding:6px 3px;font-size:15px;text-align:center;color:#000">${escHtml(unit)}</td>
-        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">KD ${rate.toFixed(3)}</td>
+        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">${rate.toFixed(3)}</td>
         <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">KD ${amount.toFixed(3)}</td>
       </tr>`;
     }).join('');
