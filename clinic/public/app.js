@@ -7742,19 +7742,20 @@ async function printBill(id) {
     }
   }
 
-  // Check if printer is configured
-  const printerCfg = currentSystem && currentSystem.printer ? currentSystem.printer : {};
+  // Fetch fresh printer config to avoid using stale cached values
+  let printerCfg = currentSystem && currentSystem.printer ? { ...currentSystem.printer } : {};
+  try {
+    const freshCfg = await apiFetch('/api/setup/profile');
+    if (freshCfg && freshCfg.printer) printerCfg = freshCfg.printer;
+  } catch (_) { /* use cached */ }
+
   const hasPrinter = printerCfg.printer_name;
   const printMode = printerCfg.print_mode || 'auto';
 
   if (printMode === 'manual') {
-    // --- Manual Print: show preview then trigger browser print popup ---
-    printArea.classList.add('hidden');
-    showManualPrintPreview(b, () => {
-      printArea.classList.remove('hidden');
-      window.print();
-      setTimeout(() => printArea.classList.add('hidden'), 500);
-    });
+    // --- Manual Print: trigger browser print popup directly ---
+    window.print();
+    setTimeout(() => printArea.classList.add('hidden'), 500);
     return;
   }
 
