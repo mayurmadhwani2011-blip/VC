@@ -8615,7 +8615,7 @@ function renderSelectedReport() {
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('psvFrom').value='';document.getElementById('psvTo').value='';document.getElementById('psvStatus').value='';loadPendingSvcReport()">Clear</button>
           </div>
         </div>
-        <div id="pendingSvcBody" style="height:65vh;min-height:380px;overflow-y:auto;border:1px solid var(--border-light);border-radius:10px;padding:8px;background:var(--bg)">${skeletonTable(6)}</div>
+        <div id="pendingSvcBody">${skeletonTable(6)}</div>
       </div>`;
     loadPendingSvcReport();
     return;
@@ -8940,13 +8940,17 @@ async function loadSupplierLedger() {
 let _psvAllRows = [];
 let _psvRenderedCount = 0;
 let _psvScrollObserver = null;
-const PSV_BATCH = 40;
+const PSV_BATCH = 50;
+
+function _psvDisconnect() {
+  if (_psvScrollObserver) { _psvScrollObserver.disconnect(); _psvScrollObserver = null; }
+}
 
 function _psvRenderBatch() {
   const tbody = document.getElementById('psvTableBody');
   if (!tbody) return;
   const next = _psvAllRows.slice(_psvRenderedCount, _psvRenderedCount + PSV_BATCH);
-  if (!next.length) return;
+  if (!next.length) { _psvDisconnect(); return; }
   const statusColor = s => s === 'Completed' ? '#16a34a' : (s === 'In Progress' ? '#2563eb' : '#d97706');
   const statusIcon  = s => s === 'Completed' ? '✔' : (s === 'In Progress' ? '🔵' : '⏳');
   tbody.insertAdjacentHTML('beforeend', next.map(r => `
@@ -8966,20 +8970,27 @@ function _psvRenderBatch() {
       </td>
     </tr>`).join(''));
   _psvRenderedCount += next.length;
-  // Update sentinel visibility
+  const state = document.getElementById('psvLoadState');
+  if (state) state.textContent = _psvRenderedCount < _psvAllRows.length ? `Showing ${_psvRenderedCount} of ${_psvAllRows.length} items` : `${_psvAllRows.length} item${_psvAllRows.length !== 1 ? 's' : ''}`;
+  if (_psvRenderedCount >= _psvAllRows.length) _psvDisconnect();
+}
+
+function _psvAttachScroll() {
+  _psvDisconnect();
   const sentinel = document.getElementById('psvSentinel');
-  if (sentinel) sentinel.style.display = _psvRenderedCount >= _psvAllRows.length ? 'none' : '';
+  if (!sentinel || _psvRenderedCount >= _psvAllRows.length) return;
+  _psvScrollObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) _psvRenderBatch();
+  }, { root: null, rootMargin: '0px 0px 240px 0px', threshold: 0.01 });
+  _psvScrollObserver.observe(sentinel);
 }
 
 async function loadPendingSvcReport() {
   const wrap = document.getElementById('pendingSvcBody');
   if (!wrap) return;
-
-  // Disconnect old scroll observer
-  if (_psvScrollObserver) { _psvScrollObserver.disconnect(); _psvScrollObserver = null; }
+  _psvDisconnect();
   _psvAllRows = [];
   _psvRenderedCount = 0;
-
   const from   = document.getElementById('psvFrom')?.value || '';
   const to     = document.getElementById('psvTo')?.value || '';
   const status = document.getElementById('psvStatus')?.value || '';
@@ -9016,25 +9027,17 @@ async function loadPendingSvcReport() {
       return;
     }
     wrap.innerHTML = summaryHtml + `
-      <div class="table-wrap" style="overflow:visible">
-        <table>
-          <thead><tr>
-            <th>Date</th><th>Bill #</th><th>Patient</th><th>Service</th>
-            <th>Status</th><th>Completed On</th><th>Provider</th><th style="text-align:right">Amount</th><th>Action</th>
-          </tr></thead>
-          <tbody id="psvTableBody"></tbody>
-        </table>
-        <div id="psvSentinel" style="height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading more...</div>
-      </div>`;
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Date</th><th>Bill #</th><th>Patient</th><th>Service</th>
+          <th>Status</th><th>Completed On</th><th>Provider</th><th style="text-align:right">Amount</th><th>Action</th>
+        </tr></thead>
+        <tbody id="psvTableBody"></tbody>
+      </table></div>
+      <div class="svc-load-state" id="psvLoadState"></div>
+      <div style="height:2px" id="psvSentinel" aria-hidden="true"></div>`;
     _psvRenderBatch();
-    // Set up IntersectionObserver on sentinel to load more rows when visible
-    const sentinel = document.getElementById('psvSentinel');
-    if (sentinel) {
-      _psvScrollObserver = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting) _psvRenderBatch();
-      }, { root: wrap, threshold: 0.1 });
-      _psvScrollObserver.observe(sentinel);
-    }
+    _psvAttachScroll();
   } catch (e) {
     wrap.innerHTML = `<div class="text-danger" style="padding:16px">${escHtml(e.message || 'Failed to load report')}</div>`;
   }
