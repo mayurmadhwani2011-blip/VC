@@ -834,6 +834,8 @@ body.sidebar-collapsed #sidebar.temp-expanded .btn-logout { justify-content: ini
 .btn-primary:hover { background: var(--c-primary-dark); }
 .btn-success { background: var(--c-success); border-color: var(--c-success); color: #fff; }
 .btn-success:hover { filter: brightness(1.1); }
+.btn-whatsapp { background: #25D366; border-color: #25D366; color: #fff; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; }
+.btn-whatsapp:hover { background: #1ebe5d; border-color: #1ebe5d; color: #fff; }
 .btn-danger { background: var(--c-danger); border-color: var(--c-danger); color: #fff; }
 .btn-danger:hover { filter: brightness(1.1); }
 .btn-outline { background: transparent; }
