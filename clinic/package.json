@@ -5,8 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "backup:db": "node scripts/backup-db.js"
+    "dev": "nodemon server.js --watch server.js --watch public/app.js --watch public/style.css --ext js,json,css",
+    "backup:db": "node scripts/backup-db.js",
+    "service:start": "net start ClinicManagementSystem",
+    "service:stop": "net stop ClinicManagementSystem",
+    "service:restart": "net stop ClinicManagementSystem & timeout /t 2 & net start ClinicManagementSystem"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -26,6 +29,10 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "html2pdf.js": "^0.10.1",
+    "node-windows": "^1.0.0-beta.8",
     "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
