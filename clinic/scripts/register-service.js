@@ -12,7 +12,7 @@ const serviceDescription = process.env.CLINIC_SERVICE_DESCRIPTION || 'Clinic Man
 const port = String(process.env.CLINIC_PORT || process.env.PORT || '5050');
 const githubToken = String(process.env.CLINIC_GITHUB_TOKEN || '').trim();
 const githubOwner = String(process.env.CLINIC_GITHUB_OWNER || 'mayurmadhwani2011-blip').trim();
-const githubRepo = String(process.env.CLINIC_GITHUB_REPO || 'VC').trim();
+const githubRepo = String(process.env.CLINIC_GITHUB_REPO || 'CMS').trim();
 
 const svc = new Service({
   name: serviceName,

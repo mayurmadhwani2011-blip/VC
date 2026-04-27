@@ -2207,7 +2207,7 @@ app.post('/api/admin/system-update', requireRole('admin'), async (req, res) => {
   }
 
   const GITHUB_OWNER = String(process.env.CLINIC_GITHUB_OWNER || 'mayurmadhwani2011-blip').trim();
-  const GITHUB_REPO = String(process.env.CLINIC_GITHUB_REPO || 'VC').trim();
+  const GITHUB_REPO = String(process.env.CLINIC_GITHUB_REPO || 'CMS').trim();
   const GITHUB_BRANCH = branch;
   const GITHUB_TOKEN = String(process.env.CLINIC_GITHUB_TOKEN || '').trim();
 
