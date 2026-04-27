@@ -2193,7 +2193,10 @@ function runUpdateCommand(command, args, options = {}) {
 }
 
 app.post('/api/admin/system-update', requireRole('admin'), async (req, res) => {
-  const db = readDB();
+  let db;
+  try { db = readDB(); } catch (e) {
+    return res.status(500).json({ error: `Database read failed: ${e.message}. Try restarting the service.` });
+  }
   const me = getSessionUserRecord(db, req);
   if (!me || me.role !== 'admin') {
     return res.status(403).json({ error: 'Only admin can run System Update' });
@@ -9472,16 +9475,26 @@ app.delete('/api/store/supplier-returns/:id', requireRole('admin'), (req, res) =
 // ===================== SPA fallback =====================
 app.get('*', (req,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
+// Global async error handler — catches unhandled errors in async route handlers
+app.use((err, req, res, next) => {
+  console.error('[Express error handler]', err && err.message || err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: err && err.message ? err.message : 'Internal server error' });
+});
+
 app.listen(PORT, () => {
   console.log(`\nClinic Management System -> http://localhost:${PORT}`);
   console.log(`Logins: admin/admin123  |  doctor1/doctor123  |  receptionist1/recep123\n`);
 
-  // Periodic WAL checkpoint every 10 minutes to prevent WAL from growing too large
+  // Checkpoint WAL on startup to clear any leftover WAL from previous run
+  try { sqlite.pragma('wal_checkpoint(TRUNCATE)'); } catch (_) {}
+
+  // Periodic WAL checkpoint every 5 minutes to prevent WAL from growing too large
   setInterval(() => {
     try {
       sqlite.pragma('wal_checkpoint(PASSIVE)');
     } catch (e) {
       // Non-fatal — skip if busy
     }
-  }, 10 * 60 * 1000);
+  }, 5 * 60 * 1000);
 });
