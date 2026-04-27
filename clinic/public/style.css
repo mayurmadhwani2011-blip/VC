@@ -239,6 +239,8 @@ h1,h2,h3,h4,h5,h6 { line-height: 1.3; font-weight: 600; }
   color: var(--c-primary);
 }
 .logo-text { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: 1px; }
+.dermiq-wordmark { display: flex; flex-direction: column; gap: 1px; }
+.dermiq-clinic-name { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.3px; line-height: 1; margin-top: 1px; }
 .dermiq-icon { flex-shrink: 0; }
 .sidebar-header-actions {
   display: flex;
