@@ -1,9 +1,15 @@
 ﻿let currentSystem = null;
 let _whatsappWin = null;
 function openWhatsApp(phone) {
-  const url = 'https://web.whatsapp.com/send?phone=' + String(phone).replace(/[^0-9]/g, '');
-  _whatsappWin = window.open(url, 'whatsapp_web');
-  if (_whatsappWin) _whatsappWin.focus();
+  const clean = String(phone).replace(/[^0-9]/g, '');
+  navigator.clipboard.writeText(clean).catch(() => {});
+  if (_whatsappWin && !_whatsappWin.closed) {
+    _whatsappWin.focus();
+    toast('Number ' + clean + ' copied — paste in WhatsApp search', 'info');
+  } else {
+    _whatsappWin = window.open('https://web.whatsapp.com', 'whatsapp_web');
+    toast('Number ' + clean + ' copied — paste in WhatsApp search', 'info');
+  }
 }
 const API = (() => {
   try {
