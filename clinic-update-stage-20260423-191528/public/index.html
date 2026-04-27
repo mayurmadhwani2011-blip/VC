@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ClinicMS — Clinic Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/lucide-static@0.263.1/font/lucide.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══════════════════ LOGIN PAGE ══════════════════ -->
+<div id="loginPage" class="login-wrapper" role="main">
+  <div class="login-card" role="form" aria-label="Login form">
+    <div class="login-brand">
+      <div class="login-logo-ring"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M12 11v5"/><path d="M9.5 13.5h5"/><rect width="18" height="18" x="3" y="4" rx="2"/></svg></div>
+      <h1 id="loginClinicName">ClinicMS</h1>
+      <p class="login-sub" id="loginClinicSub">Clinic Management System</p>
+    </div>
+    <div id="loginError" class="alert alert-error hidden" role="alert"></div>
+    <div class="form-group">
+      <label for="loginUsername">Username</label>
+      <div class="input-icon-wrap">
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="loginUsername" placeholder="Enter username" autocomplete="username" aria-required="true"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="loginPassword">Password</label>
+      <div class="input-icon-wrap">
+        <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" aria-required="true"/>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()" id="loginBtn">
+      <span>Sign In</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    </button>
+    <div class="login-demo">
+      <div class="demo-title">Demo Accounts</div>
+      <div class="demo-accounts">
+        <button class="demo-chip" onclick="fillDemo('admin','admin123')"><span class="demo-role">Admin</span> admin / admin123</button>
+        <button class="demo-chip" onclick="fillDemo('doctor1','doctor123')"><span class="demo-role doc">Doctor</span> doctor1 / doctor123</button>
+        <button class="demo-chip" onclick="fillDemo('receptionist1','recep123')"><span class="demo-role rec">Receptionist</span> receptionist1 / recep123</button>
+      </div>
+    </div>
+  </div>
+  <div class="login-bg-art"></div>
+</div>
+
+<!-- ══════════════════ MAIN APP ══════════════════ ----------->
+<div id="mainApp" class="hidden">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" role="navigation" aria-label="Main navigation">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><path d="M12 11v5"/><path d="M9.5 13.5h5"/><rect width="18" height="18" x="3" y="4" rx="2"/></svg>
+        <span class="logo-text" id="sidebarClinicName">ClinicMS</span>
+      </div>
+      <div class="sidebar-header-actions">
+        <button class="sidebar-collapse" onclick="toggleSidebarCollapsed()" aria-label="Collapse sidebar" title="Collapse sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="sidebar-close" onclick="toggleSidebar()" aria-label="Close sidebar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <nav id="sideNav"></nav>
+    <div class="sidebar-footer">
+      <div id="userBadge" class="user-badge"></div>
+      <div class="sidebar-footer-actions">
+        <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <svg id="themeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
+        <button class="btn btn-logout" onclick="doLogout()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile overlay -->
+  <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Main content -->
+  <div class="main-wrapper">
+    <header class="topbar" role="banner">
+      <button class="menu-btn" onclick="toggleSidebar()" aria-label="Open menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-left">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSub" class="topbar-subtitle"></p>
+      </div>
+      <div class="topbar-right">
+        <button class="btn-icon topbar-theme-btn" onclick="toggleTheme()" aria-label="Toggle dark mode">
+          <svg id="themeIconTop" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
+        <div class="topbar-user-wrap" id="topbarUserWrap">
+          <div class="avatar" id="topbarAvatar"></div>
+          <div class="topbar-user-info">
+            <span id="topbarUser" class="topbar-user"></span>
+            <span id="topbarRole" class="topbar-role"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div id="pageTabs" class="page-tabs hidden" role="tablist" aria-label="Open pages"></div>
+
+    <main id="contentArea" role="main"></main>
+  </div>
+</div>
+
+<!-- ══════════════════ PRINT AREA ══════════════════ -->
+<div id="printArea" class="hidden"></div>
+
+<!-- ══════════════════ TOAST CONTAINER ══════════════════ -->
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="app.js?v=20260423-fix-api-url"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "clinic-management-system",
+  "version": "1.0.0",
+  "description": "Simple Clinic Management System for small clinics",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "backup:db": "node scripts/backup-db.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "clinic",
+    "hospital",
+    "management"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.6",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "html2pdf.js": "^0.10.1",
+    "pngjs": "^7.0.0"
+  }
+}

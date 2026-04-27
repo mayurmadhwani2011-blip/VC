@@ -1,0 +1,18 @@
+{
+  "backup_id": "db-backup-20260419-122643Z",
+  "created_at": "2026-04-19T12:26:43.478Z",
+  "created_by": "npm backup:db",
+  "files": {
+    "sqlite": "clinic-data.sqlite",
+    "json": "clinic-data.json"
+  },
+  "counts": {
+    "users": 11,
+    "patients": 24042,
+    "appointments": 57,
+    "prescriptions": 7,
+    "bills": 60,
+    "services": 10,
+    "discounts": 1
+  }
+}
