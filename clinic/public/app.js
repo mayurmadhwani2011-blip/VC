@@ -1,4 +1,4 @@
-﻿let currentSystem = null;
+let currentSystem = null;
 let _whatsappWin = null;
 function openWhatsApp(phone) {
   const clean = String(phone).replace(/[^0-9]/g, '');
@@ -29,7 +29,7 @@ function getTerminalId() {
 }
 
 /* -------------------------------------------------------
-  Clinic Management System · Frontend SPA (app.js)
+  Clinic Management System � Frontend SPA (app.js)
   Modern UI with dark mode, skeleton loaders, toasts
   ------------------------------------------------------- */
 let currentPageId = '';
@@ -103,7 +103,7 @@ const IC = {
   supreturn:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
 };
 
-// --- Nav config · unified list filtered by permission ----
+// --- Nav config � unified list filtered by permission ----
 const NAV_ALL = [
   { section: 'Overview' },
   // WhatsApp Campaign nav item will be added after NAV_ALL declaration
@@ -479,7 +479,7 @@ function renderAccessLockScreen() {
     : (status === 'suspended' ? 'Subscription Suspended' : 'Subscription Expired');
   const detail = setupRequired
     ? 'Admin must complete setup before other users can use the system.'
-    : `Plan status: ${String(status).toUpperCase()} · End date: ${endDate}`;
+    : `Plan status: ${String(status).toUpperCase()} � End date: ${endDate}`;
   const cta = isAdmin
     ? `<button class="btn btn-primary" onclick="navigate('owner-control')">${IC.setup} Open Owner Setup</button>`
     : `<button class="btn" onclick="doLogout()">Sign Out</button>`;
@@ -541,7 +541,7 @@ function toLocalDateTimeInputValue(value = new Date()) {
 }
 
 function formatDateTime(value) {
-  if (!value) return '—';
+  if (!value) return '�';
   if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
     const [y, m, d] = value.trim().split('-').map(Number);
     const dtOnly = new Date(y, (m || 1) - 1, d || 1);
@@ -581,7 +581,7 @@ async function doLogin() {
   errEl.classList.add('hidden');
   if (!username || !password) { showLoginError('Enter username and password'); return; }
   const btn = document.getElementById('loginBtn');
-  btn.disabled = true; btn.querySelector('span').textContent = 'Signing in—';
+  btn.disabled = true; btn.querySelector('span').textContent = 'Signing in�';
   btn.classList.add('loading');
   try {
     const data = await apiFetch('/api/login', { method: 'POST', body: JSON.stringify({ username, password }) });
@@ -942,7 +942,7 @@ function navigate(page) {
       <div style="font-size:20px;font-weight:700;color:var(--text)">Access Denied</div>
       <div style="color:var(--text-muted)">You don't have permission to view this page.</div>
     </div>`;
-    toast('Access denied · you do not have permission to view this page.', 'error');
+    toast('Access denied � you do not have permission to view this page.', 'error');
     return;
   }
 
@@ -997,11 +997,11 @@ function isTypingContext(target) {
 function showShortcutGuide() {
   showModal('Speed Shortcuts', `
     <div class="text-sm" style="display:grid;gap:10px">
-      <div><strong>Alt + P</strong> · Open Patients</div>
-      <div><strong>Alt + A</strong> · Open Appointments</div>
-      <div><strong>Alt + B</strong> · Open Billing</div>
-      <div><strong>Alt + N</strong> · Quick New (context-aware)</div>
-      <div><strong>/</strong> · Focus main search box on current page</div>
+      <div><strong>Alt + P</strong> � Open Patients</div>
+      <div><strong>Alt + A</strong> � Open Appointments</div>
+      <div><strong>Alt + B</strong> � Open Billing</div>
+      <div><strong>Alt + N</strong> � Quick New (context-aware)</div>
+      <div><strong>/</strong> � Focus main search box on current page</div>
       <div class="text-muted" style="margin-top:6px">Designed for receptionist speed: most actions in one or two clicks.</div>
     </div>`);
 }
@@ -1173,7 +1173,7 @@ function setViewPref(page, view) {
   document.querySelectorAll(`.vt-btn[data-page="${page}"]`).forEach(btn => {
     btn.classList.toggle('vt-active', btn.dataset.mode === view);
   });
-  // pages whose render function handles view mode themselves · just re-render
+  // pages whose render function handles view mode themselves � just re-render
   if (page === 'packages') {
     const isAdmin = currentUser && currentUser.role === 'admin';
     renderPackagesTable(window._allPackages || [], isAdmin);
@@ -1417,7 +1417,7 @@ async function dashboard() {
       </div>` : ''}
 
       <div class="card">
-        <div class="card-title">${IC.appointments} ${isDoctor ? 'My' : "Today's"} Appointments · ${today}</div>
+        <div class="card-title">${IC.appointments} ${isDoctor ? 'My' : "Today's"} Appointments � ${today}</div>
         ${dashDateFilter}
         <div id="dashAptsWrap">
           ${renderDashAptTable(apts)}
@@ -1439,7 +1439,7 @@ function renderDashAptTable(apts) {
     <thead><tr><th>Patient Name</th><th>MR#</th><th>Time</th>${!isDoctor?'<th>Doctor Name</th>':''}<th>Status</th><th>Actions</th></tr></thead>
     <tbody>${apts.map(a => `<tr>
       <td><strong>${escHtml(a.patient_name)}</strong><br><span class="text-muted text-sm">${escHtml(a.patient_phone||'')}</span></td>
-      <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'—')}</span></td>
+      <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'�')}</span></td>
       <td>${escHtml(a.time)}</td>
       ${!isDoctor ? `<td>${escHtml(a.doctor_name)}</td>` : ''}
       <td>${appointmentStatusTag(a)}</td>
@@ -1562,7 +1562,7 @@ async function patients(search = '', page, mode, renderSeq = _pageRenderSeq) {
     }
     const pagerHtml = pages > 1 ? `
       <div style="display:flex;align-items:center;gap:8px;padding:10px 4px;flex-wrap:wrap">
-        <span class="text-muted text-sm">Showing ${((_patPage-1)*PAT_PAGE_SIZE)+1}–${Math.min(_patPage*PAT_PAGE_SIZE,total)} of ${total}</span>
+        <span class="text-muted text-sm">Showing ${((_patPage-1)*PAT_PAGE_SIZE)+1}�${Math.min(_patPage*PAT_PAGE_SIZE,total)} of ${total}</span>
         <div style="display:flex;gap:4px;margin-left:auto">
           <button class="btn btn-sm" onclick="patients('${escHtml(search)}',${_patPage-1},'${_patMode}')" ${_patPage<=1?'disabled':''}>&#8592; Prev</button>
           <span class="text-muted text-sm" style="padding:4px 8px">${_patPage} / ${pages}</span>
@@ -1575,12 +1575,12 @@ async function patients(search = '', page, mode, renderSeq = _pageRenderSeq) {
         const statusColor = p.patient_status === 'VIP' ? 'var(--c-primary)' : p.patient_status === 'Not Good' ? 'var(--c-danger)' : 'var(--c-success)';
         const blockedBadge = p.blocked ? `<span style="background:var(--c-danger);color:#fff;border-radius:4px;font-size:10px;padding:1px 5px;margin-left:4px">BLOCKED</span>` : '';
         return `<tr style="cursor:pointer${p.blocked ? ';opacity:0.6' : ''}" onclick="viewPatient(${p.id})">
-        <td><span class="code-id code-id-primary">${escHtml(p.mr_number)||'—'}</span></td>
+        <td><span class="code-id code-id-primary">${escHtml(p.mr_number)||'�'}</span></td>
         <td>${escHtml(p.name)}${p.second_name ? ` <span class="text-muted text-sm">${escHtml(p.second_name)}</span>` : ''}${blockedBadge}</td>
-        <td>${escHtml(p.civil_id)||'—'}</td>
-        <td>${escHtml(p.dob)||'—'}</td>
-        <td>${escHtml(p.age)||'—'} / ${escHtml(p.gender)||'—'}</td>
-        <td>${escHtml(p.phone)||'—'}</td>
+        <td>${escHtml(p.civil_id)||'�'}</td>
+        <td>${escHtml(p.dob)||'�'}</td>
+        <td>${escHtml(p.age)||'�'} / ${escHtml(p.gender)||'�'}</td>
+        <td>${escHtml(p.phone)||'�'}</td>
         <td><span style="background:${statusColor}22;color:${statusColor};border-radius:4px;font-size:11px;padding:2px 7px;font-weight:600">${escHtml(p.patient_status||'Good')}</span></td>
         <td class="text-muted text-sm">${escHtml(formatDateTime(p.registration_date || p.created_at || ''))}</td>
         <td class="td-actions patient-actions-cell" onclick="event.stopPropagation()">
@@ -1899,7 +1899,7 @@ function openPatientImportMappingModal(headers, sourceRows, delimiter = ',') {
       Map your file columns to patient fields. You can keep your original column order and names.
     </div>
     <div class="alert" style="margin-bottom:12px">
-      <strong>Detected columns (${headers.length})</strong> · delimiter: ${escHtml(delimiterLabel)}<br>
+      <strong>Detected columns (${headers.length})</strong> � delimiter: ${escHtml(delimiterLabel)}<br>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
         ${headers.map(h => `<span style="padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover);font-size:12px">${escHtml(h)}</span>`).join('') || '<span class="text-muted">No headers detected</span>'}
       </div>
@@ -1996,7 +1996,7 @@ async function _renderPatientPackagesInTab() {
                 <td>${escHtml(s.package_name)}</td>
                 <td>${escHtml(formatDateTime(s.purchased_at || ''))}</td>
                 <td>${statusBadge(s.status)}</td>
-                <td>${services || '—'}</td>
+                <td>${services || '�'}</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -2016,16 +2016,16 @@ async function viewPatient(id) {
     ]);
     const patApts = apts.filter(a => a.patient_id === id);
     // Flatten all service line_items from bills
-    const allServices = bills.flatMap(b => (b.line_items||[]).map(li => ({ ...li, bill_at: (b.created_at||''), visit_id: b.visit_id||'—', payment_status: b.payment_status })));
+    const allServices = bills.flatMap(b => (b.line_items||[]).map(li => ({ ...li, bill_at: (b.created_at||''), visit_id: b.visit_id||'�', payment_status: b.payment_status })));
     const statusColor = p.patient_status === 'VIP' ? 'var(--c-primary)' : p.patient_status === 'Not Good' ? 'var(--c-danger)' : 'var(--c-success)';
 
-    showModal(`Patient Profile · ${escHtml(p.name)}`, `
+    showModal(`Patient Profile � ${escHtml(p.name)}`, `
       <!-- Patient Info Card -->
       <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
           <div>
             <div style="font-size:22px;font-weight:700">${escHtml(p.name)}${p.second_name ? ` <span style=\"font-weight:400;color:var(--text-muted,#888)\">${escHtml(p.second_name)}</span>` : ''}</div>
-            <div style="color:var(--text-muted,#888);font-size:13px;margin-top:2px">MR# <strong style="color:var(--c-primary)">${escHtml(p.mr_number)||'—'}</strong>${p.civil_id ? ` &nbsp;—&nbsp; Civil ID: ${escHtml(p.civil_id)}` : ''}</div>
+            <div style="color:var(--text-muted,#888);font-size:13px;margin-top:2px">MR# <strong style="color:var(--c-primary)">${escHtml(p.mr_number)||'�'}</strong>${p.civil_id ? ` &nbsp;�&nbsp; Civil ID: ${escHtml(p.civil_id)}` : ''}</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm btn-primary" onclick="openPatientEmr(${p.id})">View Full EMR</button>
@@ -2051,17 +2051,17 @@ async function viewPatient(id) {
           </div>
         </div>
         <div class="detail-grid" style="margin-top:12px">
-          <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value">${escHtml(p.phone)||'—'}</div></div>
-          <div class="detail-item"><div class="detail-label">Alt Phone</div><div class="detail-value">${escHtml(p.alt_phone)||'—'}</div></div>
-          <div class="detail-item"><div class="detail-label">Date of Birth</div><div class="detail-value">${escHtml(p.dob)||'—'}</div></div>
-          <div class="detail-item"><div class="detail-label">Age / Gender</div><div class="detail-value">${p.age||'—'} / ${escHtml(p.gender)||'—'}</div></div>
-          <div class="detail-item"><div class="detail-label">Address</div><div class="detail-value">${escHtml(p.address)||'—'}</div></div>
+          <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value">${escHtml(p.phone)||'�'}</div></div>
+          <div class="detail-item"><div class="detail-label">Alt Phone</div><div class="detail-value">${escHtml(p.alt_phone)||'�'}</div></div>
+          <div class="detail-item"><div class="detail-label">Date of Birth</div><div class="detail-value">${escHtml(p.dob)||'�'}</div></div>
+          <div class="detail-item"><div class="detail-label">Age / Gender</div><div class="detail-value">${p.age||'�'} / ${escHtml(p.gender)||'�'}</div></div>
+          <div class="detail-item"><div class="detail-label">Address</div><div class="detail-value">${escHtml(p.address)||'�'}</div></div>
           <div class="detail-item"><div class="detail-label">Registered</div><div class="detail-value">${escHtml(formatDateTime(p.registration_date || p.created_at || ''))}</div></div>
         </div>
         ${p.medical_history ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"><span class="detail-label">Medical History: </span><span class="detail-value">${escHtml(p.medical_history)}</span></div>` : ''}
       </div>
 
-      <!-- Summary badges · clickable to switch tabs -->
+      <!-- Summary badges � clickable to switch tabs -->
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;align-items:stretch">
         <div class="ph-stat-box ph-stat-active" id="phStatAppts" onclick="_phTab('phAppts')" style="background:var(--c-primary-bg);border:1.5px solid var(--c-primary);border-radius:10px;padding:12px 6px;text-align:center;cursor:pointer;transition:var(--transition);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
           <div style="font-size:22px;font-weight:700;color:var(--c-primary);line-height:1">${patApts.length}</div>
@@ -2095,10 +2095,10 @@ async function viewPatient(id) {
           <thead><tr><th>Date</th><th>Time</th><th>Doctor</th><th>Status</th><th>Notes</th></tr></thead>
           <tbody>${patApts.sort((a,b)=>b.date+b.time<a.date+a.time?-1:1).map(a=>`<tr>
             <td>${escHtml(a.date)}</td>
-            <td>${escHtml(a.time||'—')}</td>
-            <td>${escHtml(a.doctor_name||'—')}</td>
+            <td>${escHtml(a.time||'�')}</td>
+            <td>${escHtml(a.doctor_name||'�')}</td>
             <td>${statusBadge(a.status)}</td>
-            <td class="text-muted text-sm">${escHtml(a.notes||'—')}</td>
+            <td class="text-muted text-sm">${escHtml(a.notes||'�')}</td>
           </tr>`).join('')}</tbody>
         </table></div>` : `<p class="text-muted text-sm">No appointments on file.</p>`}
       </div>
@@ -2108,11 +2108,11 @@ async function viewPatient(id) {
         ${bills.length ? `<div class="table-wrap"><table>
           <thead><tr><th>Bill No.</th><th>Visit ID</th><th>Date</th><th>Total</th><th>Payment</th><th>Status</th><th></th></tr></thead>
           <tbody>${bills.map(b=>`<tr>
-            <td><span class="code-id code-id-primary">${escHtml(b.bill_number||'—')}</span></td>
-            <td><span class="code-id code-id-muted">${escHtml(b.visit_id||'—')}</span></td>
+            <td><span class="code-id code-id-primary">${escHtml(b.bill_number||'�')}</span></td>
+            <td><span class="code-id code-id-muted">${escHtml(b.visit_id||'�')}</span></td>
             <td class="text-sm">${escHtml(formatDateTime(b.created_at||''))}</td>
             <td><strong>${(parseFloat(b.total)||0).toFixed(3)}</strong></td>
-            <td class="text-sm">${escHtml(b.payment_method||'—')}</td>
+            <td class="text-sm">${escHtml(b.payment_method||'�')}</td>
             <td>
               <span class="status-badges-wrap">
                 ${statusBadge(b.payment_status)}
@@ -2134,11 +2134,11 @@ async function viewPatient(id) {
             const dosageList = (r.dosage||'').split(/[,\n]/).map(d=>d.trim()).filter(Boolean);
             return `<tr>
               <td class="text-sm">${escHtml(formatDateTime(r.created_at||''))}</td>
-              <td class="text-sm">${escHtml(r.doctor_name||'—')}</td>
-              <td class="text-sm">${escHtml(r.diagnosis||'—')}</td>
-              <td class="text-sm">${medList.length ? medList.map(m=>`<div>${escHtml(m)}</div>`).join('') : '—'}</td>
-              <td class="text-sm">${dosageList.length ? dosageList.map(d=>`<div>${escHtml(d)}</div>`).join('') : '—'}</td>
-              <td class="text-sm text-muted">${escHtml(r.progress_note||'—')}</td>
+              <td class="text-sm">${escHtml(r.doctor_name||'�')}</td>
+              <td class="text-sm">${escHtml(r.diagnosis||'�')}</td>
+              <td class="text-sm">${medList.length ? medList.map(m=>`<div>${escHtml(m)}</div>`).join('') : '�'}</td>
+              <td class="text-sm">${dosageList.length ? dosageList.map(d=>`<div>${escHtml(d)}</div>`).join('') : '�'}</td>
+              <td class="text-sm text-muted">${escHtml(r.progress_note||'�')}</td>
               <td><button class="btn btn-sm" onclick="printPrescription(${r.id})">${IC.print}</button></td>
             </tr>`;
           }).join('')}</tbody>
@@ -2156,10 +2156,10 @@ async function viewPatient(id) {
                 '<span style="margin-left:6px;font-weight:600;color:' + (sv.used>=sv.total ? 'var(--c-danger)' : 'var(--c-success)') + '">' + sv.used + '/' + sv.total + ' used</span>' +
               '</div>').join('');
             return '<tr>' +
-              '<td><strong>' + escHtml(pk.package_name||'—') + '</strong></td>' +
+              '<td><strong>' + escHtml(pk.package_name||'�') + '</strong></td>' +
               '<td class="text-sm">' + escHtml(formatDateTime(pk.purchased_at||'')) + '</td>' +
               '<td>' + statusBadge(pk.status) + '</td>' +
-              '<td>' + (svcs || '—') + '</td>' +
+              '<td>' + (svcs || '�') + '</td>' +
               '</tr>';
           }).join('') + '</tbody></table></div>'
         : '<p class="text-muted text-sm">No packages on file.</p>'}
@@ -2172,8 +2172,8 @@ async function viewPatient(id) {
           '<tbody>' + allServices.map(sv =>
             '<tr>' +
               '<td class="text-sm">' + escHtml(formatDateTime(sv.bill_at||'')) + '</td>' +
-              '<td><span class="code-id code-id-muted">' + escHtml(sv.visit_id||'—') + '</span></td>' +
-              '<td><strong>' + escHtml(sv.name||sv.service_name||'—') + '</strong></td>' +
+              '<td><span class="code-id code-id-muted">' + escHtml(sv.visit_id||'�') + '</span></td>' +
+              '<td><strong>' + escHtml(sv.name||sv.service_name||'�') + '</strong></td>' +
               '<td><span style="font-size:11px;background:var(--bg-hover);border-radius:4px;padding:2px 6px">' + escHtml(sv.type||'service') + '</span></td>' +
               '<td>' + (parseFloat(sv.amount)||0).toFixed(3) + '</td>' +
             '</tr>').join('') + '</tbody></table></div>'
@@ -2773,16 +2773,16 @@ function renderPatientEmrModal() {
         <aside class="patient-emr-left">
           <div class="patient-emr-patient-card">
             <h4>${escHtml(p.name || 'Patient')}</h4>
-            <div class="text-sm text-muted">MR#: <strong>${escHtml(p.mr_number || '—')}</strong></div>
-            <div class="text-sm text-muted">Phone: ${escHtml(p.phone || '—')}</div>
-            <div class="text-sm text-muted">Civil ID: ${escHtml(p.civil_id || '—')}</div>
-            <div class="text-sm text-muted">DOB: ${escHtml(p.dob || '—')}</div>
+            <div class="text-sm text-muted">MR#: <strong>${escHtml(p.mr_number || '�')}</strong></div>
+            <div class="text-sm text-muted">Phone: ${escHtml(p.phone || '�')}</div>
+            <div class="text-sm text-muted">Civil ID: ${escHtml(p.civil_id || '�')}</div>
+            <div class="text-sm text-muted">DOB: ${escHtml(p.dob || '�')}</div>
             <div class="text-sm text-muted">Registered: ${escHtml(formatDateTime(p.registration_date || ''))}</div>
           </div>
 
           <div class="patient-emr-summary-card">
             <h5>Quick Summary</h5>
-            <div class="text-sm"><strong>Latest Visit:</strong> ${latest ? escHtml(formatDateTime(latest.date || '')) : '—'}</div>
+            <div class="text-sm"><strong>Latest Visit:</strong> ${latest ? escHtml(formatDateTime(latest.date || '')) : '�'}</div>
             <div class="text-sm text-muted">${latest ? escHtml(latest.doctor_name || 'Doctor not linked') : 'No visit found'}</div>
             <div class="text-sm text-muted">${latest && latest.diagnosis ? escHtml(latest.diagnosis) : 'No diagnosis yet'}</div>
             <div class="patient-emr-counts">
@@ -2817,7 +2817,7 @@ function renderPatientEmrModal() {
       </div>
     </div>`;
 
-  showModal(`Patient EMR · ${escHtml(p.name || '')}`, bodyHtml, null, 'modal-emr');
+  showModal(`Patient EMR � ${escHtml(p.name || '')}`, bodyHtml, null, 'modal-emr');
 }
 
 async function openPatientEmr(patientId, filters = null) {
@@ -3151,7 +3151,7 @@ function calCellHtml(day, dateStr, isOther, todayStr) {
   apts.slice(0, maxShow).forEach(a => {
     const statusCls = (a.status||'Booked').toLowerCase().replace(/[\s-]/g,'-');
     const pillClass = statusCls === 'booked' ? 'scheduled' : statusCls;
-    aptHTML += `<div class="cal-pill ${pillClass}" title="${escHtml(a.patient_name)} · ${escHtml(a.time)}" onclick="event.stopPropagation();openEditAppointmentModal(${a.id})">${escHtml(a.time)} ${escHtml(a.patient_name)}</div>`;
+    aptHTML += `<div class="cal-pill ${pillClass}" title="${escHtml(a.patient_name)} � ${escHtml(a.time)}" onclick="event.stopPropagation();openEditAppointmentModal(${a.id})">${escHtml(a.time)} ${escHtml(a.patient_name)}</div>`;
   });
   if (apts.length > maxShow) {
     aptHTML += `<div class="cal-pill" style="background:var(--bg-hover);color:var(--text-muted)">+${apts.length - maxShow} more</div>`;
@@ -3193,7 +3193,7 @@ function showDayDetail(dateStr) {
   const nice = new Date(dateStr+'T00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 
   detail.innerHTML = `
-    <h4>${IC.appointments} ${nice} · ${dayApts.length} appointment${dayApts.length!==1?'s':''}</h4>
+    <h4>${IC.appointments} ${nice} � ${dayApts.length} appointment${dayApts.length!==1?'s':''}</h4>
     ${can('appointments.create') ? `<button class="btn btn-primary btn-sm mb-2" onclick="openNewAppointmentModal(null,'${dateStr}')">${IC.plus} Book on this date</button>` : ''}
     ${dayApts.length === 0
       ? emptyState(IC.empty, 'No appointments', 'No appointments on this date')
@@ -3207,13 +3207,13 @@ function aptRowHtml(a) {
   const isDoctor = currentUser.role === 'doctor';
   const isLocked = ['Completed','Cancelled'].includes(a.status);
   return `<tr>
-    <td><strong>${escHtml(a.time||'—')}</strong></td>
+    <td><strong>${escHtml(a.time||'�')}</strong></td>
     <td><strong>${escHtml(a.patient_name)}</strong><br><span class="text-muted text-sm">${escHtml(a.patient_phone||'')}</span></td>
-    <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'—')}</span></td>
-    ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'—')}</td>` : ''}
+    <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'�')}</span></td>
+    ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'�')}</td>` : ''}
     <td>${appointmentStatusTag(a)}</td>
     <td class="td-actions"><div class="apt-actions">
-      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">ℹ️ Info</button>
+      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">?? Info</button>
       ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
       ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
       ${!isDoctor && !isLocked ? `<button class="btn btn-sm btn-outline-primary" onclick="openEditAppointmentModal(${a.id})">${IC.edit} Edit</button>` : ''}
@@ -3223,23 +3223,23 @@ function aptRowHtml(a) {
   </tr>`;
 }
 
-// List-view row · columns: Date | Time | Patient | MR# | Doctor (non-doctor only) | Status | Actions
+// List-view row � columns: Date | Time | Patient | MR# | Doctor (non-doctor only) | Status | Actions
 function listAptRowHtml(a) {
   const isDoctor = currentUser.role === 'doctor';
   const isLocked = ['Completed','Cancelled'].includes(a.status);
-  const fmtDate = d => d ? new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+  const fmtDate = d => d ? new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '�';
   return `<tr>
     <td class="text-sm text-muted">${fmtDate(a.date)}</td>
-    <td><strong>${escHtml(a.time||'—')}</strong></td>
+    <td><strong>${escHtml(a.time||'�')}</strong></td>
     <td>
       <strong>${escHtml(a.patient_name)}</strong>
       ${a.patient_phone ? `<br><span class="text-muted text-sm">${escHtml(a.patient_phone)}</span>` : ''}
     </td>
-    <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'—')}</span></td>
-    ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'—')}</td>` : ''}
+    <td><span class="code-id code-id-primary">${escHtml(a.mr_number||'�')}</span></td>
+    ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'�')}</td>` : ''}
     <td>${appointmentStatusTag(a)}</td>
     <td class="td-actions"><div class="apt-actions">
-      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">ℹ️ Info</button>
+      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">?? Info</button>
       ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
       ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
       ${!isDoctor && !isLocked ? `<button class="btn btn-sm btn-outline-primary" onclick="openEditAppointmentModal(${a.id})">${IC.edit} Edit</button>` : ''}
@@ -3437,7 +3437,7 @@ async function openNewAppointmentModal(prePatientId = null, preDate = null, preD
         </div>
         <div id="selectedPatientLabel" class="text-muted text-sm mt-1"></div>
         ${!prePatientId ? `<div style="margin-top:10px">
-          <button type="button" class="btn btn-primary btn-sm" onmousedown="event.preventDefault();quickRegisterFromAppt()">${IC.plus} New Patient · Quick Register</button>
+          <button type="button" class="btn btn-primary btn-sm" onmousedown="event.preventDefault();quickRegisterFromAppt()">${IC.plus} New Patient � Quick Register</button>
         </div>` : ''}
       </div>
       <div class="form-row">
@@ -3483,7 +3483,7 @@ async function openNewAppointmentModal(prePatientId = null, preDate = null, preD
 
   if (prePatientId) {
     apiFetch(`/api/patients/${prePatientId}`).then(p => {
-      document.getElementById('patientSearchInput').value = `${p.name} · ${p.phone||''}`;
+      document.getElementById('patientSearchInput').value = `${p.name} � ${p.phone||''}`;
       document.getElementById('selectedPatientLabel').textContent = `Selected: ${p.name}`;
     });
   }
@@ -3528,7 +3528,7 @@ function searchPatientsForAppt(q) {
 
 function selectPatientFromDropdown(id, name, phone) {
   document.getElementById('selectedPatientId').value = id;
-  document.getElementById('patientSearchInput').value = `${name} · ${phone}`;
+  document.getElementById('patientSearchInput').value = `${name} � ${phone}`;
   document.getElementById('selectedPatientLabel').textContent = `Selected: ${name}`;
   document.getElementById('patientDropdown').style.display = 'none';
 }
@@ -3647,7 +3647,7 @@ async function followUps() {
     <div class="apt-filter-bar" id="fuFilterBar">
       <div class="apt-filter-toolbar">
         <div class="apt-filter-fields" style="grid-template-columns:2fr 1fr minmax(150px,180px) minmax(150px,180px)">
-          <input class="apt-filter-field" type="text" id="fuSearch" placeholder="Search patient, MR#, purpose, notes…" oninput="fuDebouncedSearch()"/>
+          <input class="apt-filter-field" type="text" id="fuSearch" placeholder="Search patient, MR#, purpose, notes�" oninput="fuDebouncedSearch()"/>
           <select class="apt-filter-field" id="fuStatus" onchange="loadFollowUps()">
             <option value="">All Status</option>
             <option value="Pending" selected>Pending</option>
@@ -3701,7 +3701,7 @@ async function loadFollowUps() {
     }
 
     const fmtDue = f => {
-      const d = f.due_date ? new Date(f.due_date + 'T00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '—';
+      const d = f.due_date ? new Date(f.due_date + 'T00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '�';
       return f.due_time ? `${d} <span class="text-muted text-sm">${escHtml(f.due_time)}</span>` : d;
     };
     wrap.innerHTML = `<div class="table-wrap"><table>
@@ -3711,11 +3711,11 @@ async function loadFollowUps() {
           <td><span class="billing-index">${i + 1}</span></td>
           <td><strong>${fmtDue(f)}</strong></td>
           <td><strong>${escHtml(f.patient_name || 'Patient')}</strong>${f.patient_phone ? `<br><span class="text-muted text-sm">${escHtml(f.patient_phone)}</span>` : ''}</td>
-          <td><span class="code-id code-id-primary">${escHtml(f.mr_number || '—')}</span></td>
-          <td class="text-sm">${escHtml(f.doctor_name || '—')}</td>
-          <td class="text-sm">${escHtml(f.purpose || '—')}</td>
+          <td><span class="code-id code-id-primary">${escHtml(f.mr_number || '�')}</span></td>
+          <td class="text-sm">${escHtml(f.doctor_name || '�')}</td>
+          <td class="text-sm">${escHtml(f.purpose || '�')}</td>
           <td>${fuStatusBadge(f.status)}</td>
-          <td class="text-muted text-sm">${escHtml(f.notes || '—')}</td>
+          <td class="text-muted text-sm">${escHtml(f.notes || '�')}</td>
           <td class="td-actions">
             <div class="billing-actions">
               <div class="billing-actions-top">
@@ -3809,7 +3809,7 @@ async function completeFollowUp(id) {
         <div class="form-group" style="grid-column:1/-1"><label>Next Purpose</label><input name="next_purpose" placeholder="e.g. 1-week review"/></div>
         <div class="form-group" style="grid-column:1/-1"><label>Next Notes</label><textarea name="next_notes" rows="2"></textarea></div>
       </div>
-      ${row ? `<div class="text-muted text-sm">Patient: ${escHtml(row.patient_name || '')} · Current Due: ${escHtml(row.due_date || '')}</div>` : ''}
+      ${row ? `<div class="text-muted text-sm">Patient: ${escHtml(row.patient_name || '')} � Current Due: ${escHtml(row.due_date || '')}</div>` : ''}
     </form>
   `, async () => {
     const form = document.getElementById('fuCompleteForm');
@@ -4005,7 +4005,7 @@ function bookAptFromFollowUp(fuId) {
     apiFetch(`/api/patients/${patId}`).then(p => {
       const inp = document.getElementById('patientSearchInput');
       const lbl = document.getElementById('selectedPatientLabel');
-      if (inp) inp.value = `${p.name} · ${p.phone || ''}`;
+      if (inp) inp.value = `${p.name} � ${p.phone || ''}`;
       if (lbl) lbl.textContent = `Selected: ${p.name}`;
     }).catch(() => {});
   }
@@ -4334,14 +4334,14 @@ async function submitQuickRegFromAppt(btn) {
   const phone = document.getElementById('qrPhone')?.value?.trim();
   if (!name)  { toast('Name is required','error'); return; }
   if (!phone) { toast('Phone is required','error'); return; }
-  btn.disabled = true; btn.textContent = 'Registering—';
+  btn.disabled = true; btn.textContent = 'Registering�';
   try {
     const p = await apiFetch('/api/patients', { method:'POST', body: JSON.stringify({ name, phone }) });
     document.getElementById('quickRegOverlay')?.remove();
     const inp = document.getElementById('patientSearchInput');
     const hid = document.getElementById('selectedPatientId');
     const lbl = document.getElementById('selectedPatientLabel');
-    if (inp) inp.value = `${name} · ${phone}`;
+    if (inp) inp.value = `${name} � ${phone}`;
     if (hid) hid.value = p.id;
     if (lbl) lbl.textContent = `? Selected: ${name} (MR: ${p.mr_number || p.id})`;
     toast(`Patient "${name}" registered & selected`, 'success');
@@ -4443,7 +4443,7 @@ async function scheduler(renderSeq = _pageRenderSeq) {
     const slotHeight = 30; // px per 15-min slot
     const hourHeight = slotHeight * 4; // px per hour block
 
-    // Build time labels · one per hour block, with 2x2 sub-labels
+    // Build time labels � one per hour block, with 2x2 sub-labels
     let timeLabels = '';
     for (let h = startHour; h < endHour; h++) {
       const top = (h - startHour) * hourHeight;
@@ -4503,7 +4503,7 @@ async function scheduler(renderSeq = _pageRenderSeq) {
 
       colHeaders += `<div class="sched-col-header" style="border-bottom: 3px solid ${color.border}">
         <div class="sched-doc-name">${escHtml(doc.name)}</div>
-        <div class="sched-doc-count">${docApts.length} apt${docApts.length!==1?'s':''} · ${doc.slot_duration||30} min slots${doc.department_name ? ` · ${escHtml(doc.department_name)}` : ''}</div>
+        <div class="sched-doc-count">${docApts.length} apt${docApts.length!==1?'s':''} � ${doc.slot_duration||30} min slots${doc.department_name ? ` � ${escHtml(doc.department_name)}` : ''}</div>
         <div class="text-muted text-sm">Work ${escHtml(docSchedule.work_start || '09:00')} - ${escHtml(docSchedule.work_end || '17:00')}</div>
         <div class="text-muted text-sm">Off: ${escHtml(weeklyOff)} | Breaks: ${escHtml(breakSummary)}</div>
       </div>`;
@@ -4546,14 +4546,14 @@ async function scheduler(renderSeq = _pageRenderSeq) {
           <div class="sched-apt-status"></div>
           <div class="sched-apt-info">
             <div class="sched-apt-name">${escHtml(a.patient_name)}</div>
-            <div class="sched-apt-meta">${a.mr_number ? `<span class="code-id code-id-primary">${escHtml(a.mr_number)}</span>` : ''}${a.patient_phone ? (a.mr_number ? ' · ' : '') + escHtml(a.patient_phone) : ''}</div>
-            <div class="sched-apt-time">${escHtml(a.time)} · ${escHtml(a.status)}</div>
+            <div class="sched-apt-meta">${a.mr_number ? `<span class="code-id code-id-primary">${escHtml(a.mr_number)}</span>` : ''}${a.patient_phone ? (a.mr_number ? ' � ' : '') + escHtml(a.patient_phone) : ''}</div>
+            <div class="sched-apt-time">${escHtml(a.time)} � ${escHtml(a.status)}</div>
           </div>
           ${a.status !== 'Cancelled' ? '<div class="sched-drag-handle" title="Drag to reschedule">::</div>' : ''}
         </div>`;
       });
 
-      // Build slot row backgrounds · alternate per hour
+      // Build slot row backgrounds � alternate per hour
       let slotRows = '';
       for (let h = 0; h < (endHour - startHour); h++) {
         const top = h * hourHeight;
@@ -4631,7 +4631,7 @@ async function scheduler(renderSeq = _pageRenderSeq) {
         <span class="sched-legend-item"><span class="sched-legend-dot no-show"></span> No-Show</span>
         <span class="sched-legend-item"><span class="sched-legend-dot cancelled"></span> Cancelled</span>
         <span class="sched-legend-item">Shaded blocks = holidays / breaks / off-hours</span>
-        <span class="sched-legend-item">${IC.clock} ${doctors.length} Doctor${doctors.length!==1?'s':''} · ${allApts.length} Appointment${allApts.length!==1?'s':''}</span>
+        <span class="sched-legend-item">${IC.clock} ${doctors.length} Doctor${doctors.length!==1?'s':''} � ${allApts.length} Appointment${allApts.length!==1?'s':''}</span>
         ${schedDept && !isDeptLocked ? `<span class="sched-legend-item"><button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="schedDept='';scheduler()">? Clear Filter</button></span>` : ''}
       </div>
 
@@ -4997,12 +4997,12 @@ function renderPrescriptionRows(list) {
       <thead><tr><th>#</th><th>MR#</th><th>Patient</th><th>Visit ID</th><th>Doctor</th><th>Diagnosis</th><th>Medicines</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody>${list.map((r,i) => `<tr>
         <td>${i+1}</td>
-        <td><span class="code-id code-id-primary">${escHtml(r.mr_number||'—')}</span></td>
+        <td><span class="code-id code-id-primary">${escHtml(r.mr_number||'�')}</span></td>
         <td><strong>${escHtml(r.patient_name)}</strong></td>
-        <td><span class="code-id code-id-muted">${escHtml(r.visit_id||'—')}</span></td>
+        <td><span class="code-id code-id-muted">${escHtml(r.visit_id||'�')}</span></td>
         <td>${escHtml(r.doctor_name)}</td>
-        <td>${escHtml(r.diagnosis)||'—'}</td>
-        <td class="truncate" style="max-width:160px">${escHtml(r.medicines)||'—'}</td>
+        <td>${escHtml(r.diagnosis)||'�'}</td>
+        <td class="truncate" style="max-width:160px">${escHtml(r.medicines)||'�'}</td>
         <td class="text-muted text-sm">${escHtml(formatDateTime(r.created_at||''))}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="printPrescription(${r.id})">${IC.print} Print</button>
@@ -5159,7 +5159,7 @@ async function loadRxVisitOptions(patientId, selectedVisitId = '', fieldId = 'rx
 
     const options = visitRows.map(v => {
       const dt = formatDateTime(v.created_at || '');
-      const label = dt !== '—' ? `${v.visit_id} - ${dt}` : v.visit_id;
+      const label = dt !== '�' ? `${v.visit_id} - ${dt}` : v.visit_id;
       return `<option value="${escHtml(v.visit_id)}">${escHtml(label)}</option>`;
     }).join('');
     selectEl.innerHTML = `<option value="">Select visit ID</option>${options}`;
@@ -5241,18 +5241,18 @@ async function printPrescription(id) {
   printArea.classList.remove('hidden');
   printArea.innerHTML = `
     <div style="text-align:center;margin-bottom:20px">
-      <h2 style="margin:0">ClinicMS · Clinic Management System</h2>
+      <h2 style="margin:0">ClinicMS � Clinic Management System</h2>
       <p style="color:#666;margin:4px 0">Prescription</p>
       <hr/>
     </div>
     <table style="width:100%;margin-bottom:16px">
       <tr><td><strong>Patient:</strong> ${escHtml(rx.patient_name)}</td><td><strong>Date:</strong> ${escHtml(formatDateTime(rx.created_at||''))}</td></tr>
-      <tr><td><strong>MR#:</strong> ${escHtml(rx.mr_number || '—')}</td><td><strong>Visit ID:</strong> ${escHtml(rx.visit_id || '—')}</td></tr>
+      <tr><td><strong>MR#:</strong> ${escHtml(rx.mr_number || '�')}</td><td><strong>Visit ID:</strong> ${escHtml(rx.visit_id || '�')}</td></tr>
       <tr><td><strong>Doctor:</strong> ${escHtml(rx.doctor_name)}</td><td></td></tr>
     </table>
-    <h4>Diagnosis</h4><p>${escHtml(rx.diagnosis)||'—'}</p>
-    <h4>Medicines</h4><p>${escHtml(rx.medicines)||'—'}</p>
-    <h4>Dosage &amp; Instructions</h4><p>${escHtml(rx.dosage)||'—'}</p>
+    <h4>Diagnosis</h4><p>${escHtml(rx.diagnosis)||'�'}</p>
+    <h4>Medicines</h4><p>${escHtml(rx.medicines)||'�'}</p>
+    <h4>Dosage &amp; Instructions</h4><p>${escHtml(rx.dosage)||'�'}</p>
     ${rx.notes ? `<h4>Notes</h4><p>${escHtml(rx.notes)}</p>` : ''}
     <div style="margin-top:40px;display:flex;justify-content:space-between;font-size:13px">
       <span>Patient Signature: _______________</span>
@@ -5295,15 +5295,15 @@ function renderDiscountTable() {
       const notStarted = d.valid_from && d.valid_from > todayISO;
       const validLabel = expired ? '<span class="badge badge-cancelled">Expired</span>' : notStarted ? '<span class="badge badge-pending">Not Started</span>' : '<span class="badge badge-confirmed">Valid</span>';
       const typeLabel = d.type === 'percentage' ? `<span class="badge badge-admin">${IC.discount} %</span>` : d.type === 'fixed' ? `<span class="badge badge-arrived">Fixed</span>` : `<span class="badge badge-secondary">Open</span>`;
-      const valueLabel = d.type === 'percentage' ? `${d.value}%` : d.type === 'fixed' ? `KD ${parseFloat(d.value||0).toFixed(3)}` : '— (manual)';
+      const valueLabel = d.type === 'percentage' ? `${d.value}%` : d.type === 'fixed' ? `KD ${parseFloat(d.value||0).toFixed(3)}` : '� (manual)';
       return `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(d.name)}</strong></td>
         <td>${typeLabel}</td>
         <td>${escHtml(valueLabel)}</td>
         <td>${escHtml(d.applicable_on||'all')}</td>
-        <td>${d.max_limit ? `KD ${parseFloat(d.max_limit).toFixed(3)}` : '—'}</td>
-        <td style="font-size:12px">${escHtml(d.valid_from||'—')} → ${escHtml(d.valid_to||'—')}<br/>${validLabel}</td>
+        <td>${d.max_limit ? `KD ${parseFloat(d.max_limit).toFixed(3)}` : '�'}</td>
+        <td style="font-size:12px">${escHtml(d.valid_from||'�')} ? ${escHtml(d.valid_to||'�')}<br/>${validLabel}</td>
         <td>${d.active !== false ? '<span class="badge badge-confirmed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="openDiscountModal(${d.id})">${IC.edit}</button>
@@ -5318,7 +5318,7 @@ async function openDiscountModal(id = null) {
   if (id) {
     try { d = await apiFetch(`/api/discounts/${id}`); } catch { toast('Failed to load','error'); return; }
   }
-  showModal(id ? `Edit Discount · ${escHtml(d.name)}` : 'New Discount', `
+  showModal(id ? `Edit Discount � ${escHtml(d.name)}` : 'New Discount', `
     <form id="discountForm">
       <div class="form-group"><label>Discount Name *</label><input name="name" value="${escHtml(d.name||'')}" required maxlength="80"/></div>
       <div class="form-row">
@@ -5447,7 +5447,7 @@ function refreshSupplierInvoicePaymentMeta() {
 
   metaEl.innerHTML = `
     <div class="form-row" style="margin:0">
-      <div class="form-group" style="margin:0"><label>Supplier</label><div><strong>${escHtml(inv.supplier_name || '—')}</strong></div></div>
+      <div class="form-group" style="margin:0"><label>Supplier</label><div><strong>${escHtml(inv.supplier_name || '�')}</strong></div></div>
       <div class="form-group" style="margin:0"><label>Invoice #</label><div><strong>${escHtml(inv.invoice_number || `PO-${inv.po_id}`)}</strong></div></div>
     </div>
     <div class="form-row" style="margin-top:8px">
@@ -5487,7 +5487,7 @@ async function openSupplierInvoicePaymentModal(preselectPoId = null) {
           return {
             po_id: po.id,
             supplier_id: po.supplier_id,
-            supplier_name: po.supplier_name || '—',
+            supplier_name: po.supplier_name || '�',
             invoice_number: String(po.invoice_number || '').trim() || `PO-${po.id}`,
             order_date: po.order_date || String(po.created_at || '').slice(0, 10),
             purchase_status: po.status || 'Pending',
@@ -5515,7 +5515,7 @@ async function openSupplierInvoicePaymentModal(preselectPoId = null) {
       : (Array.isArray(methodsResp) ? methodsResp.filter((m) => m.active !== false).map((m) => m.name) : []);
 
     const invoiceOpts = _supplierInvoiceCandidates.map((inv) => `
-      <option value="${inv.po_id}">${escHtml(`${inv.supplier_name || 'Supplier'} · ${inv.invoice_number || `PO-${inv.po_id}`} · Due ${expenseMoney(inv.due_amount || 0)}`)}</option>`).join('');
+      <option value="${inv.po_id}">${escHtml(`${inv.supplier_name || 'Supplier'} � ${inv.invoice_number || `PO-${inv.po_id}`} � Due ${expenseMoney(inv.due_amount || 0)}`)}</option>`).join('');
     const methodOpts = (paymentMethods.length ? paymentMethods : ['Cash']).map((name) => `<option value="${escHtml(name)}">${escHtml(name)}</option>`).join('');
 
     showModal('Pay Supplier Invoice', `
@@ -5523,7 +5523,7 @@ async function openSupplierInvoicePaymentModal(preselectPoId = null) {
         <div class="form-group">
           <label>Supplier Invoice *</label>
           <select id="sipInvoiceId" name="invoice_id" onchange="refreshSupplierInvoicePaymentMeta()" required>
-            <option value="">— Select Invoice —</option>
+            <option value="">� Select Invoice �</option>
             ${invoiceOpts}
           </select>
         </div>
@@ -5678,17 +5678,17 @@ function renderExpenseTable() {
       const canEditRow = can('expenses.edit');
       const canDeleteRow = can('expenses.delete');
       return `<tr>
-        <td><strong>${escHtml(row.expense_date || '—')}</strong><div class="text-muted text-sm">${escHtml(formatDateTime(row.created_at || ''))}</div></td>
-        <td><strong>${escHtml(row.title || '—')}</strong>${row.notes ? `<div class="text-muted text-sm expense-notes-cell">${escHtml(row.notes)}</div>` : ''}</td>
-        <td><span class="badge badge-secondary">${escHtml(row.category || '—')}</span></td>
+        <td><strong>${escHtml(row.expense_date || '�')}</strong><div class="text-muted text-sm">${escHtml(formatDateTime(row.created_at || ''))}</div></td>
+        <td><strong>${escHtml(row.title || '�')}</strong>${row.notes ? `<div class="text-muted text-sm expense-notes-cell">${escHtml(row.notes)}</div>` : ''}</td>
+        <td><span class="badge badge-secondary">${escHtml(row.category || '�')}</span></td>
         <td><strong class="expense-amount">${expenseMoney(row.amount || 0)}</strong></td>
-        <td>${escHtml(row.payment_method || '—')}</td>
-        <td>${vendorBits.length ? vendorBits.map((item) => `<div>${escHtml(item)}</div>`).join('') : '—'}</td>
-        <td>${escHtml(row.updated_by_name || row.created_by_name || '—')}<div class="text-muted text-sm">${escHtml(formatDateTime(row.updated_at || row.created_at || ''))}</div></td>
+        <td>${escHtml(row.payment_method || '�')}</td>
+        <td>${vendorBits.length ? vendorBits.map((item) => `<div>${escHtml(item)}</div>`).join('') : '�'}</td>
+        <td>${escHtml(row.updated_by_name || row.created_by_name || '�')}<div class="text-muted text-sm">${escHtml(formatDateTime(row.updated_at || row.created_at || ''))}</div></td>
         <td class="td-actions">
           ${canEditRow ? `<button class="btn btn-sm" onclick="openExpenseModal(${row.id})">${IC.edit}</button>` : ''}
           ${canDeleteRow ? `<button class="btn btn-sm" style="color:#e57373" onclick="deleteExpense(${row.id})">${IC.trash}</button>` : ''}
-          ${!canEditRow && !canDeleteRow ? '—' : ''}
+          ${!canEditRow && !canDeleteRow ? '�' : ''}
         </td>
       </tr>`;
     }).join('')}</tbody>
@@ -5716,7 +5716,7 @@ async function openExpenseModal(id = null) {
     entry = { ...entry, ...found };
   }
 
-  showModal(id != null ? `Edit Expense · ${escHtml(entry.title || '')}` : 'New Expense', `
+  showModal(id != null ? `Edit Expense � ${escHtml(entry.title || '')}` : 'New Expense', `
     <form id="expenseForm">
       <div class="form-row">
         <div class="form-group"><label>Expense Title *</label><input name="title" maxlength="120" value="${escHtml(entry.title || '')}" placeholder="e.g. Tea for staff, Courier, Petrol" required /></div>
@@ -5782,7 +5782,7 @@ function _sortPkgSessionLogs(logs = []) {
   });
 }
 function _normPkgText(v) {
-  return String(v || '').toLowerCase().replace(/\[[^\]]*\]/g, '').replace(/[×x]\s*\d+(?:\.\d+)?/g, '').replace(/\s+/g, ' ').trim();
+  return String(v || '').toLowerCase().replace(/\[[^\]]*\]/g, '').replace(/[�x]\s*\d+(?:\.\d+)?/g, '').replace(/\s+/g, ' ').trim();
 }
 function resolvePkgSessionServiceId(item, patientPackage) {
   const sid = parseInt(item && item.service_id);
@@ -5851,7 +5851,7 @@ function getPkgSessionProgressLabel(item, bill, patientPackage) {
   const base = qtyThisBill > 1 && endSession > startSession
     ? `Sessions ${startSession}-${endSession} of ${totalSessions}`
     : `Session ${endSession} of ${totalSessions}`;
-  return `${base} · Used ${usedAfter}/${totalSessions} · Left ${leftAfter}`;
+  return `${base} � Used ${usedAfter}/${totalSessions} � Left ${leftAfter}`;
 }
 function getPackageUsageDetailLabel(item, bill, patientPackages = []) {
   if (!item || item.type !== 'package' || !bill) return '';
@@ -5879,7 +5879,7 @@ function getPackageUsageDetailLabel(item, bill, patientPackages = []) {
       return `${nm}${selectedMark}: Used ${used}/${total}, Left ${left}`;
     })
     .filter(Boolean);
-  return rows.join(' · ');
+  return rows.join(' � ');
 }
 async function enrichBillingPkgSessionProgress(list) {
   const bills = Array.isArray(list) ? list : [];
@@ -6023,25 +6023,25 @@ function renderBillingRows(list) {
         };
         const itemsFullSummary = b.line_items && b.line_items.length
           ? b.line_items.map(l=>itemLabel(l)).join(', ')
-          : [b.consultation_fee?`Consult KD ${b.consultation_fee}`:'', b.medicine_charge?`Meds KD ${b.medicine_charge}`:'', b.other_charges?`Other KD ${b.other_charges}`:''].filter(Boolean).join(', ')||'—';
+          : [b.consultation_fee?`Consult KD ${b.consultation_fee}`:'', b.medicine_charge?`Meds KD ${b.medicine_charge}`:'', b.other_charges?`Other KD ${b.other_charges}`:''].filter(Boolean).join(', ')||'�';
         const itemsSummary = b.line_items && b.line_items.length
           ? b.line_items.slice(0,2).map(l=>itemLabel(l)).join(', ') + (b.line_items.length>2?` +${b.line_items.length-2} more`: '')
-          : [b.consultation_fee?`Consult KD ${b.consultation_fee}`:'', b.medicine_charge?`Meds KD ${b.medicine_charge}`:'', b.other_charges?`Other KD ${b.other_charges}`:''].filter(Boolean).join(', ')||'—';
+          : [b.consultation_fee?`Consult KD ${b.consultation_fee}`:'', b.medicine_charge?`Meds KD ${b.medicine_charge}`:'', b.other_charges?`Other KD ${b.other_charges}`:''].filter(Boolean).join(', ')||'�';
         return `<tr class="billing-row">
           <td><span class="billing-index">${i+1}</span></td>
-          <td><span class="code-id code-id-primary">${escHtml(b.bill_number||'—')}</span></td>
-          <td><span class="code-id code-id-primary">${escHtml(b.visit_id||'—')}</span></td>
-          <td><span class="code-id code-id-primary">${escHtml(b.mr_number||'—')}</span></td>
+          <td><span class="code-id code-id-primary">${escHtml(b.bill_number||'�')}</span></td>
+          <td><span class="code-id code-id-primary">${escHtml(b.visit_id||'�')}</span></td>
+          <td><span class="code-id code-id-primary">${escHtml(b.mr_number||'�')}</span></td>
           <td>
             <div class="billing-patient-cell">
               <span class="billing-patient-avatar">${escHtml((b.patient_name||'?').charAt(0).toUpperCase())}</span>
               <div class="billing-patient-info">
-                <strong class="billing-patient">${escHtml(b.patient_name||'—')}</strong>
+                <strong class="billing-patient">${escHtml(b.patient_name||'�')}</strong>
                 ${b.doctor_name ? `<span class="billing-patient-doctor">${escHtml(b.doctor_name)}</span>` : ''}
               </div>
             </div>
           </td>
-          <td>${escHtml(b.doctor_name || '—')}</td>
+          <td>${escHtml(b.doctor_name || '�')}</td>
           <td class="text-muted text-sm billing-items-cell" title="${itemsFullSummary}">${itemsSummary}</td>
           <td><strong class="billing-total">KD ${b.total}</strong></td>
           <td>${(b.payment_splits && b.payment_splits.length > 1)
@@ -6126,7 +6126,7 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
   window._billProductQtyMap = {};
   const billDoctors = (docs||[]).filter(d=>d.active!==false);
 
-  showModal(`Add Services · ${escHtml(patientName)} · ${escHtml(bill.bill_number||'#'+billId)}`, `
+  showModal(`Add Services � ${escHtml(patientName)} � ${escHtml(bill.bill_number||'#'+billId)}`, `
     <div class="bill-layout">
       <div class="bill-left">
         <div class="bill-patient-row">
@@ -6136,7 +6136,7 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
         </div>
         <div class="bill-amend-note">
           <span class="bill-amend-note-icon">${IC.billing}</span>
-          <span class="bill-amend-note-text">Adding to existing bill <strong>${escHtml(bill.bill_number||'#'+billId)}</strong> · Previously billed items are locked.</span>
+          <span class="bill-amend-note-text">Adding to existing bill <strong>${escHtml(bill.bill_number||'#'+billId)}</strong> � Previously billed items are locked.</span>
         </div>
         <div class="bill-tabs">
           <button type="button" class="bill-tab active" onclick="billSwitchTab('services',this)">${IC.services||''} Services</button>
@@ -6167,7 +6167,7 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
                   </div>
                   <div class="bill-pkg-card-info">
                     <span class="bill-pkg-card-name">${escHtml(p.name)}</span>
-                    <span class="bill-pkg-card-svcs">${(p.services||[]).map(s=>escHtml(s.name)+((s.total||1)>1?` —${s.total}`:'')).join(' · ')}</span>
+                    <span class="bill-pkg-card-svcs">${(p.services||[]).map(s=>escHtml(s.name)+((s.total||1)>1?` �${s.total}`:'')).join(' � ')}</span>
                   </div>
                   <div class="bill-pkg-card-right">
                     <span class="bill-pkg-card-price">KD ${(p.discount_price||0).toFixed(3)}</span>
@@ -6180,7 +6180,7 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
                     ${(p.services||[]).map(s=>`
                     <label class="bill-pkg-svc-tile bill-pkg-svc-tile-sel">
                       <input type="checkbox" data-pkg-svc="${p.id}" data-svc="${s.service_id}" style="display:none" onchange="billUpdatePackageServices(${p.id})"/>
-                      <span class="bill-pkg-svc-tile-name">${escHtml(s.name)}${(s.total||1)>1?` <span class='text-muted' style='font-size:11px'>—${s.total} sessions</span>`:''}</span>
+                      <span class="bill-pkg-svc-tile-name">${escHtml(s.name)}${(s.total||1)>1?` <span class='text-muted' style='font-size:11px'>�${s.total} sessions</span>`:''}</span>
                       <span class="bill-pkg-svc-tile-check">&#10003;</span>
                     </label>`).join('')}
                   </div>
@@ -6231,7 +6231,7 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
         <div class="bill-doctor-row">
           <label>Doctor</label>
           <select name="doctor_id" id="billDoctorId" class="bill-doctor-select">
-            <option value="">— Select doctor —</option>
+            <option value="">� Select doctor �</option>
             ${billDoctors.map(d=>`<option value="${d.id}" ${String(d.id)===String(bill.doctor_id)?'selected':''}>${escHtml(doctorDisplayName(d))}</option>`).join('')}
           </select>
         </div>
@@ -6303,7 +6303,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
       if (!p.dob)      missing.push('Date of Birth');
       if (missing.length) {
         const proceed = await new Promise(resolve => {
-          showModal(`Complete Patient Profile · ${escHtml(p.name)}`, `
+          showModal(`Complete Patient Profile � ${escHtml(p.name)}`, `
             <div class="alert" style="background:var(--c-warning,#f59e0b)22;border:1px solid var(--c-warning,#f59e0b);border-radius:8px;padding:12px;margin-bottom:16px;color:var(--text)">
               <strong>Missing required information:</strong> ${missing.join(', ')}<br>
               <span class="text-sm text-muted">Please complete these fields before creating a bill.</span>
@@ -6436,7 +6436,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
         <div class="bill-doctor-row">
           <label>Doctor *</label>
           <select name="doctor_id" id="billDoctorId" class="bill-doctor-select" required>
-            <option value="">— Select doctor —</option>
+            <option value="">� Select doctor �</option>
             ${billDoctors.map(d => `<option value="${d.id}" ${String(d.id)===String(preDoctorId)?'selected':''}>${escHtml(doctorDisplayName(d))}</option>`).join('')}
           </select>
         </div>
@@ -6483,7 +6483,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
                   </div>
                   <div class="bill-pkg-card-info">
                     <span class="bill-pkg-card-name">${escHtml(p.name)}</span>
-                    <span class="bill-pkg-card-svcs">${(p.services||[]).map(s=>escHtml(s.name)+((s.total||1)>1?` —${s.total}`:'')).join(' · ')}</span>
+                    <span class="bill-pkg-card-svcs">${(p.services||[]).map(s=>escHtml(s.name)+((s.total||1)>1?` �${s.total}`:'')).join(' � ')}</span>
                   </div>
                   <div class="bill-pkg-card-right">
                     <span class="bill-pkg-card-price">KD ${(p.discount_price||0).toFixed(3)}</span>
@@ -6496,7 +6496,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
                     ${(p.services||[]).map(s=>`
                     <label class="bill-pkg-svc-tile bill-pkg-svc-tile-sel">
                       <input type="checkbox" data-pkg-svc="${p.id}" data-svc="${s.service_id}" style="display:none" onchange="billUpdatePackageServices(${p.id})"/>
-                      <span class="bill-pkg-svc-tile-name">${escHtml(s.name)}${(s.total||1)>1?` <span class='text-muted' style='font-size:11px'>—${s.total} sessions</span>`:''}</span>
+                      <span class="bill-pkg-svc-tile-name">${escHtml(s.name)}${(s.total||1)>1?` <span class='text-muted' style='font-size:11px'>�${s.total} sessions</span>`:''}</span>
                       <span class="bill-pkg-svc-tile-check">&#10003;</span>
                     </label>`).join('')}
                   </div>
@@ -6694,7 +6694,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
   // Change the save button label to "Save & Print"
   setTimeout(() => {
     const btn = document.getElementById('modalSaveBtn');
-    if (btn) btn.innerHTML = `${IC.print || '🖨️'} Save &amp; Print`;
+    if (btn) btn.innerHTML = `${IC.print || '???'} Save &amp; Print`;
   }, 0);
   if (prePatientId) loadBillPackageSessions(prePatientId);
 }
@@ -6808,7 +6808,7 @@ function billUpdatePackageServices(pkgId) {
     if (tile) tile.classList.toggle('selected', cb.checked);
   });
   const selectedNames = (pkg.services||[]).filter(s => selectedIds.includes(s.service_id || s.id)).map(s => s.name);
-  const label = selectedNames.length ? `${pkg.name} · ${selectedNames.join(', ')}` : pkg.name;
+  const label = selectedNames.length ? `${pkg.name} � ${selectedNames.join(', ')}` : pkg.name;
   const idx = _billLineItems.findIndex(i => !i._locked && i.type === 'package' && i.ref_id === pkgId);
   const item = { ref_id: pkgId, name: label, package_name: pkg.name, amount: pkg.discount_price||0, type: 'package', selected_service_ids: selectedIds };
   if (idx >= 0) _billLineItems[idx] = item;
@@ -6834,7 +6834,7 @@ function billTogglePkgSession(checkbox) {
       if (!_billPkgSessions[si].service_ids.length) _billPkgSessions.splice(si, 1);
     }
   } else {
-    const qtyLabel = qty > 1 ? ` —${qty}` : '';
+    const qtyLabel = qty > 1 ? ` �${qty}` : '';
     _billLineItems.push({ ref_id: patPkgId, service_id: svcId, name: `${svcName}${qtyLabel}`, package_name: pkgName, amount: 0, type: 'pkg_session', qty });
     const si = _billPkgSessions.findIndex(s => s.patient_package_id === patPkgId);
     if (si >= 0) {
@@ -6858,7 +6858,7 @@ function billUpdatePkgSessionQty(patPkgId, svcId, input) {
   if (lineIdx >= 0) {
     const svcName = svc ? svc.service_name : '';
     const pkgName = pp ? pp.package_name : '';
-    const qtyLabel = qty > 1 ? ` —${qty}` : '';
+    const qtyLabel = qty > 1 ? ` �${qty}` : '';
     _billLineItems[lineIdx].name = `${svcName}${qtyLabel}`;
     _billLineItems[lineIdx].package_name = pkgName;
     _billLineItems[lineIdx].qty = qty;
@@ -6931,7 +6931,7 @@ function renderBillItemsList() {
   el.innerHTML = _billLineItems.map((item, i) => `
     <div class="bill-line-item${item._locked ? ' bill-item-locked' : ''}">
       <span class="badge badge-${typeClr[item.type]||'secondary'} bill-item-type">${item.type}</span>
-      ${item._locked ? `<span class="bill-item-locked-badge" title="Previously billed — cannot be removed">\uD83D\uDD12</span>` : ''}
+      ${item._locked ? `<span class="bill-item-locked-badge" title="Previously billed � cannot be removed">\uD83D\uDD12</span>` : ''}
       <span class="bill-item-name">${escHtml(billItemDisplayName(item))}${item.type==='product' ? ` <span class="text-muted text-sm">x ${parseFloat(item.qty||0).toFixed(3)} ${escHtml(item.unit||'')}</span>` : ''}</span>
       <span class="bill-item-amount">KD ${parseFloat(item.amount).toFixed(3)}</span>
       ${item._locked ? '' : `<button type="button" class="btn-icon-sm" onclick="billRemoveItem(${i})" title="Remove">${IC.x}</button>`}
@@ -7130,11 +7130,11 @@ async function loadPendingServicesAlert(patientId) {
     alertEl.style.display = 'block';
     alertEl.innerHTML = `
       <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:12px">
-        <div style="font-weight:700;color:#b45309;margin-bottom:6px">⏳ ${data.pending_count} Pending Service(s) from Previous Visit(s)</div>
+        <div style="font-weight:700;color:#b45309;margin-bottom:6px">? ${data.pending_count} Pending Service(s) from Previous Visit(s)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${data.items.map(it => `
             <span style="background:#fff;border:1px solid #fbbf24;border-radius:4px;padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px">
-              <span style="color:${it.service_status==='In Progress'?'#2563eb':'#d97706'}">${it.service_status==='In Progress'?'🔵':'⏳'}</span>
+              <span style="color:${it.service_status==='In Progress'?'#2563eb':'#d97706'}">${it.service_status==='In Progress'?'??':'?'}</span>
               ${escHtml(it.service_name)}
               <span style="color:#666;font-size:11px">${escHtml(it.bill_number)}</span>
               <button type="button" onclick="viewBillModal(${it.bill_id})" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:11px;text-decoration:underline">View</button>
@@ -7216,7 +7216,7 @@ function bpsStep(pkgId, svcId, delta, remaining) {
       const btn = document.getElementById(`bpsAddBtn-${pkgId}-${svcId}`);
       if (btn) { btn.textContent='+ Add'; btn.classList.remove('bps-add-active'); }
     } else {
-      const qtyLabel = val > 1 ? ` —${val}` : '';
+      const qtyLabel = val > 1 ? ` �${val}` : '';
       const svcName = svc ? svc.service_name : '';
       const pkgName = pp ? pp.package_name : '';
       _billLineItems[lineIdx].name = `${svcName}${qtyLabel} [${pkgName}]`;
@@ -7245,7 +7245,7 @@ function bpsToggleAdd(pkgId, svcId, svcName, pkgName, remaining) {
     if (qtyEl) qtyEl.textContent = '0';
   } else {
     // add
-    const qtyLabel = qty > 1 ? ` —${qty}` : '';
+    const qtyLabel = qty > 1 ? ` �${qty}` : '';
     _billLineItems.push({ ref_id: pkgId, service_id: svcId, name: `${svcName}${qtyLabel} [${pkgName}]`, amount: 0, type: 'pkg_session', qty });
     const si = _billPkgSessions.findIndex(s=>s.patient_package_id===pkgId);
     if (si>=0) { _billPkgSessions[si].service_ids.push(svcId); if(!_billPkgSessions[si].service_quantities) _billPkgSessions[si].service_quantities={}; _billPkgSessions[si].service_quantities[svcId]=qty; }
@@ -7285,7 +7285,7 @@ async function openEditBillModal(id) {
   const activeDiscounts = (discountsRaw||[]).filter(d => d.active !== false && (!d.valid_from || d.valid_from <= todayISO) && (!d.valid_to || d.valid_to >= todayISO));
   let editAttachments = [];
   try { editAttachments = await apiFetch(`/api/bills/${id}/attachments`); } catch {}
-  showModal(`Edit Receipt · ${escHtml(b.patient_name)}`, `
+  showModal(`Edit Receipt � ${escHtml(b.patient_name)}`, `
     <form id="editBillForm">
       <div class="form-group"><label>Patient</label><input value="${escHtml(b.patient_name)}" disabled/></div>
       <div class="form-group">
@@ -7335,7 +7335,7 @@ async function openEditBillModal(id) {
         <label style="color:#666;font-size:12px;font-weight:700">ATTACHMENTS</label>
         <button type="button" class="btn btn-sm btn-primary" onclick="billPickAttachment(${id})" style="font-size:12px;padding:3px 10px">+ Add</button>
       </div>
-      <input type="file" id="billAttachInput_${id}" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
+      <input type="file" id="billAttachInput_${id}" accept="*/*" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
       <div id="billAttachList_${id}">${renderBillAttachList(editAttachments, id)}</div>
     </div>`,
     async () => {
@@ -7397,10 +7397,10 @@ async function openCancelBillModal(id) {
     toast('Bill is already cancelled.', 'warning');
     return;
   }
-  showModal(`Cancel Bill · ${escHtml(b.bill_number || ('Bill #' + id))}`, `
+  showModal(`Cancel Bill � ${escHtml(b.bill_number || ('Bill #' + id))}`, `
     <form id="cancelBillForm">
       <div style="margin-bottom:12px;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px">
-        <div><strong>Patient:</strong> ${escHtml(b.patient_name || '—')}</div>
+        <div><strong>Patient:</strong> ${escHtml(b.patient_name || '�')}</div>
         <div><strong>Total:</strong> KD ${parseFloat(b.total || 0).toFixed(3)}</div>
         <div><strong>Status:</strong> ${statusBadge(b.payment_status || 'Pending')}</div>
       </div>
@@ -7436,7 +7436,7 @@ async function openRefundModal(billId) {
   
   const items = Array.isArray(b.line_items) ? b.line_items : [];
   
-  showModal(`Refund · ${escHtml(b.bill_number)} · ${escHtml(b.patient_name)}`, `
+  showModal(`Refund � ${escHtml(b.bill_number)} � ${escHtml(b.patient_name)}`, `
     <div style="margin-bottom:12px;padding:10px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
         <div><span style="color:var(--text-muted)">Bill Total:</span> <strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></div>
@@ -7504,20 +7504,20 @@ function canPrintBill(createdAt) {
   if (!createdAt) return can('billing.view');
   const billDate = String(createdAt).slice(0, 10);
   const todayDate = new Date().toISOString().slice(0, 10);
-  if (billDate === todayDate) return can('billing.view'); // today's bill · any user with billing.view can print
-  return can('billing.print_history'); // older bill · requires explicit permission
+  if (billDate === todayDate) return can('billing.view'); // today's bill � any user with billing.view can print
+  return can('billing.print_history'); // older bill � requires explicit permission
 }
 
 async function printBill(id) {
   const b = await apiFetch(`/api/bills/${id}`);
   let refunds = [];
   try { refunds = await apiFetch(`/api/refunds?bill_id=${id}`); } catch {}
-  let cancelledByName = '—';
+  let cancelledByName = '�';
   if (b.cancelled_by) {
     try {
       const users = await apiFetch('/api/users');
       const user = users.find(u => u.id === parseInt(b.cancelled_by));
-      if (user) cancelledByName = user.name || user.username || '—';
+      if (user) cancelledByName = user.name || user.username || '�';
     } catch(e) { /* ignore */ }
   }
   const billDate = String(b.created_at || '').slice(0, 10);
@@ -7527,12 +7527,12 @@ async function printBill(id) {
     return;
   }
   
-  let createdByName = '—';
+  let createdByName = '�';
   if (b.created_by) {
     try {
       const users = await apiFetch('/api/users');
       const user = users.find(u => u.id === parseInt(b.created_by));
-      if (user) createdByName = user.name || user.username || '—';
+      if (user) createdByName = user.name || user.username || '�';
     } catch(e) { /* ignore */ }
   }
   
@@ -7569,7 +7569,7 @@ async function printBill(id) {
       if (item.type === 'package' && item.package_name) {
         const sub = serviceNames.length
           ? escHtml(serviceNames.join(', '))
-          : escHtml(String(item.name || '').replace(`${item.package_name} · `, '').replace(item.package_name, '').trim());
+          : escHtml(String(item.name || '').replace(`${item.package_name} � `, '').replace(item.package_name, '').trim());
         const usage = getPackageUsageDetailLabel(item, b, printPatientPackages);
         const usageHtml = usage ? `<div style="font-size:13px;color:#111;margin-top:2px"><strong>${escHtml(usage)}</strong></div>` : '';
         descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>` : ''}${usageHtml}`;
@@ -7583,8 +7583,8 @@ async function printBill(id) {
 
       if (item.type !== 'package') {
         const statusColor = svcStatus === 'Completed' ? '#1b5e20' : (svcStatus === 'In Progress' ? '#0d47a1' : '#b45309');
-        const statusIcon = svcStatus === 'Completed' ? '✔' : (svcStatus === 'In Progress' ? '🔵' : '⏳');
-        const completionText = item.completion_date ? ` · ${escHtml(String(item.completion_date).slice(0, 10))}` : '';
+        const statusIcon = svcStatus === 'Completed' ? '?' : (svcStatus === 'In Progress' ? '??' : '?');
+        const completionText = item.completion_date ? ` � ${escHtml(String(item.completion_date).slice(0, 10))}` : '';
         descHtml += `<div style="font-size:13px;color:${statusColor};margin-top:3px"><strong>${statusIcon} ${escHtml(svcStatus)}${completionText}</strong></div>`;
       }
 
@@ -7606,7 +7606,7 @@ async function printBill(id) {
         <thead><tr><th style="text-align:left;padding:6px 3px;font-size:17px;color:#000;border-bottom:1px solid #999">Payment Method</th><th style="text-align:right;padding:6px 3px;font-size:17px;color:#000;border-bottom:1px solid #999">Amount</th></tr></thead>
         <tbody>${b.payment_splits.map(s=>`<tr><td style="padding:6px 3px;font-size:17px;color:#000">${escHtml(s.method)}</td><td style="padding:6px 3px;font-size:17px;text-align:right;color:#000">KD ${parseFloat(s.amount).toFixed(3)}</td></tr>`).join('')}</tbody>
        </table>`
-    : `<p style="margin:8px 0;color:#000;font-size:18px;line-height:1.35"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'—')} &nbsp;|&nbsp; <strong>Status:</strong> ${escHtml(b.payment_status||'—')}</p>`;
+    : `<p style="margin:8px 0;color:#000;font-size:18px;line-height:1.35"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'�')} &nbsp;|&nbsp; <strong>Status:</strong> ${escHtml(b.payment_status||'�')}</p>`;
   const hasDiscount = (parseFloat(b.discount_amount || 0) || 0) > 0;
   const hasRefunds = Array.isArray(refunds) && refunds.length > 0;
   const isCancelled = String(b.payment_status || '') === 'Cancelled';
@@ -7623,9 +7623,9 @@ async function printBill(id) {
           <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund ${idx + 1}:</strong> ${escHtml(String(r.refund_type || 'partial').replace(/\b\w/g, c => c.toUpperCase()))}</p>
           <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Date:</strong> ${escHtml(formatDateTime(r.created_at || ''))}</p>
           <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Amount:</strong> <span style="color:#b71c1c;font-weight:700">KD ${parseFloat(r.refund_amount || 0).toFixed(3)}</span></p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Payment Type:</strong> ${escHtml(r.refund_payment_type || '—')}</p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refunded By:</strong> ${escHtml(r.refunded_by_name || '—')}</p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Reason:</strong> ${escHtml(r.refund_reason || '—')}</p>
+          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Payment Type:</strong> ${escHtml(r.refund_payment_type || '�')}</p>
+          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refunded By:</strong> ${escHtml(r.refunded_by_name || '�')}</p>
+          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Reason:</strong> ${escHtml(r.refund_reason || '�')}</p>
           ${refundItems.length ? `<p style="margin:0;font-size:14px;color:#000"><strong>Refunded Items:</strong> ${escHtml(refundItems.join(', '))}</p>` : ''}
         </div>`;
       }).join('')}
@@ -7635,7 +7635,7 @@ async function printBill(id) {
       <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#c62828">BILL CANCELLED</p>
       <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Cancelled Date:</strong> ${escHtml(formatDateTime(b.cancelled_at || ''))}</p>
       <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Cancelled By:</strong> ${escHtml(cancelledByName)}</p>
-      <p style="margin:0;font-size:14px;color:#000"><strong>Reason:</strong> ${escHtml(b.cancellation_reason || '—')}</p>
+      <p style="margin:0;font-size:14px;color:#000"><strong>Reason:</strong> ${escHtml(b.cancellation_reason || '�')}</p>
     </div>` : '';
 
   const clinicCfg = (currentSystem && currentSystem.clinic) ? currentSystem.clinic : {};
@@ -7656,16 +7656,16 @@ async function printBill(id) {
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
       <tr>
-        <td style="padding:5px 3px;font-size:15px;width:50%;color:#000"><strong>Bill No:</strong> ${escHtml(b.bill_number||'—')}</td>
+        <td style="padding:5px 3px;font-size:15px;width:50%;color:#000"><strong>Bill No:</strong> ${escHtml(b.bill_number||'�')}</td>
         <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
       </tr>
       <tr>
-        <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Patient:</strong> ${escHtml(b.patient_name||'—')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>MR #:</strong> ${escHtml(b.mr_number||'—')}</td>
+        <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Patient:</strong> ${escHtml(b.patient_name||'�')}</td>
+        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>MR #:</strong> ${escHtml(b.mr_number||'�')}</td>
       </tr>
       <tr>
-        <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Phone:</strong> ${escHtml(b.patient_phone||'—')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'—')}</td>
+        <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Phone:</strong> ${escHtml(b.patient_phone||'�')}</td>
+        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'�')}</td>
       </tr>
     </table>
     <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
@@ -7807,13 +7807,13 @@ async function printBill(id) {
 function showManualPrintPreview(bill, onPrint) {
   const previewHtml = document.getElementById('printArea')?.innerHTML || '';
 
-  showModal('🖨️ Print Preview', `
+  showModal('??? Print Preview', `
     <div style="border:1px solid var(--border);border-radius:8px;padding:16px;background:#fff;max-height:480px;overflow-y:auto;color:#000">
       ${previewHtml}
     </div>`,
     [
       {
-        label: `${IC.print || '🖨️'} Print`,
+        label: `${IC.print || '???'} Print`,
         class: 'btn-primary',
         onclick: () => {
           closeModal();
@@ -7834,7 +7834,7 @@ async function manualPrintRefreshPrinters() {
     const printers = await apiFetch('/api/printers/list');
     const currentVal = sel.value;
     // Keep the "browser print" option and rebuild the rest
-    sel.innerHTML = '<option value="">— Browser print (no printer) —</option>';
+    sel.innerHTML = '<option value="">� Browser print (no printer) �</option>';
     if (Array.isArray(printers) && printers.length) {
       printers.forEach(p => {
         const name = (p && (p.name || p.displayName)) ? String(p.name || p.displayName).trim() : String(p || '').trim();
@@ -7846,12 +7846,12 @@ async function manualPrintRefreshPrinters() {
         sel.appendChild(opt);
       });
       if (currentVal) sel.value = currentVal;
-      if (statusEl) statusEl.textContent = `✓ Found ${printers.length} printer(s).`;
+      if (statusEl) statusEl.textContent = `? Found ${printers.length} printer(s).`;
     } else {
-      if (statusEl) statusEl.textContent = '⚠ No printers found.';
+      if (statusEl) statusEl.textContent = '? No printers found.';
     }
   } catch (e) {
-    if (statusEl) statusEl.textContent = `✗ Error: ${e.message}`;
+    if (statusEl) statusEl.textContent = `? Error: ${e.message}`;
   }
 }
 
@@ -7874,12 +7874,12 @@ async function viewBillModal(id) {
   try { refunds = await apiFetch(`/api/refunds?bill_id=${id}`); } catch {}
   let attachments = [];
   try { attachments = await apiFetch(`/api/bills/${id}/attachments`); } catch {}
-  let cancelledByName = '—';
+  let cancelledByName = '�';
   if (b.cancelled_by) {
     try {
       const users = await apiFetch('/api/users');
       const user = users.find(u => u.id === parseInt(b.cancelled_by));
-      if (user) cancelledByName = user.name || user.username || '—';
+      if (user) cancelledByName = user.name || user.username || '�';
     } catch (e) { /* ignore */ }
   }
   
@@ -7892,7 +7892,7 @@ async function viewBillModal(id) {
         ? (item.unit || 'pcs')
         : (item.type === 'pkg_session' ? 'session' : (item.type === 'package' ? 'package' : 'service'));
       const rate = qty > 0 ? (amount / qty) : amount;
-      const name = item.package_name && items.name !== item.package_name ? `${item.package_name} · ${item.name}` : (item.name || '—');
+      const name = item.package_name && items.name !== item.package_name ? `${item.package_name} � ${item.name}` : (item.name || '�');
       const packageUsage = item.type === 'package' ? getPackageUsageDetailLabel(item, b, viewPatientPackages) : '';
       const pp = item.type === 'pkg_session'
         ? getPkgSessionPackageForItem(item, b, pkgProgressByPkgId, viewPatientPackages)
@@ -7907,10 +7907,10 @@ async function viewBillModal(id) {
       const svcStatus = item.service_status || 'Completed';
       const isPackageType = item.type === 'package' || item.type === 'pkg_session';
       const statusColor = svcStatus === 'Completed' ? '#16a34a' : (svcStatus === 'In Progress' ? '#2563eb' : '#d97706');
-      const statusIcon = svcStatus === 'Completed' ? '✔' : (svcStatus === 'In Progress' ? '🔵' : '⏳');
-      const statusBadgeHtml = isPackageType ? '' : `<div style="margin-top:4px;font-size:11px;color:${statusColor};font-weight:600">${statusIcon} ${escHtml(svcStatus)}${item.completion_date ? ` · ${escHtml(String(item.completion_date).slice(0,10))}` : ''}</div>`;
+      const statusIcon = svcStatus === 'Completed' ? '?' : (svcStatus === 'In Progress' ? '??' : '?');
+      const statusBadgeHtml = isPackageType ? '' : `<div style="margin-top:4px;font-size:11px;color:${statusColor};font-weight:600">${statusIcon} ${escHtml(svcStatus)}${item.completion_date ? ` � ${escHtml(String(item.completion_date).slice(0,10))}` : ''}</div>`;
       const canComplete = !isPackageType && svcStatus !== 'Completed';
-      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '✔ Mark Completed' : '🔵 Start'}</button>` : (svcStatus === 'Completed' ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">↩ Revert</button>` : '');
+      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '? Mark Completed' : '?? Start'}</button>` : (svcStatus === 'Completed' ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">? Revert</button>` : '');
       const viewNameWithStatus = `<div>${viewName}${statusBadgeHtml}${actionBtn ? `<div>${actionBtn}</div>` : ''}</div>`;
       return `<tr><td>${viewNameWithStatus}</td><td style="text-align:right">${qty.toFixed(3)}</td><td style="text-align:center">${escHtml(unit)}</td><td style="text-align:right">KD ${rate.toFixed(3)}</td><td style="text-align:right"><strong>KD ${amount.toFixed(3)}</strong></td></tr>`;
     }).join('');
@@ -7922,7 +7922,7 @@ async function viewBillModal(id) {
   
   const paymentHtml = (b.payment_splits && b.payment_splits.length > 1)
     ? `<div style="margin-top:12px"><strong>Payments:</strong><table style="width:100%;margin-top:6px"><tbody>${b.payment_splits.map(s=>`<tr><td>${escHtml(s.method)}</td><td style="text-align:right">KD ${parseFloat(s.amount).toFixed(3)}</td></tr>`).join('')}</tbody></table></div>`
-    : `<div style="margin-top:12px"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'—')} &nbsp;|&nbsp; <strong>Status:</strong> ${statusBadge(b.payment_status||'')}</div>`;
+    : `<div style="margin-top:12px"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'�')} &nbsp;|&nbsp; <strong>Status:</strong> ${statusBadge(b.payment_status||'')}</div>`;
   const discountTypeRaw = String(b.discount_type || '').toLowerCase();
   const discountTypeLabel = discountTypeRaw === 'percentage'
     ? 'Percentage'
@@ -7942,9 +7942,9 @@ async function viewBillModal(id) {
         <td style="padding:6px;font-size:12px">${escHtml(formatDateTime(r.created_at||''))}</td>
         <td style="padding:6px;font-size:12px">${statusBadge(r.refund_type||'partial')}</td>
         <td style="padding:6px;font-size:12px;text-align:right;color:#e53935"><strong>- KD ${parseFloat(r.refund_amount||0).toFixed(3)}</strong></td>
-        <td style="padding:6px;font-size:12px">${escHtml(r.refund_payment_type||'—')}</td>
-        <td style="padding:6px;font-size:12px">${escHtml(r.refund_reason||'—')}</td>
-        <td style="padding:6px;font-size:12px">${escHtml(r.refunded_by_name||'—')}</td>
+        <td style="padding:6px;font-size:12px">${escHtml(r.refund_payment_type||'�')}</td>
+        <td style="padding:6px;font-size:12px">${escHtml(r.refund_reason||'�')}</td>
+        <td style="padding:6px;font-size:12px">${escHtml(r.refunded_by_name||'�')}</td>
       </tr>`).join('')}</tbody>
     </table>` : '';
   const cancellationHtml = String(b.payment_status || '') === 'Cancelled' ? `
@@ -7953,17 +7953,17 @@ async function viewBillModal(id) {
       <div style="font-size:12px;font-weight:700;color:#c62828;margin-bottom:6px">CANCELLATION DETAILS</div>
       <div style="font-size:13px;margin-bottom:4px"><strong>Cancelled At:</strong> ${escHtml(formatDateTime(b.cancelled_at || ''))}</div>
       <div style="font-size:13px;margin-bottom:4px"><strong>Cancelled By:</strong> ${escHtml(cancelledByName)}</div>
-      <div style="font-size:13px"><strong>Reason:</strong> ${escHtml(b.cancellation_reason || '—')}</div>
+      <div style="font-size:13px"><strong>Reason:</strong> ${escHtml(b.cancellation_reason || '�')}</div>
     </div>` : '';
   
-  showModal(`Bill Details · ${escHtml(b.patient_name)}`, `
+  showModal(`Bill Details � ${escHtml(b.patient_name)}`, `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div><label style="color:#666;font-size:12px">BILL NUMBER</label><div style="font-size:16px;font-weight:600">${escHtml(b.bill_number||'—')}</div></div>
+      <div><label style="color:#666;font-size:12px">BILL NUMBER</label><div style="font-size:16px;font-weight:600">${escHtml(b.bill_number||'�')}</div></div>
       <div><label style="color:#666;font-size:12px">DATE</label><div style="font-size:16px;font-weight:600">${escHtml(formatDateTime(b.created_at||''))}</div></div>
-      <div><label style="color:#666;font-size:12px">PATIENT</label><div style="font-size:16px;font-weight:600">${escHtml(b.patient_name||'—')}</div></div>
-      <div><label style="color:#666;font-size:12px">MR #</label><div style="font-size:16px;font-weight:600">${escHtml(b.mr_number||'—')}</div></div>
-      <div><label style="color:#666;font-size:12px">PHONE</label><div style="font-size:16px">${escHtml(b.patient_phone||'—')}</div></div>
-      <div><label style="color:#666;font-size:12px">VISIT ID</label><div style="font-size:16px">${escHtml(b.visit_id||'—')}</div></div>
+      <div><label style="color:#666;font-size:12px">PATIENT</label><div style="font-size:16px;font-weight:600">${escHtml(b.patient_name||'�')}</div></div>
+      <div><label style="color:#666;font-size:12px">MR #</label><div style="font-size:16px;font-weight:600">${escHtml(b.mr_number||'�')}</div></div>
+      <div><label style="color:#666;font-size:12px">PHONE</label><div style="font-size:16px">${escHtml(b.patient_phone||'�')}</div></div>
+      <div><label style="color:#666;font-size:12px">VISIT ID</label><div style="font-size:16px">${escHtml(b.visit_id||'�')}</div></div>
     </div>
     <hr style="margin:16px 0;border:none;border-top:1px solid #ddd"/>
     <div style="margin-bottom:16px">
@@ -7980,7 +7980,7 @@ async function viewBillModal(id) {
         <div style="font-size:24px;font-weight:700;color:var(--text)">KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</div>
         ${b.discount_amount > 0 ? `
           <div style="font-size:12px;color:var(--c-danger);margin-top:4px">
-            Discount (${escHtml(b.discount_label || discountTypeLabel)}${b.discount_type === 'percentage' && b.discount_value ? ` · ${parseFloat(b.discount_value)}%` : b.discount_type === 'fixed' ? ' · Fixed' : ''}): - KD ${parseFloat(b.discount_amount||0).toFixed(3)}
+            Discount (${escHtml(b.discount_label || discountTypeLabel)}${b.discount_type === 'percentage' && b.discount_value ? ` � ${parseFloat(b.discount_value)}%` : b.discount_type === 'fixed' ? ' � Fixed' : ''}): - KD ${parseFloat(b.discount_amount||0).toFixed(3)}
           </div>
           <div style="font-size:18px;font-weight:700;color:var(--text);margin-top:4px">Net: KD ${parseFloat(b.total||0).toFixed(3)}</div>` : ''}
       </div>
@@ -7995,7 +7995,7 @@ async function viewBillModal(id) {
         <label style="color:#666;font-size:12px;font-weight:700">ATTACHMENTS</label>
         <button type="button" class="btn btn-sm btn-primary" onclick="billPickAttachment(${id})" style="font-size:12px;padding:3px 10px">+ Add</button>
       </div>
-      <input type="file" id="billAttachInput_${id}" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
+      <input type="file" id="billAttachInput_${id}" accept="*/*" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
       <div id="billAttachList_${id}">${renderBillAttachList(attachments, id)}</div>
     </div>
   `, null, 'close'); // read-only modal
@@ -8006,15 +8006,15 @@ function renderBillAttachList(attachments, billId) {
     return '<div style="color:#aaa;font-size:13px;padding:6px 0">No attachments yet.</div>';
   }
   return attachments.map(a => {
-    const icon = (a.type || '').startsWith('image/') ? '🖼' : ((a.type || '').includes('pdf') ? '📄' : '📎');
+    const icon = (a.type || '').startsWith('image/') ? '🖼' : ((a.type || '').includes('pdf') ? '📄' : (a.type || '').includes('spreadsheet') || (a.type || '').includes('excel') || /\.(xlsx?|csv)$/i.test(a.name) ? '📊' : (a.type || '').includes('word') || (a.type || '').includes('document') || /\.(docx?)$/i.test(a.name) ? '📝' : '📎');
     const date = a.uploaded_at ? formatDateTime(a.uploaded_at) : '';
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0">
       <span style="font-size:18px">${icon}</span>
       <div style="flex:1;min-width:0">
         <a href="/api/bills/${billId}/attachments/${a.id}" target="_blank" style="font-size:13px;font-weight:500;color:#2563eb;word-break:break-all">${escHtml(a.name)}</a>
-        <div style="font-size:11px;color:#888">${escHtml(date)}${a.uploaded_by ? ' · ' + escHtml(a.uploaded_by) : ''}</div>
+        <div style="font-size:11px;color:#888">${escHtml(date)}${a.uploaded_by ? ' � ' + escHtml(a.uploaded_by) : ''}</div>
       </div>
-      <button type="button" onclick="billDeleteAttachment(${billId}, ${a.id}, '${escHtml(a.name).replace(/'/g,"\\'")}', this)" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:16px;line-height:1;padding:2px 6px" title="Delete">×</button>
+      <button type="button" onclick="billDeleteAttachment(${billId}, ${a.id}, '${escHtml(a.name).replace(/'/g,"\\'")}', this)" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:16px;line-height:1;padding:2px 6px" title="Delete">�</button>
     </div>`;
   }).join('');
 }
@@ -8310,7 +8310,7 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.pending} No-Show Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#noShowReportBody table', 'no_show_report_${today}.csv')">📥 CSV</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#noShowReportBody table', 'no_show_report_${today}.csv')">?? CSV</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8332,10 +8332,10 @@ function renderSelectedReport() {
     panel.innerHTML = `
       <div class="card" style="margin:0;border:1px solid var(--border-light)">
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
-          <div class="card-title">${IC.revenue} Revenue · Last 30 Days</div>
+          <div class="card-title">${IC.revenue} Revenue � Last 30 Days</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#revenueReportBody table', 'revenue_report_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#revenueReportBody', 'revenue_report')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#revenueReportBody table', 'revenue_report_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#revenueReportBody', 'revenue_report')">?? PDF</button>
           </div>
         </div>
         <div id="revenueReportBody">${skeletonTable(5)}</div>
@@ -8354,7 +8354,7 @@ function renderSelectedReport() {
             <input id="discRptTo" type="date" value="${today}" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadDiscountsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('discRptFrom').value='';document.getElementById('discRptTo').value='';loadDiscountsReport()">All Time</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#discountReportBody table', 'discounts_report.csv')">📥 CSV</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#discountReportBody table', 'discounts_report.csv')">?? CSV</button>
           </div>
         </div>
         <div id="discountReportBody">${skeletonTable(4)}</div>
@@ -8373,7 +8373,7 @@ function renderSelectedReport() {
             <input id="refRptTo" type="date" value="${today}" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadRefundsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('refRptFrom').value='';document.getElementById('refRptTo').value='';loadRefundsReport()">All Time</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#refundReportBody table', 'refunds_report.csv')">📥 CSV</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#refundReportBody table', 'refunds_report.csv')">?? CSV</button>
           </div>
         </div>
         <div id="refundReportBody">${skeletonTable(4)}</div>
@@ -8392,8 +8392,8 @@ function renderSelectedReport() {
             <input id="canRptTo" type="date" value="" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadCancelledBillsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('canRptFrom').value='';document.getElementById('canRptTo').value='';loadCancelledBillsReport()">All Time</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#cancelledBillReportBody table', 'cancelled_bills_report.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#cancelledBillReportBody', 'cancelled_bills_report')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#cancelledBillReportBody table', 'cancelled_bills_report.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#cancelledBillReportBody', 'cancelled_bills_report')">?? PDF</button>
           </div>
         </div>
         <div id="cancelledBillReportBody">${skeletonTable(4)}</div>
@@ -8412,8 +8412,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.users} Doctor Performance</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#doctorPerformanceBody table', 'doctor_performance_report.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#doctorPerformanceBody', 'doctor_performance_report')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#doctorPerformanceBody table', 'doctor_performance_report.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#doctorPerformanceBody', 'doctor_performance_report')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8449,8 +8449,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.billing} User Collection Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#userCollectionBody table', 'user_collection_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#userCollectionBody', 'user_collection')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#userCollectionBody table', 'user_collection_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#userCollectionBody', 'user_collection')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8475,8 +8475,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.services} Billed Services Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#billedServicesBody table', 'billed_services_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#billedServicesBody', 'billed_services')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#billedServicesBody table', 'billed_services_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#billedServicesBody', 'billed_services')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8503,8 +8503,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.product || IC.store} Service Consumption</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#serviceConsumptionBody table', 'service_consumption_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#serviceConsumptionBody', 'service_consumption')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#serviceConsumptionBody table', 'service_consumption_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#serviceConsumptionBody', 'service_consumption')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8528,8 +8528,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.store} Product Cost Summary</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#productConsumptionBody table', 'product_consumption_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#productConsumptionBody', 'product_consumption')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#productConsumptionBody table', 'product_consumption_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#productConsumptionBody', 'product_consumption')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8553,8 +8553,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.store} Manual Consumption Cost</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#manualConsumptionCostBody table', 'manual_consumption_cost_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#manualConsumptionCostBody', 'manual_consumption_cost')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#manualConsumptionCostBody table', 'manual_consumption_cost_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#manualConsumptionCostBody', 'manual_consumption_cost')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8588,8 +8588,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.transfer || IC.store} Stock Movement</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#stockMovementBody table', 'stock_movement_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#stockMovementBody', 'stock_movement')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#stockMovementBody table', 'stock_movement_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#stockMovementBody', 'stock_movement')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8623,8 +8623,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.store} Stock Status</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#stockStatusBody table', 'stock_status_${today}.csv')">📥 CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#stockStatusBody', 'stock_status')">📄 PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#stockStatusBody table', 'stock_status_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#stockStatusBody', 'stock_status')">?? PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8707,8 +8707,8 @@ function renderSelectedReport() {
       <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
         <div class="card-title">${IC.reports} Activity Logs</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-sm" onclick="exportTableToCSV('#activityLogBody table', 'activity_logs_${today}.csv')">📥 CSV</button>
-          <button class="btn btn-sm" onclick="exportContentToPDF('#activityLogBody', 'activity_logs')">📄 PDF</button>
+          <button class="btn btn-sm" onclick="exportTableToCSV('#activityLogBody table', 'activity_logs_${today}.csv')">?? CSV</button>
+          <button class="btn btn-sm" onclick="exportContentToPDF('#activityLogBody', 'activity_logs')">?? PDF</button>
         </div>
       </div>
       <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8881,7 +8881,7 @@ function clearStockStatusFilters() {
   loadStockStatusReport();
 }
 
-// ── Supplier Ledger Report ──────────────────────────────
+// -- Supplier Ledger Report ------------------------------
 function clearSupplierLedgerFilters() {
   const s = document.getElementById('slSearch');
   const sup = document.getElementById('slSupplier');
@@ -8958,20 +8958,20 @@ async function loadSupplierLedger() {
       const balLabel = ledger.balance > 0.0005 ? 'Outstanding' : 'Settled';
       const rows = ledger.entries.map(e => {
         const typeClass = e.type === 'Purchase' ? 'badge-unpaid' : (e.type === 'Payment' ? 'badge-paid' : 'badge-scheduled');
-        const debit  = e.debit  > 0 ? `<span style="color:#c0392b;font-weight:600">KD ${e.debit.toFixed(3)}</span>`  : '<span class="text-muted">—</span>';
+        const debit  = e.debit  > 0 ? `<span style="color:#c0392b;font-weight:600">KD ${e.debit.toFixed(3)}</span>`  : '<span class="text-muted">�</span>';
         const credit = e.credit !== 0
           ? (e.credit > 0
             ? `<span style="color:#27ae60;font-weight:600">KD ${e.credit.toFixed(3)}</span>`
             : `<span style="color:#e67e22;font-weight:600">- KD ${Math.abs(e.credit).toFixed(3)}</span>`)
-          : '<span class="text-muted">—</span>';
+          : '<span class="text-muted">�</span>';
         const balTxt = e.balance > 0.0005
           ? `<span style="color:#e67e22;font-weight:600">KD ${e.balance.toFixed(3)}</span>`
           : `<span style="color:#27ae60;font-weight:600">KD 0.000</span>`;
         return `<tr>
-          <td class="text-muted text-sm">${escHtml(e.date || '—')}</td>
+          <td class="text-muted text-sm">${escHtml(e.date || '�')}</td>
           <td><span class="badge ${typeClass}">${escHtml(e.type)}</span></td>
-          <td class="text-sm">${escHtml(e.reference || '—')}</td>
-          <td class="text-sm text-muted">${escHtml(e.description || '—')}</td>
+          <td class="text-sm">${escHtml(e.reference || '�')}</td>
+          <td class="text-sm text-muted">${escHtml(e.description || '�')}</td>
           <td style="text-align:right">${debit}</td>
           <td style="text-align:right">${credit}</td>
           <td style="text-align:right">${balTxt}</td>
@@ -9033,21 +9033,21 @@ function _psvRenderBatch() {
   const next = _psvAllRows.slice(_psvRenderedCount, _psvRenderedCount + PSV_BATCH);
   if (!next.length) { _psvDisconnect(); return; }
   const statusColor = s => s === 'Completed' ? '#16a34a' : (s === 'In Progress' ? '#2563eb' : '#d97706');
-  const statusIcon  = s => s === 'Completed' ? '✔' : (s === 'In Progress' ? '🔵' : '⏳');
+  const statusIcon  = s => s === 'Completed' ? '?' : (s === 'In Progress' ? '??' : '?');
   tbody.insertAdjacentHTML('beforeend', next.map(r => `
     <tr>
-      <td class="text-sm">${escHtml(r.bill_date || '—')}</td>
-      <td><button class="btn-link" onclick="viewBillModal(${r.bill_id})">${escHtml(r.bill_number || '—')}</button></td>
-      <td class="text-sm">${escHtml(r.patient_name || '—')} <span class="text-muted text-sm">${escHtml(r.mr_number || '')}</span></td>
-      <td class="text-sm">${escHtml(r.service_name || '—')}</td>
+      <td class="text-sm">${escHtml(r.bill_date || '�')}</td>
+      <td><button class="btn-link" onclick="viewBillModal(${r.bill_id})">${escHtml(r.bill_number || '�')}</button></td>
+      <td class="text-sm">${escHtml(r.patient_name || '�')} <span class="text-muted text-sm">${escHtml(r.mr_number || '')}</span></td>
+      <td class="text-sm">${escHtml(r.service_name || '�')}</td>
       <td><span style="color:${statusColor(r.service_status)};font-weight:600;font-size:12px">${statusIcon(r.service_status)} ${escHtml(r.service_status)}</span></td>
-      <td class="text-sm text-muted">${r.completion_date ? escHtml(String(r.completion_date).slice(0,10)) : '—'}</td>
-      <td class="text-sm text-muted">${escHtml(r.provider_name || '—')}</td>
+      <td class="text-sm text-muted">${r.completion_date ? escHtml(String(r.completion_date).slice(0,10)) : '�'}</td>
+      <td class="text-sm text-muted">${escHtml(r.provider_name || '�')}</td>
       <td style="text-align:right" class="text-sm">KD ${parseFloat(r.amount || 0).toFixed(3)}</td>
       <td>
         ${r.service_status !== 'Completed'
-          ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '✔ Complete' : '🔵 Start'}</button>`
-          : '<span class="text-muted text-sm">—</span>'}
+          ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '? Complete' : '?? Start'}</button>`
+          : '<span class="text-muted text-sm">�</span>'}
       </td>
     </tr>`).join(''));
   _psvRenderedCount += next.length;
@@ -9091,15 +9091,15 @@ async function loadPendingSvcReport() {
           <div style="font-size:22px;font-weight:700">${summary.total || 0}</div>
         </div>
         <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:12px 16px">
-          <div class="text-muted text-sm">⏳ Pending</div>
+          <div class="text-muted text-sm">? Pending</div>
           <div style="font-size:22px;font-weight:700;color:#d97706">${summary.pending || 0}</div>
         </div>
         <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px">
-          <div class="text-muted text-sm">🔵 In Progress</div>
+          <div class="text-muted text-sm">?? In Progress</div>
           <div style="font-size:22px;font-weight:700;color:#2563eb">${summary.in_progress || 0}</div>
         </div>
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px">
-          <div class="text-muted text-sm">✔ Completed</div>
+          <div class="text-muted text-sm">? Completed</div>
           <div style="font-size:22px;font-weight:700;color:#16a34a">${summary.completed || 0}</div>
         </div>
       </div>`;
@@ -9159,12 +9159,12 @@ async function loadFullPatientsReport(page = 1) {
       <div class="table-wrap"><table>
         <thead><tr><th>MR#</th><th>Name</th><th>Civil ID</th><th>DOB</th><th>Age/Gender</th><th>Phone</th><th>Status</th><th>Registered</th></tr></thead>
         <tbody>${rows.map(p => `<tr>
-          <td><span class="code-id code-id-primary">${escHtml(p.mr_number || '—')}</span></td>
-          <td>${escHtml(p.name || '—')}${p.second_name ? ` <span class="text-muted text-sm">${escHtml(p.second_name)}</span>` : ''}</td>
-          <td>${escHtml(p.civil_id || '—')}</td>
-          <td>${escHtml(p.dob || '—')}</td>
-          <td>${escHtml(p.age || '—')} / ${escHtml(p.gender || '—')}</td>
-          <td>${escHtml(p.phone || '—')}</td>
+          <td><span class="code-id code-id-primary">${escHtml(p.mr_number || '�')}</span></td>
+          <td>${escHtml(p.name || '�')}${p.second_name ? ` <span class="text-muted text-sm">${escHtml(p.second_name)}</span>` : ''}</td>
+          <td>${escHtml(p.civil_id || '�')}</td>
+          <td>${escHtml(p.dob || '�')}</td>
+          <td>${escHtml(p.age || '�')} / ${escHtml(p.gender || '�')}</td>
+          <td>${escHtml(p.phone || '�')}</td>
           <td>${escHtml(p.patient_status || 'Good')}</td>
           <td class="text-muted text-sm">${escHtml(formatDateTime(p.registration_date || p.created_at || ''))}</td>
         </tr>`).join('')}</tbody>
@@ -9437,9 +9437,9 @@ async function loadNoShowReport(page = _noShowReportPage || 1) {
         <div class="table-wrap"><table>
           <thead><tr><th>MR#</th><th>Patient</th><th>Phone</th><th>No-Show Streak</th><th>Last No-Show Date</th></tr></thead>
           <tbody>${previewRows.map(r => `<tr>
-            <td><span class="code-id code-id-primary">${escHtml(r.mr_number || '—')}</span></td>
+            <td><span class="code-id code-id-primary">${escHtml(r.mr_number || '�')}</span></td>
             <td>${escHtml(r.patient_name || 'Unknown')}</td>
-            <td>${escHtml(r.phone || '—')}</td>
+            <td>${escHtml(r.phone || '�')}</td>
             <td><strong>${parseInt(r.consecutive_no_show_streak || 0, 10)}</strong></td>
             <td>${escHtml(formatDateTime(r.last_no_show_date || ''))}</td>
           </tr>`).join('')}</tbody>
@@ -9456,10 +9456,10 @@ async function loadNoShowReport(page = _noShowReportPage || 1) {
       <div class="table-wrap"><table>
         <thead><tr><th>MR#</th><th>Patient</th><th>Phone</th><th>Civil ID</th><th>Consecutive No-Show</th><th>Total No-Show</th><th>Last No-Show Date</th><th>Latest Status</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
-          <td><span class="code-id code-id-primary">${escHtml(r.mr_number || '—')}</span></td>
+          <td><span class="code-id code-id-primary">${escHtml(r.mr_number || '�')}</span></td>
           <td>${escHtml(r.patient_name || 'Unknown')}${r.second_name ? ` <span class="text-muted text-sm">${escHtml(r.second_name)}</span>` : ''}</td>
-          <td>${escHtml(r.phone || '—')}</td>
-          <td>${escHtml(r.civil_id || '—')}</td>
+          <td>${escHtml(r.phone || '�')}</td>
+          <td>${escHtml(r.civil_id || '�')}</td>
           <td><strong>${parseInt(r.consecutive_no_show_streak || 0, 10)}</strong></td>
           <td>${parseInt(r.total_no_shows || 0, 10)}</td>
           <td>${escHtml(formatDateTime(r.last_no_show_date || ''))}</td>
@@ -9519,20 +9519,20 @@ async function loadDiscountsReport() {
     const summaryHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">
       <div class="stat-card"><div class="stat-label">Total Discounts</div><div class="stat-value">KD ${parseFloat(rep.total_discount||0).toFixed(3)}</div></div>
       <div class="stat-card"><div class="stat-label">Bills with Discount</div><div class="stat-value">${rep.bill_count||0}</div></div>
-      ${Object.entries(byType).map(([type, d]) => `<div class="stat-card"><div class="stat-label">${escHtml(type)} discounts</div><div class="stat-value">${d.count} · KD ${d.total.toFixed(3)}</div></div>`).join('')}
+      ${Object.entries(byType).map(([type, d]) => `<div class="stat-card"><div class="stat-label">${escHtml(type)} discounts</div><div class="stat-value">${d.count} � KD ${d.total.toFixed(3)}</div></div>`).join('')}
     </div>`;
     if (!bills.length) { el.innerHTML = summaryHtml + emptyState(IC.discount, 'No discounts found', 'No bills with discounts in selected period'); return; }
     el.innerHTML = summaryHtml + `<div class="table-wrap"><table>
       <thead><tr><th>Bill No.</th><th>Visit ID</th><th>Patient</th><th>Discount</th><th>Discount Amt</th><th>Subtotal</th><th>Net Total</th><th>Created By</th><th>Date</th></tr></thead>
       <tbody>${bills.map(b => `<tr>
-        <td><span class="code-id code-id-primary">${escHtml(b.bill_number||'—')}</span></td>
-        <td><span class="code-id code-id-primary">${escHtml(b.visit_id||'—')}</span></td>
+        <td><span class="code-id code-id-primary">${escHtml(b.bill_number||'�')}</span></td>
+        <td><span class="code-id code-id-primary">${escHtml(b.visit_id||'�')}</span></td>
         <td>${escHtml(b.patient_name)}</td>
-        <td>${escHtml(b.discount_label||'—')}</td>
+        <td>${escHtml(b.discount_label||'�')}</td>
         <td style="color:#e53935"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></td>
         <td>KD ${parseFloat(b.subtotal||0).toFixed(3)}</td>
         <td><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td>
-        <td>${escHtml(b.created_by_name||'—')}</td>
+        <td>${escHtml(b.created_by_name||'�')}</td>
         <td class="text-muted text-sm">${escHtml(formatDateTime(b.created_at||''))}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
@@ -9558,20 +9558,20 @@ async function loadRefundsReport() {
       <div class="stat-card"><div class="stat-label">Total Refunded</div><div class="stat-value">KD ${parseFloat(rep.total_refunded||0).toFixed(3)}</div></div>
       <div class="stat-card"><div class="stat-label">Total Refunds</div><div class="stat-value">${rep.refund_count||0}</div></div>
     </div>
-    ${Object.keys(byUser).length ? `<div style="margin-bottom:12px"><strong>By User:</strong> ${Object.entries(byUser).map(([u,d])=>`${escHtml(u)}: ${d.count} refunds · KD ${d.total.toFixed(3)}`).join(' | ')}</div>` : ''}
-    ${Object.keys(byPay).length ? `<div style="margin-bottom:12px"><strong>By Payment Type:</strong> ${Object.entries(byPay).map(([p,d])=>`${escHtml(p)}: ${d.count} · KD ${d.total.toFixed(3)}`).join(' | ')}</div>` : ''}
+    ${Object.keys(byUser).length ? `<div style="margin-bottom:12px"><strong>By User:</strong> ${Object.entries(byUser).map(([u,d])=>`${escHtml(u)}: ${d.count} refunds � KD ${d.total.toFixed(3)}`).join(' | ')}</div>` : ''}
+    ${Object.keys(byPay).length ? `<div style="margin-bottom:12px"><strong>By Payment Type:</strong> ${Object.entries(byPay).map(([p,d])=>`${escHtml(p)}: ${d.count} � KD ${d.total.toFixed(3)}`).join(' | ')}</div>` : ''}
     ${topReasons.length ? `<div style="margin-bottom:12px"><strong>Top Reasons:</strong> ${topReasons.map(r=>`${escHtml(r.reason)} (${r.count}x)`).join(', ')}</div>` : ''}`;
     if (!refunds.length) { el.innerHTML = summaryHtml + emptyState(IC.refund, 'No refunds found', 'No refunds in selected period'); return; }
     el.innerHTML = summaryHtml + `<div class="table-wrap"><table>
       <thead><tr><th>Bill No.</th><th>Patient</th><th>Type</th><th>Amount</th><th>Payment Type</th><th>Reason</th><th>Refunded By</th><th>Date</th></tr></thead>
       <tbody>${refunds.map(r => `<tr>
-        <td><span class="code-id code-id-primary">${escHtml(r.bill_number||'—')}</span></td>
-        <td>${escHtml(r.patient_name||'—')}</td>
+        <td><span class="code-id code-id-primary">${escHtml(r.bill_number||'�')}</span></td>
+        <td>${escHtml(r.patient_name||'�')}</td>
         <td>${statusBadge(r.refund_type||'partial')}</td>
         <td style="color:#e53935"><strong>- KD ${parseFloat(r.refund_amount||0).toFixed(3)}</strong></td>
-        <td>${escHtml(r.refund_payment_type||'—')}</td>
-        <td class="text-sm">${escHtml(r.refund_reason||'—')}</td>
-        <td>${escHtml(r.refunded_by_name||'—')}</td>
+        <td>${escHtml(r.refund_payment_type||'�')}</td>
+        <td class="text-sm">${escHtml(r.refund_reason||'�')}</td>
+        <td>${escHtml(r.refunded_by_name||'�')}</td>
         <td class="text-muted text-sm">${escHtml(formatDateTime(r.created_at||''))}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
@@ -9600,7 +9600,7 @@ async function loadCancelledBillsReport() {
         <div class="stat-card"><div class="stat-label">Cancelled Subtotal</div><div class="stat-value">KD ${parseFloat(rep.total_subtotal || 0).toFixed(3)}</div></div>
         <div class="stat-card"><div class="stat-label">Discount on Cancelled</div><div class="stat-value" style="color:#d32f2f">KD ${parseFloat(rep.total_discount || 0).toFixed(3)}</div></div>
       </div>
-      ${Object.keys(byUser).length ? `<div style="margin-bottom:10px"><strong>By User:</strong> ${Object.entries(byUser).map(([u,d])=>`${escHtml(u)}: ${d.count} bills · KD ${parseFloat(d.total || 0).toFixed(3)}`).join(' | ')}</div>` : ''}
+      ${Object.keys(byUser).length ? `<div style="margin-bottom:10px"><strong>By User:</strong> ${Object.entries(byUser).map(([u,d])=>`${escHtml(u)}: ${d.count} bills � KD ${parseFloat(d.total || 0).toFixed(3)}`).join(' | ')}</div>` : ''}
       ${topReasons.length ? `<div style="margin-bottom:12px"><strong>Top Reasons:</strong> ${topReasons.map(r=>`${escHtml(r.reason)} (${parseInt(r.count || 0, 10)}x)`).join(', ')}</div>` : ''}`;
 
     if (!rows.length) {
@@ -9612,13 +9612,13 @@ async function loadCancelledBillsReport() {
       <thead><tr><th>Cancelled Date</th><th>Bill No.</th><th>Visit ID</th><th>Patient</th><th>Amount</th><th>Payment Method</th><th>Cancelled By</th><th>Reason</th><th>Bill Created</th></tr></thead>
       <tbody>${rows.map(b => `<tr>
         <td class="text-muted text-sm">${escHtml(formatDateTime(b.cancelled_at || ''))}</td>
-        <td><span class="code-id code-id-primary">${escHtml(b.bill_number || '—')}</span></td>
-        <td><span class="code-id code-id-primary">${escHtml(b.visit_id || '—')}</span></td>
-        <td>${escHtml(b.patient_name || '—')} ${b.mr_number ? `<span class="code-id code-id-muted">${escHtml(b.mr_number)}</span>` : ''}</td>
+        <td><span class="code-id code-id-primary">${escHtml(b.bill_number || '�')}</span></td>
+        <td><span class="code-id code-id-primary">${escHtml(b.visit_id || '�')}</span></td>
+        <td>${escHtml(b.patient_name || '�')} ${b.mr_number ? `<span class="code-id code-id-muted">${escHtml(b.mr_number)}</span>` : ''}</td>
         <td><strong>KD ${parseFloat(b.total || 0).toFixed(3)}</strong></td>
-        <td>${escHtml(b.payment_method || '—')}</td>
-        <td>${escHtml(b.cancelled_by_name || '—')}</td>
-        <td class="text-sm">${escHtml(b.cancellation_reason || '—')}</td>
+        <td>${escHtml(b.payment_method || '�')}</td>
+        <td>${escHtml(b.cancelled_by_name || '�')}</td>
+        <td class="text-sm">${escHtml(b.cancellation_reason || '�')}</td>
         <td class="text-muted text-sm">${escHtml(formatDateTime(b.created_at || ''))}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
@@ -9735,7 +9735,7 @@ async function loadDoctorPerformanceReport() {
       if (financialOnly) {
         return `<tr>
           <td><strong>${escHtml(r.doctor_name || 'Doctor')}</strong></td>
-          <td>${escHtml(r.specialization || '—')}</td>
+          <td>${escHtml(r.specialization || '�')}</td>
           <td>KD ${parseFloat(r.gross_revenue || 0).toFixed(3)}</td>
           <td style="color:#d32f2f">KD ${parseFloat(r.total_discount || 0).toFixed(3)}</td>
           <td>KD ${parseFloat(r.net_revenue || 0).toFixed(3)}</td>
@@ -9746,7 +9746,7 @@ async function loadDoctorPerformanceReport() {
       }
       return `<tr>
         <td><strong>${escHtml(r.doctor_name || 'Doctor')}</strong></td>
-        <td>${escHtml(r.specialization || '—')}</td>
+        <td>${escHtml(r.specialization || '�')}</td>
         <td>${parseInt(r.total_patients || 0, 10)}</td>
         <td>${parseInt(r.total_visits || 0, 10)}</td>
         <td>KD ${parseFloat(r.gross_revenue || 0).toFixed(3)}</td>
@@ -9765,7 +9765,7 @@ async function loadDoctorPerformanceReport() {
     const trendHtml = !financialOnly ? `
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px">
         <div class="card" style="margin:0;border:1px solid var(--border-light)">
-          <div class="card-title" style="margin-bottom:8px">Revenue Trend · ${escHtml(chartFocus.doctor_name || 'Selected Doctor')}</div>
+          <div class="card-title" style="margin-bottom:8px">Revenue Trend � ${escHtml(chartFocus.doctor_name || 'Selected Doctor')}</div>
           ${renderBars(chartFocus.revenue_trend || [], 'final_revenue', 'label', 'var(--c-primary)', true)}
         </div>
         <div class="card" style="margin:0;border:1px solid var(--border-light)">
@@ -9835,7 +9835,7 @@ async function loadUserCollectionReport(page) {
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Refund Deduction</div><div class="stat-value" style="color:#d32f2f">- KD ${parseFloat(summary.total_refunded || 0).toFixed(3)}</div></div></div>
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Rows</div><div class="stat-value">${parseInt(summary.rows_count || 0)}</div></div></div>
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Bill Entries</div><div class="stat-value">${parseInt(summary.total_bill_entries || 0)}</div></div></div>
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Date Range</div><div class="stat-value" style="font-size:14px">${escHtml(summary.date_from || '—')} to ${escHtml(summary.date_to || '—')}</div></div></div>
+        <div class="stat-card"><div class="stat-content"><div class="stat-label">Date Range</div><div class="stat-value" style="font-size:14px">${escHtml(summary.date_from || '�')} to ${escHtml(summary.date_to || '�')}</div></div></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         ${methodTotals.map(m => `<span style="padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover);font-size:12px"><strong>${escHtml(m.payment_method)}</strong>: KD ${parseFloat(m.amount || 0).toFixed(3)}</span>`).join('')}
@@ -9843,9 +9843,9 @@ async function loadUserCollectionReport(page) {
       <div class="table-wrap"><table class="user-collection-table">
         <thead><tr><th>Date</th><th>User</th><th>Payment Method</th><th>Gross</th><th>Refund</th><th>Net Amount</th><th>Bill Count</th><th>Breakdown</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
-          <td>${escHtml(r.date || '—')}</td>
+          <td>${escHtml(r.date || '�')}</td>
           <td><strong>${escHtml(r.user_name || 'Unknown')}</strong></td>
-          <td>${escHtml(r.payment_method || '—')}</td>
+          <td>${escHtml(r.payment_method || '�')}</td>
           <td>KD ${parseFloat(r.gross_amount || 0).toFixed(3)}</td>
           <td style="color:#d32f2f">- KD ${parseFloat(r.refunded_amount || 0).toFixed(3)}</td>
           <td><strong>KD ${parseFloat(r.amount || 0).toFixed(3)}</strong></td>
@@ -9854,11 +9854,11 @@ async function loadUserCollectionReport(page) {
             ${(Array.isArray(r.bills) && r.bills.length)
               ? `<details class="ucr-breakdown"><summary>${r.bills.length} bill${r.bills.length !== 1 ? 's' : ''}</summary>
                    <div class="ucr-breakdown-list">${r.bills.map(b => `<div class="ucr-breakdown-item">
-                     <div><strong>${escHtml(b.bill_number || ('Bill #' + b.bill_id))}</strong> · ${escHtml(b.patient_name || 'Unknown')} ${b.mr_number ? `<span class="code-id code-id-muted">${escHtml(b.mr_number)}</span>` : ''}</div>
-                     <div class="text-sm text-muted">Visit: ${escHtml(b.visit_id || '—')} | Status: ${escHtml(b.payment_status || '—')} | Gross: KD ${parseFloat(b.split_amount || 0).toFixed(3)} | Refund: KD ${parseFloat(b.refunded_amount || 0).toFixed(3)} | Net: KD ${parseFloat(b.net_amount || 0).toFixed(3)}</div>
+                     <div><strong>${escHtml(b.bill_number || ('Bill #' + b.bill_id))}</strong> � ${escHtml(b.patient_name || 'Unknown')} ${b.mr_number ? `<span class="code-id code-id-muted">${escHtml(b.mr_number)}</span>` : ''}</div>
+                     <div class="text-sm text-muted">Visit: ${escHtml(b.visit_id || '�')} | Status: ${escHtml(b.payment_status || '�')} | Gross: KD ${parseFloat(b.split_amount || 0).toFixed(3)} | Refund: KD ${parseFloat(b.refunded_amount || 0).toFixed(3)} | Net: KD ${parseFloat(b.net_amount || 0).toFixed(3)}</div>
                    </div>`).join('')}</div>
                  </details>`
-              : '<span class="text-muted text-sm">—</span>'}
+              : '<span class="text-muted text-sm">�</span>'}
           </td>
         </tr>`).join('')}</tbody>
       </table></div>
@@ -9901,10 +9901,10 @@ async function loadActivityLogs() {
         <td><strong>${escHtml(r.actor_name || 'System')}</strong><br><span class="text-muted text-sm">${escHtml(r.actor_username || r.actor_role || 'system')}</span></td>
         <td><span class="badge badge-scheduled">${escHtml((r.action || '').replace(/_/g,' '))}</span></td>
         <td>${escHtml(r.module || 'system')}</td>
-        <td>${escHtml(r.patient_name || '—')}</td>
-        <td>${r.patient_mr_number ? `<span class="code-id code-id-muted">${escHtml(r.patient_mr_number)}</span>` : '—'}</td>
-        <td>${r.visit_id ? `<span class="code-id code-id-primary">${escHtml(r.visit_id)}</span>` : '—'}</td>
-        <td class="text-sm">${escHtml(r.notes || '—')}</td>
+        <td>${escHtml(r.patient_name || '�')}</td>
+        <td>${r.patient_mr_number ? `<span class="code-id code-id-muted">${escHtml(r.patient_mr_number)}</span>` : '�'}</td>
+        <td>${r.visit_id ? `<span class="code-id code-id-primary">${escHtml(r.visit_id)}</span>` : '�'}</td>
+        <td class="text-sm">${escHtml(r.notes || '�')}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch (e) {
@@ -9951,10 +9951,10 @@ async function loadServiceConsumptionReport(page) {
           <td>${((safePage - 1) * REPORT_PAGE_SIZE) + i + 1}</td>
           <td><strong>${escHtml(r.service_name || '')}</strong></td>
           <td>${escHtml(r.product_name || '')}</td>
-          <td>${escHtml(r.product_sku || '—')}</td>
+          <td>${escHtml(r.product_sku || '�')}</td>
           <td>${r.total_service_qty || 0}</td>
           <td><strong>${r.total_consumed_qty || 0}</strong></td>
-          <td>${escHtml(r.unit || '—')}</td>
+          <td>${escHtml(r.unit || '�')}</td>
           <td>KD ${parseFloat(r.avg_unit_cost || 0).toFixed(3)}</td>
           <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
         </tr>`).join('')}</tbody>
@@ -10034,11 +10034,11 @@ async function loadBilledServicesReport(page) {
       <div class="table-wrap"><table>
         <thead><tr><th>Date</th><th>Bill</th><th>Patient</th><th>MR#</th><th>Billed Item</th><th>Service</th><th>Department</th><th>Doctor</th><th>Qty</th><th>Price</th><th>Status</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
-          <td>${escHtml(r.date || '—')}</td>
+          <td>${escHtml(r.date || '�')}</td>
           <td>${escHtml(r.bill_number || ('#' + r.bill_id))}<br><span class="text-muted text-sm">${escHtml(r.visit_id || '')}</span></td>
-          <td>${escHtml(r.patient_name || '—')}</td>
-          <td>${r.mr_number ? `<span class="code-id code-id-muted">${escHtml(r.mr_number)}</span>` : '—'}</td>
-          <td><span class="badge badge-secondary">${escHtml(r.item_type || 'Service')}</span><br><span class="text-sm">${escHtml(r.item_name || '—')}</span></td>
+          <td>${escHtml(r.patient_name || '�')}</td>
+          <td>${r.mr_number ? `<span class="code-id code-id-muted">${escHtml(r.mr_number)}</span>` : '�'}</td>
+          <td><span class="badge badge-secondary">${escHtml(r.item_type || 'Service')}</span><br><span class="text-sm">${escHtml(r.item_name || '�')}</span></td>
           <td><strong>${escHtml(r.service_name || 'Service')}</strong></td>
           <td>${escHtml(r.department_name || 'Unknown')}</td>
           <td>${escHtml(r.doctor_name || 'Unknown')}</td>
@@ -10098,11 +10098,11 @@ async function loadProductConsumptionReport(page) {
         <tbody>${rows.map((r, i) => `<tr>
           <td>${((safePage - 1) * REPORT_PAGE_SIZE) + i + 1}</td>
           <td><strong>${escHtml(r.product_name || '')}</strong></td>
-          <td>${escHtml(r.product_sku || '—')}</td>
+          <td>${escHtml(r.product_sku || '�')}</td>
           <td>${parseInt(r.services_used_count || 0)}</td>
           <td>${r.total_service_qty || 0}</td>
           <td><strong>${r.total_consumed_qty || 0}</strong></td>
-          <td>${escHtml(r.unit || '—')}</td>
+          <td>${escHtml(r.unit || '�')}</td>
           <td>KD ${parseFloat(r.avg_unit_cost || 0).toFixed(3)}</td>
           <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
           <td><strong>${parseFloat(r.cost_share_pct || 0).toFixed(2)}%</strong></td>
@@ -10176,16 +10176,16 @@ async function loadManualConsumptionCostReport(page) {
       <div class="table-wrap"><table>
         <thead><tr><th>Date</th><th>Store</th><th>Entry #</th><th>Item</th><th>Qty</th><th>Unit</th><th>Cost</th><th>Total Cost</th><th>Reason</th><th>Remarks</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
-          <td>${escHtml(r.date || '—')}</td>
-          <td><strong>${escHtml(r.store_name || '—')}</strong></td>
+          <td>${escHtml(r.date || '�')}</td>
+          <td><strong>${escHtml(r.store_name || '�')}</strong></td>
           <td>${escHtml(r.entry_no || ('MC#' + r.entry_id))}</td>
-          <td><strong>${escHtml(r.item_name || '—')}</strong>${r.item_sku ? `<div class="text-muted text-sm">${escHtml(r.item_sku)}</div>` : ''}</td>
+          <td><strong>${escHtml(r.item_name || '�')}</strong>${r.item_sku ? `<div class="text-muted text-sm">${escHtml(r.item_sku)}</div>` : ''}</td>
           <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
-          <td>${escHtml(r.unit || '—')}</td>
+          <td>${escHtml(r.unit || '�')}</td>
           <td>KD ${parseFloat(r.cost || 0).toFixed(3)}</td>
           <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
-          <td>${escHtml(r.reason || '—')}</td>
-          <td class="text-sm text-muted">${escHtml(r.remarks || r.entry_remarks || '—')}</td>
+          <td>${escHtml(r.reason || '�')}</td>
+          <td class="text-sm text-muted">${escHtml(r.remarks || r.entry_remarks || '�')}</td>
         </tr>`).join('')}</tbody>
       </table></div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -10281,18 +10281,18 @@ async function loadStockMovementReport(page) {
       <div class="table-wrap"><table>
         <thead><tr><th>Date</th><th>Type</th><th>Direction</th><th>Store</th><th>Product</th><th>SKU</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Total Value</th><th>Reference</th><th>Note</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
-          <td>${escHtml(r.date || '—')}</td>
-          <td>${escHtml(r.movement_type || '—')}</td>
+          <td>${escHtml(r.date || '�')}</td>
+          <td>${escHtml(r.movement_type || '�')}</td>
           <td>${r.direction === 'IN' ? '<span class="badge badge-completed">IN</span>' : '<span class="badge badge-cancelled">OUT</span>'}</td>
-          <td>${escHtml(r.store_name || '—')}</td>
-          <td><strong>${escHtml(r.product_name || '—')}</strong></td>
-          <td>${escHtml(r.product_sku || '—')}</td>
+          <td>${escHtml(r.store_name || '�')}</td>
+          <td><strong>${escHtml(r.product_name || '�')}</strong></td>
+          <td>${escHtml(r.product_sku || '�')}</td>
           <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
-          <td>${escHtml(r.unit || '—')}</td>
+          <td>${escHtml(r.unit || '�')}</td>
           <td>KD ${parseFloat(r.unit_cost || 0).toFixed(3)}</td>
           <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
-          <td>${escHtml(r.reference || '—')}</td>
-          <td class="text-sm text-muted">${escHtml(r.note || '—')}</td>
+          <td>${escHtml(r.reference || '�')}</td>
+          <td class="text-sm text-muted">${escHtml(r.note || '�')}</td>
         </tr>`).join('')}</tbody>
       </table></div>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -10354,12 +10354,12 @@ async function loadStockStatusReport(page) {
       <div class="table-wrap"><table>
         <thead><tr><th>Store</th><th>Product</th><th>SKU</th><th>Category</th><th>Qty</th><th>Unit</th><th>Reorder</th><th>Avg Cost</th><th>Stock Value</th><th>Status</th></tr></thead>
         <tbody>${rows.map(r => `<tr>
-          <td>${escHtml(r.store_name || '—')}</td>
-          <td><strong>${escHtml(r.product_name || '—')}</strong></td>
-          <td>${escHtml(r.product_sku || '—')}</td>
-          <td>${escHtml(r.category || '—')}</td>
+          <td>${escHtml(r.store_name || '�')}</td>
+          <td><strong>${escHtml(r.product_name || '�')}</strong></td>
+          <td>${escHtml(r.product_sku || '�')}</td>
+          <td>${escHtml(r.category || '�')}</td>
           <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
-          <td>${escHtml(r.unit || '—')}</td>
+          <td>${escHtml(r.unit || '�')}</td>
           <td>${parseFloat(r.reorder_level || 0).toFixed(3)}</td>
           <td>KD ${parseFloat(r.avg_cost || 0).toFixed(3)}</td>
           <td><strong>KD ${parseFloat(r.stock_value || 0).toFixed(3)}</strong></td>
@@ -10552,7 +10552,7 @@ async function users() {
     ca.innerHTML = `
       <div class="action-bar">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="search" placeholder="Search by name…" style="width:170px" value="${escHtml(userNameFilter)}" oninput="userNameFilter=this.value;renderUsersTable(window._usersCache||[])" />
+          <input type="search" placeholder="Search by name�" style="width:170px" value="${escHtml(userNameFilter)}" oninput="userNameFilter=this.value;renderUsersTable(window._usersCache||[])" />
           <select style="width:auto;min-width:130px" onchange="userRoleFilter=this.value;renderUsersTable(window._usersCache||[])">
             ${roleOpts}
           </select>
@@ -10594,9 +10594,9 @@ function renderUsersTable(list) {
         <td>${escHtml(u.username)}</td>
         <td>${roleBadge(u.role)}</td>
         <td>${u.active === false ? '<span class="badge badge-cancelled">Inactive</span>' : '<span class="badge badge-completed">Active</span>'}</td>
-        <td>${escHtml((u.department_names || []).length ? u.department_names.join(', ') : (u.department_name || '')) || '—'}</td>
+        <td>${escHtml((u.department_names || []).length ? u.department_names.join(', ') : (u.department_name || '')) || '�'}</td>
         <td>${u.role === 'admin' ? 'All Stores' : escHtml((u.store_names || []).length ? u.store_names.join(', ') : 'All Stores')}</td>
-        <td>${u.role==='doctor' ? `<span class="badge badge-scheduled">${u.slot_duration||30} min</span>` : '—'}</td>
+        <td>${u.role==='doctor' ? `<span class="badge badge-scheduled">${u.slot_duration||30} min</span>` : '�'}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="openEditUserModal(${u.id})">${IC.edit} Edit</button>
           ${u.id !== currentUser.id
@@ -10715,7 +10715,7 @@ async function openEditUserModal(id) {
     if (!u) { toast('User not found', 'error'); return; }
     const depOptions = (departments || []).filter(d => d.active !== false || d.id === u.department_id)
       .map(d => `<option value="${d.id}" ${parseInt(u.department_id)===d.id?'selected':''}>${escHtml(d.name)}</option>`).join('');
-    showModal(`Edit · ${escHtml(u.name)}`, `
+    showModal(`Edit � ${escHtml(u.name)}`, `
       <form id="editUserForm">
         <div class="form-group"><label>Full Name</label><input name="name" value="${escHtml(u.name)}"/></div>
         <div class="form-group"><label>Role</label><input value="${escHtml(u.role)}" disabled/></div>
@@ -10873,9 +10873,9 @@ function renderServiceRow(s, index, isAdmin) {
     <td>${index + 1}</td>
     <td><strong>${escHtml(s.name)}</strong></td>
     <td>${serviceCategoryBadgeHtml(s.category)}</td>
-    <td>${escHtml(s.description||'—')}</td>
+    <td>${escHtml(s.description||'�')}</td>
     <td><strong>KD ${s.price.toFixed(3)}</strong></td>
-    <td>${s.duration_min ? s.duration_min+' min' : '—'}</td>
+    <td>${s.duration_min ? s.duration_min+' min' : '�'}</td>
     <td>${s.active ? '<span class="badge badge-completed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
     ${isAdmin?`<td class="action-btns">
       <button class="btn btn-sm" onclick="openServiceProductModal(${s.id})" title="Assign Products">${IC.product || IC.store}</button>
@@ -11066,7 +11066,7 @@ async function openEditServiceModal(id) {
     const list = await apiFetch('/api/services');
     const s = list.find(x => x.id === id);
     if (!s) { toast('Not found','error'); return; }
-    showModal(`Edit · ${escHtml(s.name)}`, `
+    showModal(`Edit � ${escHtml(s.name)}`, `
       <form id="svcForm">
         <div class="form-row">
           <div class="form-group"><label>Service Name *</label><input name="name" value="${escHtml(s.name)}" required/></div>
@@ -11349,7 +11349,7 @@ function openServiceImportMappingModal(headers, sourceRows, delimiter = ',') {
   const body = `
     <div class="text-sm" style="margin-bottom:10px">Map your file columns to service fields.</div>
     <div class="alert" style="margin-bottom:12px">
-      <strong>Detected columns (${headers.length})</strong> · delimiter: ${escHtml(delimiterLabel)}<br>
+      <strong>Detected columns (${headers.length})</strong> � delimiter: ${escHtml(delimiterLabel)}<br>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
         ${headers.map(h => `<span style="padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover);font-size:12px">${escHtml(h)}</span>`).join('') || '<span class="text-muted">No headers detected</span>'}
       </div>
@@ -11419,15 +11419,15 @@ async function openServiceProductModal(serviceId) {
     const productOptions = (products || []).filter(p => p.active !== false)
       .map(p => {
         const cost = parseFloat(p.cost_price || 0) || 0;
-        return `<option value="${p.id}">${escHtml(p.name)}${p.uom_symbol ? ` (${escHtml(p.uom_symbol)})` : ''} · KD ${cost.toFixed(3)}</option>`;
+        return `<option value="${p.id}">${escHtml(p.name)}${p.uom_symbol ? ` (${escHtml(p.uom_symbol)})` : ''} � KD ${cost.toFixed(3)}</option>`;
       }).join('');
 
-    showModal(`Assign Products · ${escHtml(svc.name)}`, `
+    showModal(`Assign Products � ${escHtml(svc.name)}`, `
       <div id="svcProdModalWrap">
         <div class="form-row">
           <div class="form-group">
             <label>Product</label>
-            <select id="spmProductId"><option value="">— Select Product —</option>${productOptions}</select>
+            <select id="spmProductId"><option value="">� Select Product �</option>${productOptions}</select>
           </div>
           <div class="form-group">
             <label>Qty per Service Use</label>
@@ -11470,7 +11470,7 @@ function renderServiceProductList(links) {
       <td>${parseFloat(l.qty_per_use || 0).toFixed(3)}</td>
       <td>KD ${parseFloat(l.product_cost || 0).toFixed(3)}</td>
       <td><strong>KD ${parseFloat(l.cost_per_use || 0).toFixed(3)}</strong></td>
-      <td>${escHtml(l.product_unit || '—')}</td>
+      <td>${escHtml(l.product_unit || '�')}</td>
       <td><button class="btn btn-sm btn-danger" onclick="deleteServiceProductLink(${l.id},${l.service_id})">${IC.trash}</button></td>
     </tr>`).join('')}</tbody>
   </table></div>`;
@@ -11538,11 +11538,11 @@ function renderPackagesTable(list, isAdmin) {
       <thead><tr><th>#</th><th>Name</th><th>Services</th><th>Sessions</th><th>Price</th><th>Status</th>${isAdmin ? '<th>Actions</th>' : ''}</tr></thead>
       <tbody>${list.map((p,i) => {
         const totalSessions = (p.services||[]).reduce((t,s)=>t+(s.total||1),0);
-        const svcNames = (p.services||[]).map(s=>escHtml(s.name)+(s.total>1?` —${s.total}`:'')).join(', ');
+        const svcNames = (p.services||[]).map(s=>escHtml(s.name)+(s.total>1?` �${s.total}`:'')).join(', ');
         return `<tr>
           <td>${i+1}</td>
           <td><strong>${escHtml(p.name)}</strong>${p.description?`<div class="text-muted text-sm">${escHtml(p.description)}</div>`:''}</td>
-          <td class="text-sm">${svcNames||'—'}</td>
+          <td class="text-sm">${svcNames||'�'}</td>
           <td>${totalSessions}</td>
           <td><strong>KD ${(p.discount_price||0).toFixed(3)}</strong>${p.total_price&&p.total_price>p.discount_price?`<br><span class="text-muted text-sm" style="text-decoration:line-through">KD ${(p.total_price).toFixed(3)}</span>`:''}</td>
           <td>${p.active ? '<span class="badge badge-paid">Active</span>' : '<span class="badge badge-unpaid">Inactive</span>'}</td>
@@ -11562,7 +11562,7 @@ function renderPackagesTable(list, isAdmin) {
     const savingPct = mrp > 0 ? Math.round((saving / mrp) * 100) : 0;
     const totalSessions = (p.services||[]).reduce((t,s)=>t+(s.total||1),0);
     const chips = (p.services||[]).map(s =>
-      `<span class="pkg-svc-chip">${escHtml(s.name)}${(s.total||1)>1?`<em> —${s.total}</em>`:''}</span>`
+      `<span class="pkg-svc-chip">${escHtml(s.name)}${(s.total||1)>1?`<em> �${s.total}</em>`:''}</span>`
     ).join('');
     return `
     <div class="pkg-card${p.active ? '' : ' pkg-card-inactive'}">
@@ -11710,7 +11710,7 @@ async function openEditPackageModal(id) {
     } else if (Array.isArray(p.service_ids)) {
       p.service_ids.forEach(id => selMap.set(id, 1));
     }
-    showModal(`Edit · ${escHtml(p.name)}`, `
+    showModal(`Edit � ${escHtml(p.name)}`, `
       <form id="pkgForm">
         <div class="form-group"><label>Package Name *</label><input name="name" value="${escHtml(p.name)}" required/></div>
         <div class="form-group"><label>Description</label><input name="description" value="${escHtml(p.description||'')}"/></div>
@@ -11952,19 +11952,19 @@ async function setup() {
           </div>
           <div class="card">
             <div class="card-header-row">
-              <div class="card-title">🖨️ Printer Configuration</div>
+              <div class="card-title">??? Printer Configuration</div>
             </div>
             <div class="card-body">
               <form id="setupPrinterForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
                 <div class="form-group"><label>Print Mode</label>
                   <select name="print_mode">
-                    <option value="auto">Auto Print – print immediately after bill creation</option>
-                    <option value="manual">Manual Print – show preview with Print / Cancel</option>
+                    <option value="auto">Auto Print � print immediately after bill creation</option>
+                    <option value="manual">Manual Print � show preview with Print / Cancel</option>
                   </select>
                 </div>
                 <div class="form-group"><label>Printer Type</label>
                   <select name="printer_type" onchange="updatePrinterTypeFields()">
-                    <option value="">—— Not Configured ——</option>
+                    <option value="">�� Not Configured ��</option>
                     <option value="usb">USB Printer</option>
                     <option value="network">Network Printer</option>
                   </select>
@@ -11982,7 +11982,7 @@ async function setup() {
               </form>
               <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
                 <button class="btn btn-primary" onclick="savePrinterConfig()">${IC.check} Save Printer Config</button>
-                <button class="btn" onclick="testPrinterConnection()">🧪 Test Printer</button>
+                <button class="btn" onclick="testPrinterConnection()">?? Test Printer</button>
               </div>
               <div id="printerStatus" class="text-muted" style="margin-top:8px;font-size:13px"></div>
             </div>
@@ -12070,7 +12070,7 @@ async function loadSetupPrinterConfig() {
 
     const printerStatus = document.getElementById('printerStatus');
     if (printer.printer_name && printerStatus) {
-      printerStatus.textContent = `✓ Configured: ${printer.printer_name} (${printer.printer_type || 'unknown'})`;
+      printerStatus.textContent = `? Configured: ${printer.printer_name} (${printer.printer_type || 'unknown'})`;
     } else if (printerStatus) {
       printerStatus.textContent = '';
     }
@@ -12207,9 +12207,9 @@ function renderResetProgress(job) {
   wrap.style.display = '';
   const progress = Math.max(0, Math.min(100, parseInt(job.progress || 0, 10) || 0));
   bar.style.width = `${progress}%`;
-  txt.textContent = `${progress}% · ${job.phase || 'running'} · ${job.message || ''}`;
+  txt.textContent = `${progress}% � ${job.phase || 'running'} � ${job.message || ''}`;
   if (job.backup && job.backup.files) {
-    links.innerHTML = `Backup: <a href="${escHtml(job.backup.files.sqlite || '#')}" target="_blank" rel="noopener">Download SQLite</a> · <a href="${escHtml(job.backup.files.json || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
+    links.innerHTML = `Backup: <a href="${escHtml(job.backup.files.sqlite || '#')}" target="_blank" rel="noopener">Download SQLite</a> � <a href="${escHtml(job.backup.files.json || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
   } else {
     links.textContent = '';
   }
@@ -12322,7 +12322,7 @@ async function loadOwnerBackupStatus() {
     const latest = list[0];
     const when = latest && latest.created_at ? formatDateTime(latest.created_at) : 'Unknown time';
     const bid = latest && latest.backup_id ? latest.backup_id : 'Unknown';
-    state.innerHTML = `Latest backup: <strong>${escHtml(bid)}</strong> · ${escHtml(when)} · <a href="${escHtml((latest.files && latest.files.sqlite) || '#')}" target="_blank" rel="noopener">Download SQLite</a> · <a href="${escHtml((latest.files && latest.files.json) || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
+    state.innerHTML = `Latest backup: <strong>${escHtml(bid)}</strong> � ${escHtml(when)} � <a href="${escHtml((latest.files && latest.files.sqlite) || '#')}" target="_blank" rel="noopener">Download SQLite</a> � <a href="${escHtml((latest.files && latest.files.json) || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
     renderRestoreBackupOptions(list);
   } catch (e) {
     state.textContent = 'Backup status unavailable. If you just updated server code, restart server once.';
@@ -12361,9 +12361,9 @@ function renderRestoreProgress(job) {
   wrap.style.display = '';
   const progress = Math.max(0, Math.min(100, parseInt(job.progress || 0, 10) || 0));
   bar.style.width = `${progress}%`;
-  txt.textContent = `${progress}% · ${job.phase || 'running'} · ${job.message || ''}`;
+  txt.textContent = `${progress}% � ${job.phase || 'running'} � ${job.message || ''}`;
   if (job.safety_backup) {
-    safety.innerHTML = `Safety backup: <strong>${escHtml(String(job.safety_backup.backup_id || 'created'))}</strong> ${job.safety_backup.files ? `· <a href="${escHtml(job.safety_backup.files.sqlite || '#')}" target="_blank" rel="noopener">SQLite</a> · <a href="${escHtml(job.safety_backup.files.json || '#')}" target="_blank" rel="noopener">JSON</a>` : ''}`;
+    safety.innerHTML = `Safety backup: <strong>${escHtml(String(job.safety_backup.backup_id || 'created'))}</strong> ${job.safety_backup.files ? `� <a href="${escHtml(job.safety_backup.files.sqlite || '#')}" target="_blank" rel="noopener">SQLite</a> � <a href="${escHtml(job.safety_backup.files.json || '#')}" target="_blank" rel="noopener">JSON</a>` : ''}`;
   } else {
     safety.textContent = '';
   }
@@ -12487,7 +12487,7 @@ async function triggerDbBackup() {
     const bid = backup && backup.backup_id ? backup.backup_id : 'created';
     toast(`Backup created: ${bid}`, 'success');
     if (state && backup) {
-      state.innerHTML = `Latest backup: <strong>${escHtml(backup.backup_id || '')}</strong> · ${escHtml(formatDateTime(backup.created_at || ''))} · <a href="${escHtml((backup.files && backup.files.sqlite) || '#')}" target="_blank" rel="noopener">Download SQLite</a> · <a href="${escHtml((backup.files && backup.files.json) || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
+      state.innerHTML = `Latest backup: <strong>${escHtml(backup.backup_id || '')}</strong> � ${escHtml(formatDateTime(backup.created_at || ''))} � <a href="${escHtml((backup.files && backup.files.sqlite) || '#')}" target="_blank" rel="noopener">Download SQLite</a> � <a href="${escHtml((backup.files && backup.files.json) || '#')}" target="_blank" rel="noopener">Download JSON</a>`;
     } else {
       loadOwnerBackupStatus();
     }
@@ -12523,7 +12523,7 @@ async function triggerSystemUpdate() {
     const res = await apiFetch('/api/admin/system-update', {
       method: 'POST',
       body: JSON.stringify({ remote: 'origin', branch: 'main' }),
-      timeoutMs: 300000  // 5 minutes – update downloads zip + runs npm install
+      timeoutMs: 300000  // 5 minutes � update downloads zip + runs npm install
     });
 
     const backupId = res && res.backup && res.backup.backup_id ? res.backup.backup_id : 'created';
@@ -12534,7 +12534,7 @@ async function triggerSystemUpdate() {
       ? 'Restart app service to apply backend code changes.'
       : '';
     if (state) {
-      state.innerHTML = `Update completed: <strong>${escHtml(from)}</strong> → <strong>${escHtml(to)}</strong> · Backup: <strong>${escHtml(backupId)}</strong>${changed ? '' : ' · Already up to date'}${restartNote ? ` · ${escHtml(restartNote)}` : ''}`;
+      state.innerHTML = `Update completed: <strong>${escHtml(from)}</strong> ? <strong>${escHtml(to)}</strong> � Backup: <strong>${escHtml(backupId)}</strong>${changed ? '' : ' � Already up to date'}${restartNote ? ` � ${escHtml(restartNote)}` : ''}`;
     }
     toast(changed ? 'System update completed.' : 'System is already up to date.', 'success');
   } catch (e) {
@@ -12723,9 +12723,9 @@ async function refreshAvailablePrinters(preferredName = '') {
         }
         if (desiredName) select.value = desiredName;
         if (manual && desiredName) manual.value = desiredName;
-        if (status) status.textContent = `✓ Found ${printers.length} printer(s). Select one above.`;
+        if (status) status.textContent = `? Found ${printers.length} printer(s). Select one above.`;
       } else {
-        if (status) status.textContent = `⚠ No printers found. Check your system printer settings or enter printer name manually below.`;
+        if (status) status.textContent = `? No printers found. Check your system printer settings or enter printer name manually below.`;
         if (desiredName) {
           const savedOpt = document.createElement('option');
           savedOpt.value = desiredName;
@@ -12738,7 +12738,7 @@ async function refreshAvailablePrinters(preferredName = '') {
   } catch (e) {
     const status = document.getElementById('printerStatus');
     if (status) {
-      status.textContent = `✗ Error fetching printers: ${e.message}. Check browser console for details.`;
+      status.textContent = `? Error fetching printers: ${e.message}. Check browser console for details.`;
     }
     console.error('Printer fetch error:', e);
     toast(`Failed to list printers: ${e.message}`, 'error');
@@ -12784,7 +12784,7 @@ async function savePrinterConfig() {
     currentSystem = result;
     toast('Printer configuration saved.', 'success');
     const status = document.getElementById('printerStatus');
-    if (status) status.textContent = name ? `✓ Configured: ${name} (${type})` : '';
+    if (status) status.textContent = name ? `? Configured: ${name} (${type})` : '';
     if (currentPageId === 'setup') {
       loadSetupPrinterConfig();
     }
@@ -12823,11 +12823,11 @@ async function testPrinterConnection() {
     });
     
     toast('Printer test sent successfully!', 'success');
-    if (status) status.textContent = '✓ Test print sent (check your printer)';
+    if (status) status.textContent = '? Test print sent (check your printer)';
   } catch (e) {
     toast(`Printer test failed: ${e.message}`, 'error');
     if (document.getElementById('printerStatus')) {
-      document.getElementById('printerStatus').textContent = `✗ Test failed: ${e.message}`;
+      document.getElementById('printerStatus').textContent = `? Test failed: ${e.message}`;
     }
   }
 }
@@ -12893,7 +12893,7 @@ async function loadPaymentMethods() {
 function openAddPaymentMethodModal() {
   showModal('Add Payment Method', `
     <label class="form-label">Method Name</label>
-    <input id="pmName" class="form-control" placeholder="e.g. Cash, Card, UPI—" />
+    <input id="pmName" class="form-control" placeholder="e.g. Cash, Card, UPI�" />
   `, async () => {
     const name = document.getElementById('pmName').value.trim();
     if (!name) { toast('Name is required', 'error'); return; }
@@ -13027,7 +13027,7 @@ function openAddServiceCategoryModal() {
   showModal('Add Service Category', `
     <div class="form-group">
       <label>Category Name <span style="color:var(--c-danger)">*</span></label>
-      <input id="scName" class="form-control" placeholder="e.g. Radiology, Surgery—" autofocus/>
+      <input id="scName" class="form-control" placeholder="e.g. Radiology, Surgery�" autofocus/>
     </div>`,
     async () => {
       const name = document.getElementById('scName')?.value?.trim();
@@ -13394,7 +13394,7 @@ async function saveQuickProductCategory(targetSelectId) {
     if (sel) {
       const options = (_storeProductCategories || []).filter(c => c.active !== false)
         .map(c => `<option value="${escHtml(c.name)}">${escHtml(c.name)}</option>`).join('');
-      sel.innerHTML = `<option value="">— Select Category —</option>${options}`;
+      sel.innerHTML = `<option value="">� Select Category �</option>${options}`;
       sel.value = created.name;
     }
     closeQuickProductCategoryModal();
@@ -13420,9 +13420,9 @@ async function patientPackages(renderSeq = _pageRenderSeq) {
     <div class="apt-filter-bar">
       <div class="apt-filter-toolbar">
         <div class="apt-filter-fields" style="grid-template-columns:repeat(3,1fr) minmax(140px,170px) minmax(140px,170px) minmax(140px,160px)">
-          <input class="apt-filter-field" type="text" id="ppFilterMR" placeholder="Search MR#…" oninput="_applyPPFilter()"/>
-          <input class="apt-filter-field" type="text" id="ppFilterPatient" placeholder="Search patient…" oninput="_applyPPFilter()"/>
-          <input class="apt-filter-field" type="text" id="ppFilterPackage" placeholder="Search package…" oninput="_applyPPFilter()"/>
+          <input class="apt-filter-field" type="text" id="ppFilterMR" placeholder="Search MR#�" oninput="_applyPPFilter()"/>
+          <input class="apt-filter-field" type="text" id="ppFilterPatient" placeholder="Search patient�" oninput="_applyPPFilter()"/>
+          <input class="apt-filter-field" type="text" id="ppFilterPackage" placeholder="Search package�" oninput="_applyPPFilter()"/>
           <input class="apt-filter-field" type="date" id="ppFilterFrom" value="${today}" onchange="_applyPPFilter()" title="Purchased from"/>
           <input class="apt-filter-field" type="date" id="ppFilterTo" value="${today}" onchange="_applyPPFilter()" title="Purchased to"/>
           <select class="apt-filter-field" id="ppFilterStatus" onchange="_applyPPFilter()">
@@ -13484,7 +13484,7 @@ function _applyPPFilter() {
         const totalSess=svcs.reduce((a,sv)=>a+(sv.total||0),0);
         return `<tr>
           <td><span class="billing-index">${i+1}</span></td>
-          <td><span class="code-id code-id-primary">${escHtml(s.mr_number||'—')}</span></td>
+          <td><span class="code-id code-id-primary">${escHtml(s.mr_number||'�')}</span></td>
           <td><strong>${escHtml(s.patient_name||'Patient #'+s.patient_id)}</strong></td>
           <td class="text-sm">${escHtml(s.package_name)}</td>
           <td class="text-sm">${totalUsed}/${totalSess}</td>
@@ -13573,7 +13573,7 @@ async function viewPatientPackage(id) {
     `${IC.packages} Package Details`,
     `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border-light)">
         <div><div class="text-muted text-sm">Patient</div><strong style="word-break:break-word">${escHtml(s.patient_name||'#'+s.patient_id)}</strong></div>
-        <div><div class="text-muted text-sm">MR#</div><strong>${escHtml(s.mr_number||'—')}</strong></div>
+        <div><div class="text-muted text-sm">MR#</div><strong>${escHtml(s.mr_number||'�')}</strong></div>
         <div><div class="text-muted text-sm">Package</div><strong style="word-break:break-word">${escHtml(s.package_name)}</strong></div>
         <div style="display:flex;flex-direction:column;gap:4px"><div class="text-muted text-sm">Status</div><div style="display:flex;align-items:center;min-height:22px">${statusBadge(s.status)}</div></div>
         <div><div class="text-muted text-sm">Overall</div><strong>${totalUsed}/${totalSess}</strong></div>
@@ -13877,7 +13877,7 @@ function renderStoreOverviewCard(storeId) {
     <div class="store-store-head">
       <div>
         <div class="card-title">${IC.store} ${escHtml(st.name)} ${st.is_main ? '<span class="badge badge-admin" style="font-size:10px;margin-left:4px">Main</span>' : ''}</div>
-        <div class="text-muted text-sm">${visibleRows.length} product${visibleRows.length !== 1 ? 's' : ''} · KD ${storeValue.toFixed(3)}</div>
+        <div class="text-muted text-sm">${visibleRows.length} product${visibleRows.length !== 1 ? 's' : ''} � KD ${storeValue.toFixed(3)}</div>
       </div>
       <span class="badge ${storeLowCount ? 'badge-unpaid' : 'badge-paid'}">${storeLowCount} low</span>
     </div>
@@ -13894,7 +13894,7 @@ function renderStoreOverviewCard(storeId) {
       const isLow = (parseFloat(row.qty || 0) || 0) <= (parseFloat(row.reorder_level || 0) || 0);
       return `<div class="store-product-item ${isLow ? 'is-low' : ''}">
         <div class="store-product-main">
-          <strong>${escHtml(row.product_name || '—')}</strong>
+          <strong>${escHtml(row.product_name || '�')}</strong>
           <div class="text-muted text-sm">${escHtml(row.product_sku || 'No SKU')}</div>
         </div>
         <div class="store-product-meta">
@@ -14005,7 +14005,7 @@ async function storeOverview() {
               <div class="store-spotlight-item">
                 <div>
                   <div class="store-spotlight-name">${escHtml(row.product_name || 'Product')}</div>
-                  <div class="text-muted text-sm">${escHtml(row.store_name || 'Unknown Store')} · ${escHtml(row.product_sku || '')}</div>
+                  <div class="text-muted text-sm">${escHtml(row.store_name || 'Unknown Store')} � ${escHtml(row.product_sku || '')}</div>
                 </div>
                 <div class="store-spotlight-metrics">
                   <span class="badge badge-unpaid">${parseFloat(row.qty || 0).toFixed(3)} ${escHtml(row.product_unit || '')}</span>
@@ -14085,11 +14085,11 @@ function renderStoreProducts(list) {
       return `<tr>
         <td>${i+1}</td>
         <td><strong>${escHtml(p.name)}</strong>${p.description?`<div class="text-muted text-sm">${escHtml(p.description)}</div>`:''}</td>
-        <td class="text-muted text-sm">${escHtml(p.sku||'—')}</td>
-        <td>${escHtml(p.category||'—')}</td>
-        <td>${escHtml(p.uom_symbol || p.unit || '—')}</td>
+        <td class="text-muted text-sm">${escHtml(p.sku||'�')}</td>
+        <td>${escHtml(p.category||'�')}</td>
+        <td>${escHtml(p.uom_symbol || p.unit || '�')}</td>
         <td>KD ${(p.cost_price||0).toFixed(3)}</td>
-        <td>${p.sell_price>0?`KD ${p.sell_price.toFixed(3)}`:'—'}</td>
+        <td>${p.sell_price>0?`KD ${p.sell_price.toFixed(3)}`:'�'}</td>
         <td><span class="badge ${isLow?'badge-unpaid':'badge-paid'}">${p.total_stock} ${escHtml(p.uom_symbol || p.unit || '')}</span>${isLow?` <span class="badge badge-cancelled" style="font-size:10px">Low</span>`:''}</td>
         <td>${expiryChipHtml(p.next_expiry, p.missing_expiry_count)}</td>
         <td>${p.reorder_level}</td>
@@ -14114,7 +14114,7 @@ function renderProductUomConversionRow(containerId, selectedUomId = '', factor =
   wrap.insertAdjacentHTML('beforeend', `
     <div class="prod-uom-row" style="display:grid;grid-template-columns:1fr 150px 30px;gap:8px;align-items:center;margin-bottom:6px">
       <select class="prod-uom-sel" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)">
-        <option value="">— Select UOM —</option>${uomOpts}
+        <option value="">� Select UOM �</option>${uomOpts}
       </select>
       <div class="num-stepper prod-uom-factor-wrap"><button type="button" class="num-step-btn" onclick="stepNum(this,-1)">-</button><input class="prod-uom-factor" type="number" min="0.001" step="0.001" value="${factor !== '' ? factor : ''}" placeholder="Factor"/><button type="button" class="num-step-btn" onclick="stepNum(this,1)">+</button></div>
       <button type="button" onclick="this.closest('.prod-uom-row').remove()" style="background:none;border:none;cursor:pointer;color:var(--c-danger)">${IC.trash}</button>
@@ -14138,7 +14138,7 @@ function collectProductUomConversions(modal, baseUomId) {
   return out;
 }
 function openAddProductModal() {
-  const uomOpts = (_allUoms || []).filter(u => u.active !== false).map(u => `<option value="${u.id}">${escHtml(u.name)} (${escHtml(u.symbol)}) · factor ${parseFloat(u.factor || 1).toFixed(3)}</option>`).join('');
+  const uomOpts = (_allUoms || []).filter(u => u.active !== false).map(u => `<option value="${u.id}">${escHtml(u.name)} (${escHtml(u.symbol)}) � factor ${parseFloat(u.factor || 1).toFixed(3)}</option>`).join('');
   const catOpts = (_storeProductCategories || []).filter(c => c.active !== false).map(c => `<option value="${escHtml(c.name)}">${escHtml(c.name)}</option>`).join('');
   showModal('Add Product', `
     <form id="addProductForm">
@@ -14153,7 +14153,7 @@ function openAddProductModal() {
             <span>Category *</span>
             ${can('setup.edit') ? `<button type="button" class="btn btn-sm" onclick="quickAddProductCategory('addProductCategorySel')">${IC.plus} Category</button>` : ''}
           </label>
-          <select id="addProductCategorySel" name="category" required><option value="">— Select Category —</option>${catOpts}</select>
+          <select id="addProductCategorySel" name="category" required><option value="">� Select Category �</option>${catOpts}</select>
         </div>
       </div>
       <div class="form-row">
@@ -14185,7 +14185,7 @@ function openAddProductModal() {
 }
 async function openEditProductModal(id) {
   const p = _storeAllProducts.find(x=>x.id===id); if(!p) return;
-  const uomOpts = (_allUoms || []).map(u => `<option value="${u.id}" ${parseInt(p.uom_id) === u.id ? 'selected' : ''}>${escHtml(u.name)} (${escHtml(u.symbol)}) · factor ${parseFloat(u.factor || 1).toFixed(3)}</option>`).join('');
+  const uomOpts = (_allUoms || []).map(u => `<option value="${u.id}" ${parseInt(p.uom_id) === u.id ? 'selected' : ''}>${escHtml(u.name)} (${escHtml(u.symbol)}) � factor ${parseFloat(u.factor || 1).toFixed(3)}</option>`).join('');
   const catOpts = (_storeProductCategories || []).map(c => `<option value="${escHtml(c.name)}" ${String(p.category||'') === String(c.name) ? 'selected' : ''}>${escHtml(c.name)}</option>`).join('');
   showModal('Edit Product', `
     <form id="editProductForm">
@@ -14200,7 +14200,7 @@ async function openEditProductModal(id) {
             <span>Category *</span>
             ${can('setup.edit') ? `<button type="button" class="btn btn-sm" onclick="quickAddProductCategory('editProductCategorySel')">${IC.plus} Category</button>` : ''}
           </label>
-          <select id="editProductCategorySel" name="category" required><option value="">— Select Category —</option>${catOpts}</select>
+          <select id="editProductCategorySel" name="category" required><option value="">� Select Category �</option>${catOpts}</select>
         </div>
       </div>
       <div class="form-row">
@@ -14271,10 +14271,10 @@ function renderSuppliers(list) {
     <tbody>${list.map((s,i)=>`<tr>
       <td>${i+1}</td>
       <td><strong>${escHtml(s.name)}</strong></td>
-      <td>${escHtml(s.contact_name||'—')}</td>
-      <td>${escHtml(s.phone||'—')}</td>
-      <td>${escHtml(s.email||'—')}</td>
-      <td>${escHtml(s.address||'—')}</td>
+      <td>${escHtml(s.contact_name||'�')}</td>
+      <td>${escHtml(s.phone||'�')}</td>
+      <td>${escHtml(s.email||'�')}</td>
+      <td>${escHtml(s.address||'�')}</td>
       <td>${s.active?'<span class="badge badge-paid">Active</span>':'<span class="badge badge-unpaid">Inactive</span>'}</td>
       ${can('store.manage')?`<td class="td-actions">
         <button class="btn btn-sm" onclick="openEditSupplierModal(${s.id})">${IC.edit}</button>
@@ -14397,13 +14397,13 @@ function renderPOs(list) {
       const dueAmount = o.due_amount != null ? parseFloat(o.due_amount) : parseFloat(o.total_cost || 0);
       return `<tr>
       <td>${i+1}</td>
-      <td><strong>${escHtml(o.supplier_name||'—')}</strong></td>
-      <td class="text-muted text-sm">${escHtml(o.invoice_number||'—')}</td>
+      <td><strong>${escHtml(o.supplier_name||'�')}</strong></td>
+      <td class="text-muted text-sm">${escHtml(o.invoice_number||'�')}</td>
       <td>${(o.items||[]).length} item(s)${missingExpiry ? ` <span class="expiry-chip missing">Expiry Missing</span>` : ''}</td>
       <td><strong>KD ${(o.total_cost||0).toFixed(3)}</strong></td>
       <td>${payBadge}<div class="text-muted text-sm">Due KD ${dueAmount.toFixed(3)}</div></td>
       <td>${o.status==='Received'?'<span class="badge badge-paid">Received</span>':'<span class="badge badge-scheduled">Pending</span>'}</td>
-      <td class="text-muted text-sm">${escHtml(o.order_date||'—')}</td>
+      <td class="text-muted text-sm">${escHtml(o.order_date||'�')}</td>
       <td class="td-actions">
         <div class="apt-actions po-actions">
           <button class="btn btn-sm" onclick="viewPODetails(${o.id})">${IC.eye} View</button>
@@ -14418,7 +14418,7 @@ function renderPOs(list) {
 }
 function formatExpiryDisplay(dateStr) {
   const raw = String(dateStr || '').slice(0,10);
-  if (!raw) return '—';
+  if (!raw) return '�';
   const dt = new Date(`${raw}T00:00`);
   return Number.isNaN(dt.getTime()) ? raw : dt.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
 }
@@ -14432,7 +14432,7 @@ function expiryChipHtml(dateStr, missingCount = 0) {
   if (missingCount > 0) {
     chips.push(`<span class="expiry-chip missing">${missingCount} missing</span>`);
   }
-  return chips.join(' ') || '—';
+  return chips.join(' ') || '�';
 }
 async function poCreateOrderFromModal() {
   const supplier_id = document.getElementById('poSupplier')?.value;
@@ -14481,7 +14481,7 @@ function poSyncProductSelects(preferredProductId = '') {
     const current = sel.value;
     const exists = (window._poProducts || []).some(p => String(p.id) === String(current));
     const nextValue = exists ? current : ((!assignedPreferred && preferredProductId) ? String(preferredProductId) : '');
-    sel.innerHTML = `<option value="">— Product —</option>${poBuildProductOptions(nextValue)}`;
+    sel.innerHTML = `<option value="">� Product �</option>${poBuildProductOptions(nextValue)}`;
     sel.value = nextValue;
     if (!assignedPreferred && nextValue === String(preferredProductId)) assignedPreferred = true;
     if (nextValue) poOnProductChange(sel);
@@ -14491,7 +14491,7 @@ function poSyncProductSelects(preferredProductId = '') {
     const newRow = [...document.querySelectorAll('.po-item-row')].pop();
     const sel = newRow ? newRow.querySelector('.po-prod-sel') : null;
     if (sel) {
-      sel.innerHTML = `<option value="">— Product —</option>${poBuildProductOptions(preferredProductId)}`;
+      sel.innerHTML = `<option value="">� Product �</option>${poBuildProductOptions(preferredProductId)}`;
       sel.value = String(preferredProductId);
       poOnProductChange(sel);
     }
@@ -14501,7 +14501,7 @@ function poQuickProductCategoryOptions() {
   return (_storeProductCategories || []).filter(c => c.active !== false).map(c => `<option value="${escHtml(c.name)}">${escHtml(c.name)}</option>`).join('');
 }
 function poQuickProductUomOptions() {
-  return (_allUoms || []).filter(u => u.active !== false).map(u => `<option value="${u.id}">${escHtml(u.name)} (${escHtml(u.symbol)}) · factor ${parseFloat(u.factor || 1).toFixed(3)}</option>`).join('');
+  return (_allUoms || []).filter(u => u.active !== false).map(u => `<option value="${u.id}">${escHtml(u.name)} (${escHtml(u.symbol)}) � factor ${parseFloat(u.factor || 1).toFixed(3)}</option>`).join('');
 }
 function poToggleQuickProduct() {
   const panel = document.getElementById('poQuickProductPanel');
@@ -14562,7 +14562,7 @@ async function openNewPOModal() {
   window._poItemCount = 0;
   showModal('New Purchase Order', `
     <div class="po-meta-grid">
-      <div class="form-group"><label>Supplier *</label><select id="poSupplier" required><option value="">— Select Supplier —</option>${supplierOpts}</select></div>
+      <div class="form-group"><label>Supplier *</label><select id="poSupplier" required><option value="">� Select Supplier �</option>${supplierOpts}</select></div>
       <div class="form-group"><label>Order Date</label><input type="date" id="poDate" value="${new Date().toLocaleDateString('sv')}"/></div>
       <div class="form-group"><label>Supplier Invoice #</label><input id="poInvoiceNumber" placeholder="e.g. INV-2026-001"/></div>
       <div class="form-group"><label>Notes</label><input id="poNotes"/></div>
@@ -14575,13 +14575,13 @@ async function openNewPOModal() {
           <div class="po-quick-product-grid">
             <div class="form-group"><label>Product Name *</label><input name="name" required/></div>
             <div class="form-group"><label>SKU</label><input name="sku" placeholder="e.g. MED-001"/></div>
-            <div class="form-group"><label>Base UOM *</label><select name="uom_id" required><option value="">— Select UOM —</option>${poQuickProductUomOptions()}</select></div>
+            <div class="form-group"><label>Base UOM *</label><select name="uom_id" required><option value="">� Select UOM �</option>${poQuickProductUomOptions()}</select></div>
             <div class="form-group">
               <label style="display:flex;align-items:center;justify-content:space-between;gap:8px">
                 <span>Category *</span>
                 ${can('setup.edit') ? `<button type="button" class="btn btn-sm" onclick="quickAddProductCategory('poQuickCategory')">${IC.plus} Category</button>` : ''}
               </label>
-              <select id="poQuickCategory" name="category" required><option value="">— Select Category —</option>${poQuickProductCategoryOptions()}</select>
+              <select id="poQuickCategory" name="category" required><option value="">� Select Category �</option>${poQuickProductCategoryOptions()}</select>
             </div>
             <div class="form-group"><label>Cost Price</label><input name="cost_price" type="number" min="0" step="0.001" value="0"/></div>
             <div class="form-group"><label>Sell Price</label><input name="sell_price" type="number" min="0" step="0.001" value="0"/></div>
@@ -14620,8 +14620,8 @@ function poAddItem() {
   if(!window._poProducts) return;
   const opts = poBuildProductOptions();
   wrap.insertAdjacentHTML('beforeend',`<div class="po-item-row">
-    <select class="po-prod-sel" onchange="poOnProductChange(this)"><option value="">— Product —</option>${opts}</select>
-    <select class="po-uom-sel" onchange="poOnUomChange(this)"><option value="">— UOM —</option></select>
+    <select class="po-prod-sel" onchange="poOnProductChange(this)"><option value="">� Product �</option>${opts}</select>
+    <select class="po-uom-sel" onchange="poOnUomChange(this)"><option value="">� UOM �</option></select>
     <div class="po-num-wrap" title="Quantity">
       <button type="button" class="po-step-btn" onclick="poStepQty(this,-1)">-</button>
       <input class="po-qty" type="number" min="1" step="1" value="1" placeholder="Qty" oninput="poCalcTotal()" onchange="poCalcTotal()"/>
@@ -14676,7 +14676,7 @@ function poOnProductChange(sel) {
       : (p && p.uom_id ? [{ uom_id: p.uom_id, factor: 1, symbol: p.unit }] : []);
     uomSel.innerHTML = options.length
       ? options.map(o => `<option value="${o.uom_id}" data-factor="${parseFloat(o.factor || 1)}">${escHtml(o.symbol || '')} (x${parseFloat(o.factor || 1).toFixed(3)})</option>`).join('')
-      : `<option value="">— UOM —</option>`;
+      : `<option value="">� UOM �</option>`;
     if (p && p.uom_id) uomSel.value = String(p.uom_id);
   }
   poCalcTotal();
@@ -14723,15 +14723,15 @@ async function viewPODetails(id) {
       const delta = currentWac - purchaseCost;
       const deltaColor = delta > 0 ? 'var(--c-danger)' : (delta < 0 ? 'var(--c-success)' : 'var(--text-muted)');
       const expiryRaw = i.expiry_date || i.expiry || i.exp_date || '';
-      const expiryLabel = expiryRaw ? new Date(`${expiryRaw}T00:00`).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '—';
-      return `<tr><td style="padding:6px 4px;font-size:13px">${escHtml(i.product_name||'—')}</td><td style="padding:6px 4px;font-size:13px;text-align:center">${i.qty} ${escHtml(i.uom_symbol || i.product_unit || '')}</td><td style="padding:6px 4px;font-size:13px;text-align:center"><span class="po-expiry-chip">${escHtml(expiryLabel)}</span></td><td style="padding:6px 4px;font-size:13px;text-align:right">KD ${purchaseCost.toFixed(3)}</td><td style="padding:6px 4px;font-size:13px;text-align:right">KD ${currentWac.toFixed(3)}</td><td style="padding:6px 4px;font-size:13px;text-align:right;color:${deltaColor};font-weight:600">${delta >= 0 ? '+' : ''}KD ${delta.toFixed(3)}</td><td style="padding:6px 4px;font-size:13px;text-align:right">KD ${(parseFloat(i.line_total || 0) || (i.qty * purchaseCost)).toFixed(3)}</td></tr>`;
+      const expiryLabel = expiryRaw ? new Date(`${expiryRaw}T00:00`).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' }) : '�';
+      return `<tr><td style="padding:6px 4px;font-size:13px">${escHtml(i.product_name||'�')}</td><td style="padding:6px 4px;font-size:13px;text-align:center">${i.qty} ${escHtml(i.uom_symbol || i.product_unit || '')}</td><td style="padding:6px 4px;font-size:13px;text-align:center"><span class="po-expiry-chip">${escHtml(expiryLabel)}</span></td><td style="padding:6px 4px;font-size:13px;text-align:right">KD ${purchaseCost.toFixed(3)}</td><td style="padding:6px 4px;font-size:13px;text-align:right">KD ${currentWac.toFixed(3)}</td><td style="padding:6px 4px;font-size:13px;text-align:right;color:${deltaColor};font-weight:600">${delta >= 0 ? '+' : ''}KD ${delta.toFixed(3)}</td><td style="padding:6px 4px;font-size:13px;text-align:right">KD ${(parseFloat(i.line_total || 0) || (i.qty * purchaseCost)).toFixed(3)}</td></tr>`;
     }).join('');
-    showModal(`PO · ${escHtml(o.supplier_name||'—')}`,`
+    showModal(`PO � ${escHtml(o.supplier_name||'�')}`,`
       <div style="background:var(--bg-card);border-radius:6px;padding:12px;margin-bottom:12px;border-left:4px solid var(--c-primary)">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
-          <div><span class="text-muted">Supplier:</span> <strong style="display:block;margin-top:2px">${escHtml(o.supplier_name||'—')}</strong></div>
-          <div><span class="text-muted">Invoice #:</span> <strong style="display:block;margin-top:2px">${escHtml(o.invoice_number||'—')}</strong></div>
-          <div><span class="text-muted">Order Date:</span> <strong style="display:block;margin-top:2px">${escHtml(o.order_date||'—')}</strong></div>
+          <div><span class="text-muted">Supplier:</span> <strong style="display:block;margin-top:2px">${escHtml(o.supplier_name||'�')}</strong></div>
+          <div><span class="text-muted">Invoice #:</span> <strong style="display:block;margin-top:2px">${escHtml(o.invoice_number||'�')}</strong></div>
+          <div><span class="text-muted">Order Date:</span> <strong style="display:block;margin-top:2px">${escHtml(o.order_date||'�')}</strong></div>
           <div><span class="text-muted">Status:</span> <strong style="display:block;margin-top:2px">${o.status==='Received'?'<span class="badge badge-paid">Received</span>':'<span class="badge badge-scheduled">Pending</span>'}</strong></div>
           ${o.received_at?`<div><span class="text-muted">Received Date:</span> <strong style="display:block;margin-top:2px">${escHtml(o.received_at)}</strong></div>`:''}
           ${o.received_store_name?`<div><span class="text-muted">Received To:</span> <strong style="display:block;margin-top:2px">${escHtml(o.received_store_name)}</strong></div>`:''}
@@ -14750,11 +14750,11 @@ async function openPOExpiryEditor(id) {
     const order = await apiFetch(`/api/store/purchase-orders/${id}`);
     const rows = (order.items || []).map((item, idx) => `
       <tr>
-        <td><strong>${escHtml(item.product_name || '—')}</strong></td>
+        <td><strong>${escHtml(item.product_name || '�')}</strong></td>
         <td class="text-muted text-sm">${escHtml(item.qty)} ${escHtml(item.uom_symbol || item.product_unit || '')}</td>
         <td><input class="po-edit-expiry" data-idx="${idx}" type="date" value="${escHtml(String(item.expiry_date || '').slice(0,10))}"/></td>
       </tr>`).join('');
-    showModal(`Update Expiry · PO #${id}`, `
+    showModal(`Update Expiry � PO #${id}`, `
       <div class="text-muted text-sm" style="margin-bottom:10px">This backfills the saved purchase order record used by the View dialog and inventory screens.</div>
       <div class="table-wrap po-view-table-wrap"><table style="width:100%;min-width:560px"><thead><tr><th>Product</th><th>Qty</th><th>Expiry Date</th></tr></thead><tbody>${rows}</tbody></table></div>
     `, async () => {
@@ -14850,12 +14850,12 @@ function renderTransfers(list) {
     <thead><tr><th>#</th><th>From</th><th>To</th><th>Items</th><th>Transfer Value (WAC)</th><th>Date</th><th>Notes</th><th>Actions</th></tr></thead>
     <tbody>${list.map((t,i)=>`<tr>
       <td>${i+1}</td>
-      <td><strong>${escHtml(t.from_store_name||'—')}</strong></td>
-      <td><strong>${escHtml(t.to_store_name||'—')}</strong></td>
+      <td><strong>${escHtml(t.from_store_name||'�')}</strong></td>
+      <td><strong>${escHtml(t.to_store_name||'�')}</strong></td>
       <td>${(t.items||[]).length} item(s)</td>
       <td><strong>KD ${(t.items||[]).reduce((s,it)=>s + (parseFloat(it.total_cost||0)||0),0).toFixed(3)}</strong></td>
       <td class="text-muted text-sm">${escHtml((t.created_at||'').slice(0,16))}</td>
-      <td class="text-muted text-sm">${escHtml(t.notes||'—')}</td>
+      <td class="text-muted text-sm">${escHtml(t.notes||'�')}</td>
       <td class="td-actions"><button class="btn btn-sm" onclick="viewTransferDetails(${t.id})">${IC.eye} View</button></td>
     </tr>`).join('')}</tbody>
   </table></div>`;
@@ -14891,9 +14891,9 @@ async function viewTransferDetails(id) {
     const transferTotal = (t.items || []).reduce((sum, it) => sum + (parseFloat(it.total_cost || 0) || 0), 0);
     showModal(`Transfer #${t.id}`, `
       <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">
-        <div><span class="text-muted">From:</span> <strong>${escHtml(t.from_store_name || '—')}</strong></div>
-        <div><span class="text-muted">To:</span> <strong>${escHtml(t.to_store_name || '—')}</strong></div>
-        <div><span class="text-muted">Date:</span> ${escHtml((t.created_at || '').slice(0,16) || '—')}</div>
+        <div><span class="text-muted">From:</span> <strong>${escHtml(t.from_store_name || '�')}</strong></div>
+        <div><span class="text-muted">To:</span> <strong>${escHtml(t.to_store_name || '�')}</strong></div>
+        <div><span class="text-muted">Date:</span> ${escHtml((t.created_at || '').slice(0,16) || '�')}</div>
       </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Product</th><th>Qty</th><th>Base Qty</th><th>Unit Cost (WAC)</th><th>Total</th></tr></thead>
@@ -14914,8 +14914,8 @@ async function openNewTransferModal() {
   window._transItemCount = 0;
   showModal('New Stock Transfer', `
     <div class="form-row">
-      <div class="form-group"><label>From Store *</label><select id="transFrom" required><option value="">— Select —</option>${storeOpts}</select></div>
-      <div class="form-group"><label>To Store *</label><select id="transTo" required><option value="">— Select —</option>${storeOpts}</select></div>
+      <div class="form-group"><label>From Store *</label><select id="transFrom" required><option value="">� Select �</option>${storeOpts}</select></div>
+      <div class="form-group"><label>To Store *</label><select id="transTo" required><option value="">� Select �</option>${storeOpts}</select></div>
     </div>
     <div class="form-group"><label>Notes</label><input id="transNotes"/></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px">
@@ -14950,8 +14950,8 @@ function transAddItem() {
   const opts = allProds.map(p=>`<option value="${p.id}">${escHtml(p.name)} (${p.uom_symbol || p.unit})</option>`).join('');
   ++window._transItemCount;
   wrap.insertAdjacentHTML('beforeend',`<div class="trans-item-row" style="display:grid;grid-template-columns:1fr 170px 90px 30px;gap:6px;align-items:center;margin-bottom:6px">
-    <select class="trans-prod-sel" onchange="transOnProductChange(this)" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)"><option value="">— Product —</option>${opts}</select>
-    <select class="trans-uom-sel" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)"><option value="">— UOM —</option></select>
+    <select class="trans-prod-sel" onchange="transOnProductChange(this)" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)"><option value="">� Product �</option>${opts}</select>
+    <select class="trans-uom-sel" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text)"><option value="">� UOM �</option></select>
     <input class="trans-qty" type="number" min="0.001" step="0.001" value="1" placeholder="Qty" style="width:100%;padding:7px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text);text-align:center"/>
     <button type="button" onclick="this.closest('.trans-item-row').remove()" style="background:none;border:none;cursor:pointer;color:var(--c-danger)">${IC.trash}</button>
   </div>`);
@@ -14967,7 +14967,7 @@ function transOnProductChange(sel) {
     : (p && p.uom_id ? [{ uom_id: p.uom_id, factor: 1, symbol: p.uom_symbol || p.unit }] : []);
   uomSel.innerHTML = options.length
     ? options.map(o => `<option value="${o.uom_id}" data-factor="${parseFloat(o.factor || 1)}">${escHtml(o.symbol || '')} (x${parseFloat(o.factor || 1).toFixed(3)})</option>`).join('')
-    : `<option value="">— UOM —</option>`;
+    : `<option value="">� UOM �</option>`;
   if (p && p.uom_id) uomSel.value = String(p.uom_id);
 }
 
@@ -15025,22 +15025,22 @@ function renderStoreAdjustments(list) {
   }
   const isAdmin = currentUser && currentUser.role === 'admin';
   wrap.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>#</th><th>Adj No</th><th>Type</th><th>Store</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Stock (Before → After)</th><th>Reason</th><th>Status</th><th>Date</th><th>By</th>${isAdmin ? '<th>Action</th>' : ''}</tr></thead>
+    <thead><tr><th>#</th><th>Adj No</th><th>Type</th><th>Store</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Stock (Before ? After)</th><th>Reason</th><th>Status</th><th>Date</th><th>By</th>${isAdmin ? '<th>Action</th>' : ''}</tr></thead>
     <tbody>${list.map((r, i) => `<tr>
       <td>${i + 1}</td>
       <td><span class="code-id code-id-primary">${escHtml(r.adjustment_no || ('ADJ#' + r.id))}</span></td>
       <td>${String(r.adjustment_type || '').toUpperCase() === 'IN' ? '<span class="badge badge-paid">IN</span>' : '<span class="badge badge-unpaid">OUT</span>'}</td>
-      <td><strong>${escHtml(r.store_name || '—')}</strong></td>
-      <td>${escHtml(r.product_name || '—')}<br><span class="text-muted text-sm">${escHtml(r.product_sku || '')}</span></td>
+      <td><strong>${escHtml(r.store_name || '�')}</strong></td>
+      <td>${escHtml(r.product_name || '�')}<br><span class="text-muted text-sm">${escHtml(r.product_sku || '')}</span></td>
       <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
       <td>KD ${parseFloat(r.unit_cost || 0).toFixed(3)}</td>
       <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
-      <td>${parseFloat(r.stock_before || 0).toFixed(3)} → ${parseFloat(r.stock_after || 0).toFixed(3)}</td>
-      <td>${escHtml(r.reason || '—')}<br><span class="text-muted text-sm">${escHtml(r.remarks || '')}</span></td>
+      <td>${parseFloat(r.stock_before || 0).toFixed(3)} ? ${parseFloat(r.stock_after || 0).toFixed(3)}</td>
+      <td>${escHtml(r.reason || '�')}<br><span class="text-muted text-sm">${escHtml(r.remarks || '')}</span></td>
       <td>${r.reversal_of_id ? `<span class="badge badge-secondary">Reversal</span>${r.reversal_of_adjustment_no ? `<div class="text-muted text-sm">of ${escHtml(r.reversal_of_adjustment_no)}</div>` : ''}` : (r.reversed_by_adjustment_id ? `<span class="badge badge-cancelled">Reversed</span>${r.reversed_by_adjustment_no ? `<div class="text-muted text-sm">by ${escHtml(r.reversed_by_adjustment_no)}</div>` : ''}` : '<span class="badge badge-completed">Active</span>')}</td>
       <td class="text-muted text-sm">${escHtml(formatDateTime(r.date || r.created_at || ''))}</td>
-      <td class="text-muted text-sm">${escHtml(r.created_by_name || '—')}</td>
-      ${isAdmin ? `<td>${(!r.reversal_of_id && !r.reversed_by_adjustment_id) ? `<button class="btn btn-sm" onclick="reverseStoreAdjustment(${parseInt(r.id, 10)}, '${escHtml(r.adjustment_no || ('ADJ#' + r.id))}')">${IC.transfer || '↺'} Reverse</button>` : '<span class="text-muted text-sm">—</span>'}</td>` : ''}
+      <td class="text-muted text-sm">${escHtml(r.created_by_name || '�')}</td>
+      ${isAdmin ? `<td>${(!r.reversal_of_id && !r.reversed_by_adjustment_id) ? `<button class="btn btn-sm" onclick="reverseStoreAdjustment(${parseInt(r.id, 10)}, '${escHtml(r.adjustment_no || ('ADJ#' + r.id))}')">${IC.transfer || '?'} Reverse</button>` : '<span class="text-muted text-sm">�</span>'}</td>` : ''}
     </tr>`).join('')}</tbody>
   </table></div>`;
 }
@@ -15184,7 +15184,7 @@ async function saRefreshStockHint() {
     const row = (stockRows || []).find((s) => parseInt(s.product_id, 10) === productId);
     const avail = parseFloat(row?.qty || 0) || 0;
     const avgCost = parseFloat(row?.avg_cost || 0) || 0;
-    hint.textContent = `${type === 'OUT' ? 'Available' : 'Current'} stock: ${avail.toFixed(3)}${type === 'OUT' ? ' (OUT cannot exceed available)' : ''} · Avg Cost: KD ${avgCost.toFixed(3)}`;
+    hint.textContent = `${type === 'OUT' ? 'Available' : 'Current'} stock: ${avail.toFixed(3)}${type === 'OUT' ? ' (OUT cannot exceed available)' : ''} � Avg Cost: KD ${avgCost.toFixed(3)}`;
     const costInput = document.getElementById('saUnitCost');
     if (costInput && !(parseFloat(costInput.value || 0) > 0)) costInput.value = avgCost.toFixed(3);
   } catch (e) {
@@ -15263,7 +15263,7 @@ function renderSubStores(list) {
     <tbody>${list.map((s,i)=>`<tr>
       <td>${i+1}</td>
       <td><strong>${escHtml(s.name)}</strong></td>
-      <td>${escHtml(s.code||'—')}</td>
+      <td>${escHtml(s.code||'�')}</td>
       <td>${s.is_main?'<span class="badge badge-admin">Main Store</span>':'<span class="badge badge-scheduled">Sub-Store</span>'}</td>
       <td>${s.active?'<span class="badge badge-paid">Active</span>':'<span class="badge badge-unpaid">Inactive</span>'}</td>
       ${can('store.manage')?`<td class="td-actions">
@@ -15361,7 +15361,7 @@ async function storeManualConsumption() {
       <div class="card" style="margin-bottom:12px">
         <div class="card-title" style="margin-bottom:10px">${IC.store} Manual Consumption Entry</div>
         <div class="form-row" style="margin-bottom:10px">
-          <div class="form-group"><label>Store *</label><select id="mcStore" onchange="mcOnStoreChange()"><option value="">— Select Store —</option>${mcStoreOptions(defaultStore ? defaultStore.id : '')}</select></div>
+          <div class="form-group"><label>Store *</label><select id="mcStore" onchange="mcOnStoreChange()"><option value="">� Select Store �</option>${mcStoreOptions(defaultStore ? defaultStore.id : '')}</select></div>
           <div class="form-group"><label>Date</label><input id="mcDate" type="date" value="${todayStr}"/></div>
         </div>
         <div class="table-wrap"><table class="mc-grid-table">
@@ -15420,7 +15420,7 @@ function mcRefreshProductDropdowns() {
   document.querySelectorAll('#mcRows .mc-item').forEach((selectEl) => {
     const selectedValue = selectEl.value;
     const hasSelectedOption = mcAvailableProducts().some((product) => String(product.id) === String(selectedValue));
-    selectEl.innerHTML = `<option value="">— Select Item —</option>${mcProductOptions(hasSelectedOption ? selectedValue : '')}`;
+    selectEl.innerHTML = `<option value="">� Select Item �</option>${mcProductOptions(hasSelectedOption ? selectedValue : '')}`;
     if (!hasSelectedOption) selectEl.value = '';
   });
 }
@@ -15432,13 +15432,13 @@ function mcAddRow(seed = {}) {
   const row = document.createElement('tr');
   row.className = 'mc-row';
   row.innerHTML = `
-    <td><select class="mc-item" onchange="mcOnProductChange(this)"><option value="">— Select Item —</option>${mcProductOptions(seed.product_id || '')}</select></td>
+    <td><select class="mc-item" onchange="mcOnProductChange(this)"><option value="">� Select Item �</option>${mcProductOptions(seed.product_id || '')}</select></td>
     <td><input class="mc-qty" type="number" min="0.001" step="0.001" value="${seed.qty != null ? escHtml(String(seed.qty)) : '1'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
     ${canViewCost ? `<td><input class="mc-cost" type="number" min="0" step="0.001" value="${seed.cost != null ? escHtml(String(seed.cost)) : '0.000'}" oninput="mcRecalcRow(this.closest('tr'))"/></td>
     <td><strong class="mc-total">KD 0.000</strong></td>` : ''}
     <td><select class="mc-reason" onchange="mcRecalcRow(this.closest('tr'))">${mcReasonOptions(seed.reason || 'Treatment Usage')}</select></td>
     <td><input class="mc-remarks" placeholder="Optional" value="${escHtml(seed.remarks || '')}"/></td>
-    <td><span class="mc-stock-note text-muted text-sm">—</span></td>
+    <td><span class="mc-stock-note text-muted text-sm">�</span></td>
     <td><button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove();mcRecalcAllRows()">${IC.trash}</button></td>`;
   rows.appendChild(row);
   if (seed.product_id) {
@@ -15479,7 +15479,7 @@ function mcRecalcRow(row) {
 
   if (!productId || !stockEl) {
     if (stockEl) {
-      stockEl.textContent = '—';
+      stockEl.textContent = '�';
       stockEl.classList.remove('mc-stock-low');
     }
     mcRecalcEntryTotal();
@@ -15583,12 +15583,12 @@ async function mcLoadRecent() {
     wrap.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>Date</th><th>Entry</th><th>Store</th><th>Lines</th>${canViewCost ? '<th>Total Cost</th>' : ''}<th>Remarks</th></tr></thead>
       <tbody>${rows.slice(0, 20).map(r => `<tr>
-        <td>${escHtml(String(r.date || '').slice(0,10) || '—')}</td>
+        <td>${escHtml(String(r.date || '').slice(0,10) || '�')}</td>
         <td>${escHtml(r.entry_no || ('MC#' + r.id))}</td>
-        <td>${escHtml(r.store_name || '—')}</td>
+        <td>${escHtml(r.store_name || '�')}</td>
         <td>${(r.items || []).length}</td>
         ${canViewCost ? `<td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>` : ''}
-        <td class="text-muted text-sm">${escHtml(r.remarks || '—')}</td>
+        <td class="text-muted text-sm">${escHtml(r.remarks || '�')}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch (e) {
@@ -15670,13 +15670,13 @@ function renderSupplierReturns(list) {
     <thead><tr><th>#</th><th>Return No</th><th>Supplier</th><th>PO Invoice</th><th>Type</th><th>Items</th><th>Total</th><th>Return Date</th><th>Actions</th></tr></thead>
     <tbody>${list.map((r, i) => `<tr>
       <td>${i + 1}</td>
-      <td><strong>${escHtml(r.return_no || '—')}</strong></td>
-      <td>${escHtml(r.supplier_name || '—')}</td>
-      <td class="text-muted text-sm">${escHtml(r.po_invoice || '—')}</td>
+      <td><strong>${escHtml(r.return_no || '�')}</strong></td>
+      <td>${escHtml(r.supplier_name || '�')}</td>
+      <td class="text-muted text-sm">${escHtml(r.po_invoice || '�')}</td>
       <td>${r.return_type === 'full' ? '<span class="badge badge-paid">Full</span>' : '<span class="badge badge-arrived">Partial</span>'}</td>
       <td>${(r.items || []).length} item(s)</td>
       <td><strong>KD ${parseFloat(r.total_amount || 0).toFixed(3)}</strong></td>
-      <td class="text-muted text-sm">${escHtml(r.return_date || '—')}</td>
+      <td class="text-muted text-sm">${escHtml(r.return_date || '�')}</td>
       <td class="td-actions">
         <div class="apt-actions">
           <button class="btn btn-sm" onclick="viewSRDetails(${r.id})">${IC.eye} View</button>
@@ -15697,15 +15697,15 @@ async function viewSRDetails(id) {
       <td><strong>KD ${parseFloat(it.line_total || 0).toFixed(3)}</strong></td>
     </tr>`).join('');
     openModal(`
-      <div class="modal-header"><h3>${IC.supreturn} Return Details — ${escHtml(r.return_no || '')}</h3></div>
+      <div class="modal-header"><h3>${IC.supreturn} Return Details � ${escHtml(r.return_no || '')}</h3></div>
       <div class="modal-body">
         <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:14px;">
-          <div><span class="text-muted">Supplier</span><div><strong>${escHtml(r.supplier_name || '—')}</strong></div></div>
-          <div><span class="text-muted">PO Invoice</span><div>${escHtml(r.po_invoice || '—')}</div></div>
+          <div><span class="text-muted">Supplier</span><div><strong>${escHtml(r.supplier_name || '�')}</strong></div></div>
+          <div><span class="text-muted">PO Invoice</span><div>${escHtml(r.po_invoice || '�')}</div></div>
           <div><span class="text-muted">Return Type</span><div>${r.return_type === 'full' ? '<span class="badge badge-paid">Full Return</span>' : '<span class="badge badge-arrived">Partial Return</span>'}</div></div>
-          <div><span class="text-muted">Return Date</span><div>${escHtml(r.return_date || '—')}</div></div>
-          <div><span class="text-muted">Store</span><div>${escHtml(r.store_name || '—')}</div></div>
-          <div><span class="text-muted">Reference</span><div>${escHtml(r.return_reference || '—')}</div></div>
+          <div><span class="text-muted">Return Date</span><div>${escHtml(r.return_date || '�')}</div></div>
+          <div><span class="text-muted">Store</span><div>${escHtml(r.store_name || '�')}</div></div>
+          <div><span class="text-muted">Reference</span><div>${escHtml(r.return_reference || '�')}</div></div>
           ${r.notes ? `<div style="grid-column:1/-1"><span class="text-muted">Notes</span><div>${escHtml(r.notes)}</div></div>` : ''}
         </div>
         <div class="table-wrap"><table>
@@ -15724,12 +15724,12 @@ async function voidSR(id, returnNo) {
   if (!confirm(`Void return ${returnNo}? This will restore all items back into stock.`)) return;
   try {
     await apiFetch(`/api/store/supplier-returns/${id}`, { method: 'DELETE' });
-    toast('Return voided — stock restored', 'success');
+    toast('Return voided � stock restored', 'success');
     storeSupplierReturns();
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ─── New Supplier Return Modal ───────────────────────────
+// --- New Supplier Return Modal ---------------------------
 let _srPOs = [];
 let _srSelectedPO = null;
 
@@ -15812,15 +15812,15 @@ async function openNewSRModal() {
       sel.innerHTML = `<option value="">No eligible purchase orders (must be Received &amp; Paid)</option>`;
       return;
     }
-    sel.innerHTML = `<option value="">— Select Purchase Order —</option>${_srPOs.map(p =>
-      `<option value="${p.id}">${escHtml(p.invoice_number || `PO #${p.id}`)} — ${escHtml(p.supplier_name || '—')} (${escHtml(p.order_date || '')})</option>`
+    sel.innerHTML = `<option value="">� Select Purchase Order �</option>${_srPOs.map(p =>
+      `<option value="${p.id}">${escHtml(p.invoice_number || `PO #${p.id}`)} � ${escHtml(p.supplier_name || '�')} (${escHtml(p.order_date || '')})</option>`
     ).join('')}`;
   } catch (e) {
     const fallback = Array.isArray(_storePOs) ? _storePOs : [];
     _srPOs = fallback.filter(isReceivedPO).sort((a, b) => (parseInt(b.id, 10) || 0) - (parseInt(a.id, 10) || 0));
     if (_srPOs.length) {
-      sel.innerHTML = `<option value="">— Select Purchase Order —</option>${_srPOs.map(p =>
-        `<option value="${p.id}">${escHtml(p.invoice_number || `PO #${p.id}`)} — ${escHtml(p.supplier_name || '—')} (${escHtml(p.order_date || '')})</option>`
+      sel.innerHTML = `<option value="">� Select Purchase Order �</option>${_srPOs.map(p =>
+        `<option value="${p.id}">${escHtml(p.invoice_number || `PO #${p.id}`)} � ${escHtml(p.supplier_name || '�')} (${escHtml(p.order_date || '')})</option>`
       ).join('')}`;
       toast('Loaded received POs from local cache', 'warn');
       return;
