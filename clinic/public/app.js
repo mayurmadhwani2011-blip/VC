@@ -8615,7 +8615,7 @@ function renderSelectedReport() {
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('psvFrom').value='';document.getElementById('psvTo').value='';document.getElementById('psvStatus').value='';loadPendingSvcReport()">Clear</button>
           </div>
         </div>
-        <div id="pendingSvcBody">${skeletonTable(6)}</div>
+        <div id="pendingSvcBody" style="height:65vh;min-height:380px;overflow-y:auto;border:1px solid var(--border-light);border-radius:10px;padding:8px;background:var(--bg)">${skeletonTable(6)}</div>
       </div>`;
     loadPendingSvcReport();
     return;
@@ -8937,9 +8937,49 @@ async function loadSupplierLedger() {
   }
 }
 
+let _psvAllRows = [];
+let _psvRenderedCount = 0;
+let _psvScrollObserver = null;
+const PSV_BATCH = 40;
+
+function _psvRenderBatch() {
+  const tbody = document.getElementById('psvTableBody');
+  if (!tbody) return;
+  const next = _psvAllRows.slice(_psvRenderedCount, _psvRenderedCount + PSV_BATCH);
+  if (!next.length) return;
+  const statusColor = s => s === 'Completed' ? '#16a34a' : (s === 'In Progress' ? '#2563eb' : '#d97706');
+  const statusIcon  = s => s === 'Completed' ? '✔' : (s === 'In Progress' ? '🔵' : '⏳');
+  tbody.insertAdjacentHTML('beforeend', next.map(r => `
+    <tr>
+      <td class="text-sm">${escHtml(r.bill_date || '—')}</td>
+      <td><button class="btn-link" onclick="viewBillModal(${r.bill_id})">${escHtml(r.bill_number || '—')}</button></td>
+      <td class="text-sm">${escHtml(r.patient_name || '—')} <span class="text-muted text-sm">${escHtml(r.mr_number || '')}</span></td>
+      <td class="text-sm">${escHtml(r.service_name || '—')}</td>
+      <td><span style="color:${statusColor(r.service_status)};font-weight:600;font-size:12px">${statusIcon(r.service_status)} ${escHtml(r.service_status)}</span></td>
+      <td class="text-sm text-muted">${r.completion_date ? escHtml(String(r.completion_date).slice(0,10)) : '—'}</td>
+      <td class="text-sm text-muted">${escHtml(r.provider_name || '—')}</td>
+      <td style="text-align:right" class="text-sm">KD ${parseFloat(r.amount || 0).toFixed(3)}</td>
+      <td>
+        ${r.service_status !== 'Completed'
+          ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '✔ Complete' : '🔵 Start'}</button>`
+          : '<span class="text-muted text-sm">—</span>'}
+      </td>
+    </tr>`).join(''));
+  _psvRenderedCount += next.length;
+  // Update sentinel visibility
+  const sentinel = document.getElementById('psvSentinel');
+  if (sentinel) sentinel.style.display = _psvRenderedCount >= _psvAllRows.length ? 'none' : '';
+}
+
 async function loadPendingSvcReport() {
   const wrap = document.getElementById('pendingSvcBody');
   if (!wrap) return;
+
+  // Disconnect old scroll observer
+  if (_psvScrollObserver) { _psvScrollObserver.disconnect(); _psvScrollObserver = null; }
+  _psvAllRows = [];
+  _psvRenderedCount = 0;
+
   const from   = document.getElementById('psvFrom')?.value || '';
   const to     = document.getElementById('psvTo')?.value || '';
   const status = document.getElementById('psvStatus')?.value || '';
@@ -8951,8 +8991,7 @@ async function loadPendingSvcReport() {
   try {
     const data = await apiFetch(`/api/reports/pending-services?${params.toString()}`);
     const { summary = {}, rows = [] } = data;
-    const statusColor = s => s === 'Completed' ? '#16a34a' : (s === 'In Progress' ? '#2563eb' : '#d97706');
-    const statusIcon  = s => s === 'Completed' ? '✔' : (s === 'In Progress' ? '🔵' : '⏳');
+    _psvAllRows = rows;
     const summaryHtml = `
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:12px 16px">
@@ -8976,32 +9015,26 @@ async function loadPendingSvcReport() {
       wrap.innerHTML = summaryHtml + emptyState(IC.pending || IC.services, 'No service records found', 'Try adjusting the filters');
       return;
     }
-    const tableRows = rows.map(r => `
-      <tr>
-        <td class="text-sm">${escHtml(r.bill_date || '—')}</td>
-        <td><button class="btn-link" onclick="viewBillModal(${r.bill_id})">${escHtml(r.bill_number || '—')}</button></td>
-        <td class="text-sm">${escHtml(r.patient_name || '—')} <span class="text-muted text-sm">${escHtml(r.mr_number || '')}</span></td>
-        <td class="text-sm">${escHtml(r.service_name || '—')}</td>
-        <td><span style="color:${statusColor(r.service_status)};font-weight:600;font-size:12px">${statusIcon(r.service_status)} ${escHtml(r.service_status)}</span></td>
-        <td class="text-sm text-muted">${r.completion_date ? escHtml(String(r.completion_date).slice(0,10)) : '—'}</td>
-        <td class="text-sm text-muted">${escHtml(r.provider_name || '—')}</td>
-        <td style="text-align:right" class="text-sm">KD ${parseFloat(r.amount || 0).toFixed(3)}</td>
-        <td>
-          ${r.service_status !== 'Completed'
-            ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '✔ Complete' : '🔵 Start'}</button>`
-            : '<span class="text-muted text-sm">—</span>'}
-        </td>
-      </tr>`).join('');
     wrap.innerHTML = summaryHtml + `
-      <div class="table-wrap">
+      <div class="table-wrap" style="overflow:visible">
         <table>
           <thead><tr>
             <th>Date</th><th>Bill #</th><th>Patient</th><th>Service</th>
             <th>Status</th><th>Completed On</th><th>Provider</th><th style="text-align:right">Amount</th><th>Action</th>
           </tr></thead>
-          <tbody>${tableRows}</tbody>
+          <tbody id="psvTableBody"></tbody>
         </table>
+        <div id="psvSentinel" style="height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px">Loading more...</div>
       </div>`;
+    _psvRenderBatch();
+    // Set up IntersectionObserver on sentinel to load more rows when visible
+    const sentinel = document.getElementById('psvSentinel');
+    if (sentinel) {
+      _psvScrollObserver = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) _psvRenderBatch();
+      }, { root: wrap, threshold: 0.1 });
+      _psvScrollObserver.observe(sentinel);
+    }
   } catch (e) {
     wrap.innerHTML = `<div class="text-danger" style="padding:16px">${escHtml(e.message || 'Failed to load report')}</div>`;
   }
