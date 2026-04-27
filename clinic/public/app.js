@@ -7578,16 +7578,16 @@ async function printBill(id) {
 
       return `<tr style="border-bottom:1px solid #bbb">
         <td style="padding:6px 3px;font-size:15px;color:#000">${descHtml}</td>
-        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">${qty.toFixed(3)}</td>
+        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000;white-space:nowrap">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
         <td style="padding:6px 3px;font-size:15px;text-align:center;color:#000">${escHtml(unit)}</td>
         <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">KD ${rate.toFixed(3)}</td>
         <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">KD ${amount.toFixed(3)}</td>
       </tr>`;
     }).join('');
   } else {
-    if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1.000</td><td style="text-align:center">service</td><td style="text-align:right">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td><td style="text-align:right">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td></tr>`;
-    if (b.medicine_charge)  itemRows += `<tr><td>Medicine Charges</td><td style="text-align:right">1.000</td><td style="text-align:center">item</td><td style="text-align:right">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td><td style="text-align:right">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td></tr>`;
-    if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1.000</td><td style="text-align:center">item</td><td style="text-align:right">KD ${parseFloat(b.other_charges).toFixed(3)}</td><td style="text-align:right">KD ${parseFloat(b.other_charges).toFixed(3)}</td></tr>`;
+    if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1</td><td style="text-align:center">service</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td></tr>`;
+    if (b.medicine_charge)  itemRows += `<tr><td>Medicine Charges</td><td style="text-align:right">1</td><td style="text-align:center">item</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td></tr>`;
+    if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1</td><td style="text-align:center">item</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td></tr>`;
   }
   const paymentSection = (b.payment_splits && b.payment_splits.length > 1)
     ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
@@ -7664,7 +7664,7 @@ async function printBill(id) {
           ? `<tr style="border-top:2px solid #000"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>Subtotal</strong></td><td style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</strong></td></tr>
              <tr><td colspan="4" style="text-align:right;padding:6px 3px;font-size:14px;color:#000"><strong>Discount (${escHtml(discountTypeLabel)})</strong></td><td style="text-align:right;padding:6px 3px;font-size:14px;color:#d32f2f"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></td></tr>`
           : ''}
-        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:16px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:7px 3px;font-size:16px;font-weight:700;color:#000"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
+        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:16px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:7px 3px;font-size:16px;font-weight:700;color:#000;white-space:nowrap"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
       </tfoot>
     </table>
     ${hasDiscount ? `<p style="margin:6px 0;color:#000;font-size:15px;line-height:1.35"><strong>Discount Name:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <strong>Discount Type:</strong> ${escHtml(discountTypeLabel)}</p>` : ''}
