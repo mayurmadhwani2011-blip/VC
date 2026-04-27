@@ -12511,45 +12511,80 @@ async function triggerSystemUpdate() {
     toast('Only admin can run system update.', 'error');
     return;
   }
-  const ok = await confirmDialog('Run system update from git now? A safety backup will be created. You may need to restart the app service after update.', 'Confirm System Update');
-  if (!ok) return;
+
+  // Show settings dialog so admin can configure repo/token even if server defaults are wrong
+  const dlgId = 'sysUpdateDlg_' + Date.now();
+  const html = `
+    <div id="${dlgId}" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center">
+      <div style="background:var(--bg-card);border-radius:14px;padding:28px 28px 20px;width:420px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.35)">
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px">System Update Settings</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="font-size:.85rem;font-weight:600">GitHub Owner</label>
+          <input id="su_owner" class="form-control" value="mayurmadhwani2011-blip" placeholder="e.g. mayurmadhwani2011-blip" style="width:100%" />
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="font-size:.85rem;font-weight:600">Repository Name</label>
+          <input id="su_repo" class="form-control" value="CMS" placeholder="e.g. CMS" style="width:100%" />
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="font-size:.85rem;font-weight:600">Branch</label>
+          <input id="su_branch" class="form-control" value="main" placeholder="main" style="width:100%" />
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label style="font-size:.85rem;font-weight:600">GitHub Token <span class="text-muted" style="font-weight:400">(required for private repos)</span></label>
+          <input id="su_token" class="form-control" type="password" placeholder="ghp_xxxxxxxxxxxx (leave blank if public)" style="width:100%" />
+        </div>
+        <div class="text-muted" style="font-size:.8rem;margin-bottom:16px">A safety backup of your data will be created before updating. The service will restart automatically after the update.</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn" onclick="document.getElementById('${dlgId}').remove()">Cancel</button>
+          <button class="btn btn-warning" id="su_runBtn" onclick="runSystemUpdateNow('${dlgId}')">Run Update</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function runSystemUpdateNow(dlgId) {
+  const dlg = document.getElementById(dlgId);
+  const owner = (document.getElementById('su_owner').value || '').trim();
+  const repo = (document.getElementById('su_repo').value || '').trim();
+  const branch = (document.getElementById('su_branch').value || 'main').trim();
+  const token = (document.getElementById('su_token').value || '').trim();
+
+  if (!owner || !repo) { toast('Owner and Repo are required.', 'error'); return; }
+
+  if (dlg) dlg.remove();
 
   const btn = document.getElementById('ownerSystemUpdateBtn');
   const state = document.getElementById('ownerSystemUpdateState');
   const prevLabel = btn ? btn.innerHTML : '';
   try {
-    if (btn) {
-      btn.disabled = true;
-      btn.innerHTML = `${IC.clock || ''} Updating...`;
-    }
-    if (state) state.textContent = 'Running system update... this can take a few minutes.';
+    if (btn) { btn.disabled = true; btn.innerHTML = `${IC.clock || ''} Updating...`; }
+    if (state) state.textContent = `Downloading update from ${owner}/${repo}@${branch}... this can take a few minutes.`;
 
     const res = await apiFetch('/api/admin/system-update', {
       method: 'POST',
-      body: JSON.stringify({ remote: 'origin', branch: 'main' }),
-      timeoutMs: 300000  // 5 minutes - update downloads zip + runs npm install
+      body: JSON.stringify({ remote: 'origin', branch, github_owner: owner, github_repo: repo, github_token: token }),
+      timeoutMs: 300000
     });
 
     const backupId = res && res.backup && res.backup.backup_id ? res.backup.backup_id : 'created';
-    const from = res && res.before_commit ? res.before_commit : 'unknown';
-    const to = res && res.after_commit ? res.after_commit : 'unknown';
+    const from = res && res.before_commit ? res.before_commit : '-';
+    const to = res && res.after_commit ? res.after_commit : '-';
     const changed = !!(res && res.updated);
-    const restartNote = (res && res.restart_required)
-      ? 'Restart app service to apply backend code changes.'
-      : '';
+    const restartNote = (res && res.restart_required) ? ' Service restarting - refresh in 20 seconds.' : '';
     if (state) {
-      state.innerHTML = `Update completed: <strong>${escHtml(from)}</strong> ? <strong>${escHtml(to)}</strong> - Backup: <strong>${escHtml(backupId)}</strong>${changed ? '' : ' - Already up to date'}${restartNote ? ` - ${escHtml(restartNote)}` : ''}`;
+      state.innerHTML = changed
+        ? `Update applied: <strong>${escHtml(from)}</strong> &rarr; <strong>${escHtml(to)}</strong> - Backup: <strong>${escHtml(backupId)}</strong>${escHtml(restartNote)}`
+        : `Already up to date (${escHtml(from)}). No code changes were found in ${escHtml(owner)}/${escHtml(repo)}@${escHtml(branch)}.`;
     }
-    toast(changed ? 'System update completed.' : 'System is already up to date.', 'success');
+    toast(changed ? 'Update applied! Service restarting...' : `Already up to date in ${repo}@${branch}.`, changed ? 'success' : 'info');
   } catch (e) {
     const msg = e && e.message ? e.message : 'System update failed';
     if (state) state.textContent = msg;
     toast(msg, 'error');
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = prevLabel || `${IC.clock || ''} System Update`;
-    }
+    if (btn) { btn.disabled = false; btn.innerHTML = prevLabel || `${IC.clock || ''} System Update`; }
   }
 }
 

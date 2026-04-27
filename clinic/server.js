@@ -2208,11 +2208,13 @@ app.post('/api/admin/system-update', requireRole('admin'), async (req, res) => {
   if (!/^[\w./-]+$/.test(remote) || !/^[\w./-]+$/.test(branch)) {
     return res.status(400).json({ error: 'Invalid remote or branch name' });
   }
-
-  const GITHUB_OWNER = String(process.env.CLINIC_GITHUB_OWNER || 'mayurmadhwani2011-blip').trim();
-  const GITHUB_REPO = String(process.env.CLINIC_GITHUB_REPO || 'VC').trim();
+  // Accept from request body (UI dialog) or fall back to env vars
+  const rawOwner = String(body.github_owner || process.env.CLINIC_GITHUB_OWNER || 'mayurmadhwani2011-blip').trim();
+  const rawRepo  = String(body.github_repo  || process.env.CLINIC_GITHUB_REPO  || 'CMS').trim();
+  const GITHUB_OWNER = /^[\w.-]+$/.test(rawOwner) ? rawOwner : 'mayurmadhwani2011-blip';
+  const GITHUB_REPO  = /^[\w.-]+$/.test(rawRepo)  ? rawRepo  : 'CMS';
   const GITHUB_BRANCH = branch;
-  const GITHUB_TOKEN = String(process.env.CLINIC_GITHUB_TOKEN || '').trim();
+  const GITHUB_TOKEN = String(body.github_token || process.env.CLINIC_GITHUB_TOKEN || '').trim();
 
   const logs = [];
   const pushLog = (step, result) => {
