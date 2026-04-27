@@ -2,14 +2,7 @@
 let _whatsappWin = null;
 function openWhatsApp(phone) {
   const clean = String(phone).replace(/[^0-9]/g, '');
-  navigator.clipboard.writeText(clean).catch(() => {});
-  if (_whatsappWin && !_whatsappWin.closed) {
-    _whatsappWin.focus();
-    toast('Number ' + clean + ' copied — paste in WhatsApp search', 'info');
-  } else {
-    _whatsappWin = window.open('https://web.whatsapp.com', 'whatsapp_web');
-    toast('Number ' + clean + ' copied — paste in WhatsApp search', 'info');
-  }
+  window.location.href = 'whatsapp://send?phone=' + clean;
 }
 const API = (() => {
   try {
