@@ -2438,10 +2438,6 @@ function buildPatientEmrClientData(payload, appliedFilters = {}) {
     if (entry.doctor_id && !entry.doctor_ids.includes(entry.doctor_id)) entry.doctor_ids.push(entry.doctor_id);
     if (entry.department_id && !entry.department_ids.includes(entry.department_id)) entry.department_ids.push(entry.department_id);
     if (rx.diagnosis && !entry.diagnoses.includes(rx.diagnosis)) entry.diagnoses.push(rx.diagnosis);
-    const noteText = String(rx.notes || '').trim();
-    if (noteText && !entry.notes.some(n => n.source === 'Prescription Note' && n.text === noteText)) {
-      entry.notes.push({ source: 'Prescription Note', text: noteText });
-    }
     if (!entry.prescriptions.some(item => String(item.id) === String(rx.id))) {
       entry.prescriptions.push({
         id: parseInt(rx.id, 10),
@@ -2660,7 +2656,6 @@ function renderPatientEmrTimelineEntry(entry, index) {
     ? entry.prescriptions.map(rx => `
       <div class="patient-emr-rx-card">
         <div class="patient-emr-rx-head">
-          <strong>${escHtml(rx.diagnosis || 'Prescription')}</strong>
           <span class="text-sm text-muted">${escHtml(formatDateTime(rx.created_at || entry.date || ''))}</span>
         </div>
         ${Array.isArray(rx.medicine_rows) && rx.medicine_rows.length ? `
