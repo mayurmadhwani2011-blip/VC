@@ -239,8 +239,6 @@ h1,h2,h3,h4,h5,h6 { line-height: 1.3; font-weight: 600; }
   color: var(--c-primary);
 }
 .logo-text { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: 1px; }
-.dermiq-wordmark { display: flex; flex-direction: column; gap: 1px; }
-.dermiq-clinic-name { font-size: 10px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.3px; line-height: 1; margin-top: 1px; }
 .dermiq-icon { flex-shrink: 0; }
 .sidebar-header-actions {
   display: flex;
@@ -501,7 +499,10 @@ body.sidebar-collapsed #sidebar.temp-expanded .btn-logout { justify-content: ini
 .topbar-left h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; color: var(--text); }
 .topbar-subtitle { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
 
-.topbar-right { display: flex; align-items: center; gap: 10px; }
+.topbar-center { display: flex; align-items: center; justify-content: center; flex: 1; }
+.topbar-clinic-name { font-size: 14px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.4px; white-space: nowrap; }
+
+.topbar-right { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end; }
 .topbar-theme-btn { display: none; }
 .topbar-user-wrap { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-hover); }
 .topbar-user-wrap .avatar { width: 30px; height: 30px; border-radius: 8px; background: var(--c-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }

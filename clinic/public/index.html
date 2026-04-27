@@ -84,7 +84,7 @@
           <rect x="49" y="12" width="10" height="3" rx="1.5" fill="#5EEAD4"/>
         </svg>
         <!-- Wordmark (hidden when sidebar collapsed) -->
-        <span class="logo-text dermiq-wordmark"><span style="font-weight:300;color:var(--text)">DERM</span><span style="font-weight:800;color:#0A7EA4">IQ</span><small class="dermiq-clinic-name" id="sidebarClinicName"></small></span>
+        <span class="logo-text dermiq-wordmark"><span style="font-weight:300;color:var(--text)">DERM</span><span style="font-weight:800;color:#0A7EA4">IQ</span></span>
       </div>
       <div class="sidebar-header-actions">
         <button class="sidebar-collapse" onclick="toggleSidebarCollapsed()" aria-label="Collapse sidebar" title="Collapse sidebar">
@@ -122,6 +122,9 @@
       <div class="topbar-left">
         <h1 id="pageTitle">Dashboard</h1>
         <p id="pageSub" class="topbar-subtitle"></p>
+      </div>
+      <div class="topbar-center">
+        <span class="topbar-clinic-name" id="topbarClinicName"></span>
       </div>
       <div class="topbar-right">
         <button class="btn-icon topbar-theme-btn" onclick="toggleTheme()" aria-label="Toggle dark mode">

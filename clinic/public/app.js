@@ -456,8 +456,8 @@ function applyClinicBranding() {
   if (loginNameEl) loginNameEl.textContent = clinicName;
   const loginSubEl = document.getElementById('loginClinicSub');
   if (loginSubEl) loginSubEl.textContent = tradeName;
-  const sidebarNameEl = document.getElementById('sidebarClinicName');
-  if (sidebarNameEl) sidebarNameEl.textContent = clinicName;
+  const topbarClinicEl = document.getElementById('topbarClinicName');
+  if (topbarClinicEl) topbarClinicEl.textContent = clinicName;
 }
 
 function renderAccessLockScreen() {
