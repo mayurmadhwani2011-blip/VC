@@ -7283,6 +7283,8 @@ async function openEditBillModal(id) {
   try { discountsRaw = await apiFetch('/api/discounts'); } catch {}
   const todayISO = new Date().toISOString().slice(0,10);
   const activeDiscounts = (discountsRaw||[]).filter(d => d.active !== false && (!d.valid_from || d.valid_from <= todayISO) && (!d.valid_to || d.valid_to >= todayISO));
+  let editAttachments = [];
+  try { editAttachments = await apiFetch(`/api/bills/${id}/attachments`); } catch {}
   showModal(`Edit Receipt · ${escHtml(b.patient_name)}`, `
     <form id="editBillForm">
       <div class="form-group"><label>Patient</label><input value="${escHtml(b.patient_name)}" disabled/></div>
@@ -7326,7 +7328,16 @@ async function openEditBillModal(id) {
           <input name="discount_amount" id="editBillOpenDiscAmt" type="number" min="0" step="0.001" value="${b.discount_type==='open'?parseFloat(b.discount_amount||0):''}"/>
         </div>
       </div>
-    </form>`,
+    </form>
+    <hr style="margin:16px 0;border:none;border-top:1px solid #ddd"/>
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label style="color:#666;font-size:12px;font-weight:700">ATTACHMENTS</label>
+        <button type="button" class="btn btn-sm btn-primary" onclick="billPickAttachment(${id})" style="font-size:12px;padding:3px 10px">+ Add</button>
+      </div>
+      <input type="file" id="billAttachInput_${id}" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
+      <div id="billAttachList_${id}">${renderBillAttachList(editAttachments, id)}</div>
+    </div>`,
     async () => {
       const f = document.getElementById('editBillForm');
       const body = Object.fromEntries(new FormData(f));
@@ -7861,6 +7872,8 @@ async function viewBillModal(id) {
   }
   let refunds = [];
   try { refunds = await apiFetch(`/api/refunds?bill_id=${id}`); } catch {}
+  let attachments = [];
+  try { attachments = await apiFetch(`/api/bills/${id}/attachments`); } catch {}
   let cancelledByName = '—';
   if (b.cancelled_by) {
     try {
@@ -7976,7 +7989,74 @@ async function viewBillModal(id) {
     ${paymentHtml}
     ${refundsHtml}
     ${cancellationHtml}
+    <hr style="margin:16px 0;border:none;border-top:1px solid #ddd"/>
+    <div id="billAttachmentsSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <label style="color:#666;font-size:12px;font-weight:700">ATTACHMENTS</label>
+        <button type="button" class="btn btn-sm btn-primary" onclick="billPickAttachment(${id})" style="font-size:12px;padding:3px 10px">+ Add</button>
+      </div>
+      <input type="file" id="billAttachInput_${id}" accept="image/*,.pdf,.doc,.docx" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
+      <div id="billAttachList_${id}">${renderBillAttachList(attachments, id)}</div>
+    </div>
   `, null, 'close'); // read-only modal
+}
+
+function renderBillAttachList(attachments, billId) {
+  if (!attachments || !attachments.length) {
+    return '<div style="color:#aaa;font-size:13px;padding:6px 0">No attachments yet.</div>';
+  }
+  return attachments.map(a => {
+    const icon = (a.type || '').startsWith('image/') ? '🖼' : ((a.type || '').includes('pdf') ? '📄' : '📎');
+    const date = a.uploaded_at ? formatDateTime(a.uploaded_at) : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f0f0">
+      <span style="font-size:18px">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <a href="/api/bills/${billId}/attachments/${a.id}" target="_blank" style="font-size:13px;font-weight:500;color:#2563eb;word-break:break-all">${escHtml(a.name)}</a>
+        <div style="font-size:11px;color:#888">${escHtml(date)}${a.uploaded_by ? ' · ' + escHtml(a.uploaded_by) : ''}</div>
+      </div>
+      <button type="button" onclick="billDeleteAttachment(${billId}, ${a.id}, '${escHtml(a.name).replace(/'/g,"\\'")}', this)" style="background:none;border:none;cursor:pointer;color:#e53935;font-size:16px;line-height:1;padding:2px 6px" title="Delete">×</button>
+    </div>`;
+  }).join('');
+}
+
+function billPickAttachment(billId) {
+  const inp = document.getElementById(`billAttachInput_${billId}`);
+  if (inp) inp.click();
+}
+
+async function billHandleAttachFile(billId, input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { alert('File too large (max 5 MB)'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      await apiFetch(`/api/bills/${billId}/attachments`, {
+        method: 'POST',
+        body: JSON.stringify({ name: file.name, type: file.type, data: e.target.result })
+      });
+      // Refresh the attachment list
+      const updated = await apiFetch(`/api/bills/${billId}/attachments`);
+      const listEl = document.getElementById(`billAttachList_${billId}`);
+      if (listEl) listEl.innerHTML = renderBillAttachList(updated, billId);
+    } catch (err) {
+      alert('Upload failed: ' + (err.message || err));
+    }
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+async function billDeleteAttachment(billId, attId, name, btnEl) {
+  if (!confirm(`Delete attachment "${name}"?`)) return;
+  try {
+    await apiFetch(`/api/bills/${billId}/attachments/${attId}`, { method: 'DELETE' });
+    const updated = await apiFetch(`/api/bills/${billId}/attachments`);
+    const listEl = document.getElementById(`billAttachList_${billId}`);
+    if (listEl) listEl.innerHTML = renderBillAttachList(updated, billId);
+  } catch (err) {
+    alert('Delete failed: ' + (err.message || err));
+  }
 }
 
 // --------------------------------------------------------

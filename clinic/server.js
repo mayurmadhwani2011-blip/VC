@@ -5243,6 +5243,55 @@ app.put('/api/bills/:id', requirePermission('billing.edit'), (req, res) => {
   res.json({ success:true, bill: db.bills[idx] });
 });
 
+// ── Bill Attachments ──────────────────────────────────
+app.get('/api/bills/:id/attachments', requireLogin, (req, res) => {
+  const db = readDB();
+  const bill = db.bills.find(b => b.id === parseInt(req.params.id));
+  if (!bill) return res.status(404).json({ error:'Bill not found' });
+  // Return metadata only — no base64 data
+  res.json((bill.attachments || []).map(({ data: _, ...meta }) => meta));
+});
+
+app.get('/api/bills/:id/attachments/:attId', requireLogin, (req, res) => {
+  const db = readDB();
+  const bill = db.bills.find(b => b.id === parseInt(req.params.id));
+  if (!bill) return res.status(404).json({ error:'Bill not found' });
+  const att = (bill.attachments || []).find(a => String(a.id) === String(req.params.attId));
+  if (!att) return res.status(404).json({ error:'Attachment not found' });
+  // Serve as binary download
+  const base64 = att.data.includes(',') ? att.data.split(',')[1] : att.data;
+  const buf = Buffer.from(base64, 'base64');
+  res.setHeader('Content-Type', att.type || 'application/octet-stream');
+  res.setHeader('Content-Disposition', `inline; filename="${att.name.replace(/"/g, '_')}"`);
+  res.send(buf);
+});
+
+app.post('/api/bills/:id/attachments', requirePermission('billing.edit'), (req, res) => {
+  const { name, type, data } = req.body;
+  if (!name || !data) return res.status(400).json({ error:'name and data required' });
+  if (Buffer.byteLength(data, 'utf8') > 5 * 1024 * 1024)
+    return res.status(413).json({ error:'File too large (max 5 MB)' });
+  const db = readDB();
+  const idx = db.bills.findIndex(b => b.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error:'Bill not found' });
+  if (!db.bills[idx].attachments) db.bills[idx].attachments = [];
+  const att = { id: Date.now(), name, type: type || 'application/octet-stream', data, uploaded_at: nowIso(), uploaded_by: req.session.user.username };
+  db.bills[idx].attachments.push(att);
+  writeDB(db);
+  res.json({ success:true, attachment: { id: att.id, name: att.name, type: att.type, uploaded_at: att.uploaded_at, uploaded_by: att.uploaded_by } });
+});
+
+app.delete('/api/bills/:id/attachments/:attId', requirePermission('billing.edit'), (req, res) => {
+  const db = readDB();
+  const idx = db.bills.findIndex(b => b.id === parseInt(req.params.id));
+  if (idx === -1) return res.status(404).json({ error:'Bill not found' });
+  const before = (db.bills[idx].attachments || []).length;
+  db.bills[idx].attachments = (db.bills[idx].attachments || []).filter(a => String(a.id) !== String(req.params.attId));
+  if (db.bills[idx].attachments.length === before) return res.status(404).json({ error:'Attachment not found' });
+  writeDB(db);
+  res.json({ success:true });
+});
+
 app.post('/api/bills/:id/cancel', requirePermission('billing.delete'), (req, res) => {
   const db = readDB();
   const idx = db.bills.findIndex(b => b.id === parseInt(req.params.id));
