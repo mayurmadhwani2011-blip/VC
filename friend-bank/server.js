@@ -11,7 +11,9 @@ const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : pat
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 const DATA_BACKUP_FILE = path.join(DATA_DIR, 'data.backup.json');
+const SNAPSHOT_DIR = path.join(DATA_DIR, 'snapshots');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const MIN_VALID_STATE_BYTES = 512;
 
 // Trust proxy for HTTPS on Render/Heroku
 app.set('trust proxy', 1);
@@ -155,6 +157,9 @@ function readData() {
   const fallback = { transactions: [] };
   try {
     if (!fs.existsSync(DATA_FILE)) {
+      if (fs.existsSync(DATA_BACKUP_FILE)) {
+        return recoverDataFromBackup(fallback);
+      }
       writeJsonAtomic(DATA_FILE, fallback);
       writeJsonAtomic(DATA_BACKUP_FILE, fallback);
       return fallback;
@@ -179,6 +184,7 @@ function readData() {
 function writeData(data) {
   writeJsonAtomic(DATA_FILE, data);
   writeJsonAtomic(DATA_BACKUP_FILE, data);
+  writeSnapshot(data);
 }
 
 function hasConflictMarkers(raw) {
@@ -189,6 +195,60 @@ function writeJsonAtomic(targetFile, data) {
   const tempFile = `${targetFile}.tmp`;
   fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
   fs.renameSync(tempFile, targetFile);
+}
+
+function writeSnapshot(data) {
+  try {
+    if (!fs.existsSync(SNAPSHOT_DIR)) fs.mkdirSync(SNAPSHOT_DIR, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const snapshotPath = path.join(SNAPSHOT_DIR, `data-${stamp}.json`);
+    fs.writeFileSync(snapshotPath, JSON.stringify(data, null, 2), 'utf-8');
+
+    const snapshots = fs
+      .readdirSync(SNAPSHOT_DIR)
+      .filter(name => name.startsWith('data-') && name.endsWith('.json'))
+      .sort();
+    const keep = 30;
+    if (snapshots.length > keep) {
+      const toDelete = snapshots.slice(0, snapshots.length - keep);
+      for (const file of toDelete) {
+        fs.unlinkSync(path.join(SNAPSHOT_DIR, file));
+      }
+    }
+  } catch (err) {
+    console.warn('[DATA] Snapshot write failed:', err.message);
+  }
+}
+
+function validateStateForSave(state) {
+  const errors = [];
+  if (!state || typeof state !== 'object' || Array.isArray(state)) {
+    return ['State must be an object'];
+  }
+
+  if (!Array.isArray(state.members) || state.members.length === 0) {
+    errors.push('members must be a non-empty array');
+  }
+  if (!Array.isArray(state.months) || state.months.length === 0) {
+    errors.push('months must be a non-empty array');
+  }
+  if (!state.payments || typeof state.payments !== 'object' || Array.isArray(state.payments) || Object.keys(state.payments).length === 0) {
+    errors.push('payments must be a non-empty object');
+  }
+  if (!Array.isArray(state.loans)) {
+    errors.push('loans must be an array');
+  }
+  if (!Array.isArray(state.transactions)) {
+    errors.push('transactions must be an array');
+  }
+  if (typeof state.mainBalance !== 'number' || Number.isNaN(state.mainBalance)) {
+    errors.push('mainBalance must be a number');
+  }
+  if (typeof state.loanedOut !== 'number' || Number.isNaN(state.loanedOut)) {
+    errors.push('loanedOut must be a number');
+  }
+
+  return errors;
 }
 
 function recoverDataFromBackup(fallback) {
@@ -204,9 +264,9 @@ function recoverDataFromBackup(fallback) {
     console.warn('[DATA] Backup recovery failed:', err.message);
   }
 
-  writeJsonAtomic(DATA_FILE, fallback);
-  writeJsonAtomic(DATA_BACKUP_FILE, fallback);
-  console.warn('[DATA] Initialized fresh fallback state because no valid backup was available.');
+  // Never overwrite storage with fallback when recovery fails.
+  // This prevents accidental data loss from parse/conflict issues.
+  console.warn('[DATA] No valid backup available; returning in-memory fallback without writing to disk.');
   return fallback;
 }
 
@@ -238,6 +298,16 @@ app.post('/api/state', requireAuth, requireAdmin, (req, res) => {
   if (!payload || typeof payload.state !== 'object') {
     console.log('[SAVE] REJECTED: Invalid payload');
     return res.status(400).json({ success: false, message: 'Invalid state payload' });
+  }
+  const serialized = JSON.stringify(payload.state);
+  if (!serialized || serialized.length < MIN_VALID_STATE_BYTES) {
+    console.log('[SAVE] REJECTED: State payload too small:', serialized ? serialized.length : 0, 'bytes');
+    return res.status(400).json({ success: false, message: 'State payload too small; refusing to overwrite persisted data' });
+  }
+  const validationErrors = validateStateForSave(payload.state);
+  if (validationErrors.length > 0) {
+    console.log('[SAVE] REJECTED: State validation failed:', validationErrors.join('; '));
+    return res.status(400).json({ success: false, message: `State validation failed: ${validationErrors[0]}` });
   }
   console.log('[SAVE] Loans:', payload.state.loans?.map(l => l.id + ':' + l.month));
   writeData(payload.state);
