@@ -3,6 +3,7 @@ services:
     name: friend-savings-bank
     env: node
     plan: starter
+    rootDir: friend-bank
     buildCommand: npm install
     startCommand: node server.js
     healthCheckPath: /
