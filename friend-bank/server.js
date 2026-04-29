@@ -7,6 +7,7 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const BUILD_STAMP = process.env.BUILD_STAMP || '2026-04-29-fix-1';
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
@@ -346,6 +347,14 @@ app.get('/api/gold-price', requireAuth, async (req, res) => {
     if (goldPriceCache.data) return res.json({ ...goldPriceCache.data, stale: true });
     res.status(502).json({ success: false, message: 'Unable to fetch gold price' });
   }
+});
+
+app.get('/api/build-info', (req, res) => {
+  res.json({
+    success: true,
+    buildStamp: BUILD_STAMP,
+    nodeEnv: process.env.NODE_ENV || 'development'
+  });
 });
 
 app.listen(PORT, () => {
