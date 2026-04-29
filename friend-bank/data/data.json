@@ -245,126 +245,6 @@
       "key": "December-2027",
       "amount": 30,
       "isFuture": true
-    },
-    {
-      "key": "January-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "February-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "March-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "April-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "May-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "June-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "July-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "August-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "September-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "October-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "November-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "December-2028",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "January-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "February-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "March-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "April-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "May-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "June-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "July-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "August-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "September-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "October-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "November-2029",
-      "amount": 30,
-      "isFuture": true
-    },
-    {
-      "key": "December-2029",
-      "amount": 30,
-      "isFuture": true
     }
   ],
   "payments": {
@@ -848,26 +728,15 @@
       "date": "09 Apr 2026",
       "amount": 30
     },
-<<<<<<<< HEAD:data/data.json
     "5-April-2026": {
       "paid": true,
       "date": "14 Apr 2026",
       "amount": 30
     },
-========
->>>>>>>> 4a955eb (feat: billing/followup/store UI improvements and performance fixes):friend-bank/data/data.json
     "7-April-2026": {
       "paid": true,
       "date": "14 Apr 2026",
       "amount": 30
-<<<<<<<< HEAD:data/data.json
-========
-    },
-    "5-April-2026": {
-      "paid": true,
-      "date": "14 Apr 2026",
-      "amount": 30
->>>>>>>> 4a955eb (feat: billing/followup/store UI improvements and performance fixes):friend-bank/data/data.json
     }
   },
   "rateHistory": [
@@ -1887,7 +1756,7 @@
     {
       "type": "loan",
       "amount": 203.0683,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -1941,7 +1810,7 @@
     {
       "type": "loan",
       "amount": 255.9578,
-      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "desc": "Loan to Mayur ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -1995,7 +1864,7 @@
     {
       "type": "loan",
       "amount": 297.1121,
-      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "desc": "Loan to Gagan ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2049,7 +1918,7 @@
     {
       "type": "loan",
       "amount": 341.8482,
-      "desc": "Loan to Himesh · 4 EMIs @ 2%",
+      "desc": "Loan to Himesh ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2103,7 +1972,7 @@
     {
       "type": "loan",
       "amount": 389.3651,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2163,7 +2032,7 @@
     {
       "type": "loan",
       "amount": 389.3651,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2217,7 +2086,7 @@
     {
       "type": "loan",
       "amount": 458.2369,
-      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "desc": "Loan to Mayur ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2271,7 +2140,7 @@
     {
       "type": "loan",
       "amount": 511.55,
-      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "desc": "Loan to Gagan ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2325,7 +2194,7 @@
     {
       "type": "loan",
       "amount": 567.9574,
-      "desc": "Loan to Himesh · 4 EMIs @ 2%",
+      "desc": "Loan to Himesh ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2391,7 +2260,7 @@
     {
       "type": "loan",
       "amount": 627.3389,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2403,7 +2272,7 @@
     {
       "type": "loan",
       "amount": 627.3389,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2463,7 +2332,7 @@
     {
       "type": "loan",
       "amount": 89.7439,
-      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "desc": "Loan to Mayur ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2523,7 +2392,7 @@
     {
       "type": "loan",
       "amount": 60.2775,
-      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "desc": "Loan to Gagan ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2583,7 +2452,7 @@
     {
       "type": "loan",
       "amount": 70.9937,
-      "desc": "Loan to Himesh · 4 EMIs @ 2%",
+      "desc": "Loan to Himesh ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -2931,7 +2800,7 @@
     {
       "type": "loan",
       "amount": 338.4468,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3219,7 +3088,7 @@
     {
       "type": "loan",
       "amount": 53.829,
-      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "desc": "Loan to Gagan ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3327,7 +3196,7 @@
     {
       "type": "loan",
       "amount": 615.7651,
-      "desc": "Loan to Vicky · 4 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3411,7 +3280,7 @@
     {
       "type": "loan",
       "amount": 615.7651,
-      "desc": "Loan to Vicky · 1 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 1 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3453,7 +3322,7 @@
     {
       "type": "loan",
       "amount": 762.076,
-      "desc": "Loan to Mayur · 4 EMIs @ 2%",
+      "desc": "Loan to Mayur ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3495,7 +3364,7 @@
     {
       "type": "loan",
       "amount": 339.4867,
-      "desc": "Loan to Gagan · 4 EMIs @ 2%",
+      "desc": "Loan to Gagan ? 4 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3681,7 +3550,7 @@
     {
       "type": "loan",
       "amount": 824.6043,
-      "desc": "Loan to Vicky · 1 EMIs @ 2%",
+      "desc": "Loan to Vicky ? 1 EMIs @ 2%",
       "date": "09 Apr 2026"
     },
     {
@@ -3761,369 +3630,6 @@
       "amount": 194.3294,
       "desc": "EMI 4 from Mayur (3.810 KD interest)",
       "date": "14 Apr 2026"
-<<<<<<<< HEAD:data/data.json
-========
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for May 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for April 2026",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Mayur paid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Gagan paid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Himesh paid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment",
-      "amount": 30,
-      "desc": "Vicky paid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Vicky unpaid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Himesh unpaid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Gagan unpaid installment for December 2029",
-      "date": "14 Apr 2026"
-    },
-    {
-      "type": "installment_reversal",
-      "amount": -30,
-      "desc": "Mayur unpaid installment for December 2029",
-      "date": "14 Apr 2026"
->>>>>>>> 4a955eb (feat: billing/followup/store UI improvements and performance fixes):friend-bank/data/data.json
     }
   ],
   "lockedMonths": [
@@ -4151,7 +3657,7 @@
     "February-2026",
     "March-2026"
   ],
-  "activeYear": 2029,
+  "activeYear": 2026,
   "goldTransactions": [
     {
       "type": "buy",
