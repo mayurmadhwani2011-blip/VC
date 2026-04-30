@@ -5340,6 +5340,10 @@ app.patch('/api/bills/:id/items/:itemIdx/status', requireLogin, (req, res) => {
   const bill = db.bills.find(b => b.id === billId);
   if (!bill) return res.status(404).json({ error: 'Bill not found' });
   if (String(bill.payment_status || '') === 'Cancelled') return res.status(400).json({ error: 'Cannot update cancelled bill' });
+  // Only allow service status changes on today's bills
+  const billDate = String(bill.created_at || '').slice(0, 10);
+  const todayDate = new Date().toISOString().slice(0, 10);
+  if (billDate !== todayDate) return res.status(400).json({ error: 'Service status can only be changed on today\'s bills' });
   if (!Array.isArray(bill.line_items) || itemIdx < 0 || itemIdx >= bill.line_items.length) {
     return res.status(404).json({ error: 'Line item not found' });
   }

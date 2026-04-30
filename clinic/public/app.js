@@ -7946,11 +7946,12 @@ async function viewBillModal(id) {
         : escHtml(name);
       const svcStatus = item.service_status || 'Completed';
       const isPackageType = item.type === 'package' || item.type === 'pkg_session';
+      const isTodayBill = String(b.created_at || '').slice(0, 10) === new Date().toLocaleDateString('sv');
       const statusColor = svcStatus === 'Completed' ? '#16a34a' : (svcStatus === 'In Progress' ? '#2563eb' : '#d97706');
       const statusIcon = svcStatus === 'Completed' ? '&#10003;' : (svcStatus === 'In Progress' ? '&#9654;' : '&#9679;');
       const statusBadgeHtml = isPackageType ? '' : `<div style="margin-top:4px;font-size:11px;color:${statusColor};font-weight:600">${statusIcon} ${escHtml(svcStatus)}${item.completion_date ? ` - ${escHtml(String(item.completion_date).slice(0,10))}` : ''}</div>`;
-      const canComplete = !isPackageType && svcStatus !== 'Completed';
-      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '&#10003; Mark Completed' : '&#9654; Start'}</button>` : (svcStatus === 'Completed' ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">&#8635; Revert</button>` : '');
+      const canComplete = !isPackageType && svcStatus !== 'Completed' && isTodayBill;
+      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '&#10003; Mark Completed' : '&#9654; Start'}</button>` : (svcStatus === 'Completed' && isTodayBill && !isPackageType ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">&#8635; Revert</button>` : '');
       const viewNameWithStatus = `<div>${viewName}${statusBadgeHtml}${actionBtn ? `<div>${actionBtn}</div>` : ''}</div>`;
       return `<tr><td>${viewNameWithStatus}</td><td style="text-align:right">${qty.toFixed(3)}</td><td style="text-align:center">${escHtml(unit)}</td><td style="text-align:right">KD ${rate.toFixed(3)}</td><td style="text-align:right"><strong>KD ${amount.toFixed(3)}</strong></td></tr>`;
     }).join('');
