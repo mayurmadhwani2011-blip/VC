@@ -7167,15 +7167,15 @@ async function loadPendingServicesAlert(patientId) {
     if (!data.pending_count) return;
     alertEl.style.display = 'block';
     alertEl.innerHTML = `
-      <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:8px;padding:10px 14px;margin-bottom:12px">
-        <div style="font-weight:700;color:#b45309;margin-bottom:6px">&#9888; ${data.pending_count} Pending Service(s) from Previous Visit(s)</div>
+      <div style="background:#fff3e0;border:2px solid #e65100;border-radius:8px;padding:10px 14px;margin-bottom:12px">
+        <div style="font-weight:700;color:#bf360c;margin-bottom:6px;font-size:14px">&#9888; ${data.pending_count} Pending Service(s) from Previous Visit(s)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${data.items.map(it => `
-            <span style="background:#fff;border:1px solid #fbbf24;border-radius:4px;padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px">
-              <span style="color:${it.service_status==='In Progress'?'#2563eb':'#d97706'}">${it.service_status==='In Progress'?'&#9654;':'&#9679;'}</span>
-              ${escHtml(it.service_name)}
-              <span style="color:#666;font-size:11px">${escHtml(it.bill_number)}</span>
-              <button type="button" onclick="viewBillModal(${it.bill_id})" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:11px;text-decoration:underline">View</button>
+            <span style="background:#fff;border:1px solid #bf360c;border-radius:4px;padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px">
+              <span style="color:${it.service_status==='In Progress'?'#1565c0':'#e65100'};font-weight:700">${it.service_status==='In Progress'?'&#9654;':'&#9679;'}</span>
+              <span style="color:#212121;font-weight:600">${escHtml(it.service_name)}</span>
+              <span style="color:#555;font-size:11px">${escHtml(it.bill_number)}</span>
+              <button type="button" onclick="viewBillModal(${it.bill_id})" style="background:none;border:none;color:#1565c0;cursor:pointer;font-size:11px;font-weight:700;text-decoration:underline">View</button>
             </span>`).join('')}
         </div>
       </div>`;
