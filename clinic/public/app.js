@@ -3213,7 +3213,7 @@ function aptRowHtml(a) {
     ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'-')}</td>` : ''}
     <td>${appointmentStatusTag(a)}</td>
     <td class="td-actions"><div class="apt-actions">
-      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">?? Info</button>
+      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">${IC.eye} Info</button>
       ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
       ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
       ${!isDoctor && !isLocked ? `<button class="btn btn-sm btn-outline-primary" onclick="openEditAppointmentModal(${a.id})">${IC.edit} Edit</button>` : ''}
@@ -3239,7 +3239,7 @@ function listAptRowHtml(a) {
     ${!isDoctor ? `<td class="text-sm">${escHtml(a.doctor_name||'-')}</td>` : ''}
     <td>${appointmentStatusTag(a)}</td>
     <td class="td-actions"><div class="apt-actions">
-      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">?? Info</button>
+      <button class="btn btn-info btn-sm" title="Patient Info" onclick="viewPatient(${a.patient_id})">${IC.eye} Info</button>
       ${isDoctor && a.status==='Booked' ? `<button class="btn btn-primary btn-sm" onclick="startConsultation(${a.id},${a.patient_id})">${IC.rx} Start</button>` : ''}
       ${canOpenRxFromAppointment(a) ? `<button class="btn btn-sm" onclick="openPrescriptionModal(${a.id},${a.patient_id})">${IC.rx} Rx</button>` : ''}
       ${!isDoctor && !isLocked ? `<button class="btn btn-sm btn-outline-primary" onclick="openEditAppointmentModal(${a.id})">${IC.edit} Edit</button>` : ''}
