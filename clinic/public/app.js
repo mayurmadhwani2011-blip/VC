@@ -8432,8 +8432,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.x} Cancelled Bills Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input id="canRptFrom" type="date" value="" title="From date"/>
-            <input id="canRptTo" type="date" value="" title="To date"/>
+            <input id="canRptFrom" type="date" value="${today}" title="From date"/>
+            <input id="canRptTo" type="date" value="${today}" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadCancelledBillsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('canRptFrom').value='';document.getElementById('canRptTo').value='';loadCancelledBillsReport()">All Time</button>
             <button class="btn btn-sm" onclick="exportTableToCSV('#cancelledBillReportBody table', 'cancelled_bills_report.csv')">${IC.download} CSV</button>
@@ -8704,8 +8704,8 @@ function renderSelectedReport() {
           <div class="search-box"><input id="slSearch" type="text" placeholder="Search supplier, reference, type..." oninput="loadSupplierLedger()"/></div>
           <div class="bill-filter-group report-filter-group">
             <select id="slSupplier" onchange="loadSupplierLedger()"><option value="">All Suppliers</option></select>
-            <input id="slFrom" type="date" value="" title="From date" onchange="loadSupplierLedger()"/>
-            <input id="slTo"   type="date" value="" title="To date"   onchange="loadSupplierLedger()"/>
+            <input id="slFrom" type="date" value="${today}" title="From date" onchange="loadSupplierLedger()"/>
+            <input id="slTo"   type="date" value="${today}" title="To date"   onchange="loadSupplierLedger()"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadSupplierLedger()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="clearSupplierLedgerFilters()">Clear</button>
           </div>
@@ -8728,8 +8728,8 @@ function renderSelectedReport() {
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
           <div class="bill-filter-group report-filter-group">
-            <input id="psvFrom" type="date" value="" title="From date" onchange="loadPendingSvcReport()"/>
-            <input id="psvTo"   type="date" value="" title="To date"   onchange="loadPendingSvcReport()"/>
+            <input id="psvFrom" type="date" value="${today}" title="From date" onchange="loadPendingSvcReport()"/>
+            <input id="psvTo"   type="date" value="${today}" title="To date"   onchange="loadPendingSvcReport()"/>
             <select id="psvStatus" onchange="loadPendingSvcReport()">
               <option value="">All Statuses</option>
               <option value="Pending">Pending</option>
@@ -8759,8 +8759,8 @@ function renderSelectedReport() {
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
           <div class="search-box"><input id="poRptSearch" type="text" placeholder="Search supplier, invoice #..." oninput="loadPendingOrdersReport()"/></div>
           <div class="bill-filter-group report-filter-group">
-            <input id="poRptFrom" type="date" title="From order date" onchange="loadPendingOrdersReport()"/>
-            <input id="poRptTo"   type="date" title="To order date"   onchange="loadPendingOrdersReport()"/>
+            <input id="poRptFrom" type="date" value="${today}" title="From order date" onchange="loadPendingOrdersReport()"/>
+            <input id="poRptTo"   type="date" value="${today}" title="To order date"   onchange="loadPendingOrdersReport()"/>
             <select id="poRptPayStatus" onchange="loadPendingOrdersReport()">
               <option value="">All Payment Statuses</option>
               <option value="Unpaid">Unpaid</option>
