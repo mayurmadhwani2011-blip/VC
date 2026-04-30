@@ -101,6 +101,7 @@ const IC = {
   discount:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M21 3h-4"/><path d="M21 21h-4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><line x1="17" y1="3" x2="21" y2="3"/><line x1="17" y1="21" x2="21" y2="21"/><path d="m15 9-6 6"/><circle cx="9.5" cy="9.5" r="0.5" fill="currentColor"/><circle cx="14.5" cy="14.5" r="0.5" fill="currentColor"/></svg>',
   refund:       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
   supreturn:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
+  download:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
 };
 
 // --- Nav config - unified list filtered by permission ----
@@ -6691,7 +6692,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
   // Change the save button label to "Save & Print"
   setTimeout(() => {
     const btn = document.getElementById('modalSaveBtn');
-    if (btn) btn.innerHTML = `${IC.print || '???'} Save &amp; Print`;
+    if (btn) btn.innerHTML = `${IC.print} Save &amp; Print`;
   }, 0);
   if (prePatientId) loadBillPackageSessions(prePatientId);
 }
@@ -7846,13 +7847,13 @@ async function printBill(id) {
 function showManualPrintPreview(bill, onPrint) {
   const previewHtml = document.getElementById('printArea')?.innerHTML || '';
 
-  showModal('??? Print Preview', `
+  showModal(`${IC.print} Print Preview`, `
     <div style="border:1px solid var(--border);border-radius:8px;padding:16px;background:#fff;max-height:480px;overflow-y:auto;color:#000">
       ${previewHtml}
     </div>`,
     [
       {
-        label: `${IC.print || '???'} Print`,
+        label: `${IC.print} Print`,
         class: 'btn-primary',
         onclick: () => {
           closeModal();
@@ -11995,7 +11996,7 @@ async function setup() {
           </div>
           <div class="card">
             <div class="card-header-row">
-              <div class="card-title">??? Printer Configuration</div>
+              <div class="card-title">${IC.print} Printer Configuration</div>
             </div>
             <div class="card-body">
               <form id="setupPrinterForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
