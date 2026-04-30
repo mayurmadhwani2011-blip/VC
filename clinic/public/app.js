@@ -7172,7 +7172,7 @@ async function loadPendingServicesAlert(patientId) {
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           ${data.items.map(it => `
             <span style="background:#fff;border:1px solid #fbbf24;border-radius:4px;padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px">
-              <span style="color:${it.service_status==='In Progress'?'#2563eb':'#d97706'}">${it.service_status==='In Progress'?'&#9654;':'&#9900;'}</span>
+              <span style="color:${it.service_status==='In Progress'?'#2563eb':'#d97706'}">${it.service_status==='In Progress'?'&#9654;':'&#9679;'}</span>
               ${escHtml(it.service_name)}
               <span style="color:#666;font-size:11px">${escHtml(it.bill_number)}</span>
               <button type="button" onclick="viewBillModal(${it.bill_id})" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:11px;text-decoration:underline">View</button>
@@ -9074,7 +9074,7 @@ function _psvRenderBatch() {
   const next = _psvAllRows.slice(_psvRenderedCount, _psvRenderedCount + PSV_BATCH);
   if (!next.length) { _psvDisconnect(); return; }
   const statusColor = s => s === 'Completed' ? '#16a34a' : (s === 'In Progress' ? '#2563eb' : '#d97706');
-  const statusIcon  = s => s === 'Completed' ? '&#10003;' : (s === 'In Progress' ? '&#9654;' : '&#9900;');
+  const statusIcon  = s => s === 'Completed' ? '&#10003;' : (s === 'In Progress' ? '&#9654;' : '&#9679;');
   tbody.insertAdjacentHTML('beforeend', next.map(r => `
     <tr>
       <td class="text-sm">${escHtml(r.bill_date || '-')}</td>
@@ -9131,16 +9131,16 @@ async function loadPendingSvcReport() {
           <div class="text-muted text-sm">Total Items</div>
           <div style="font-size:22px;font-weight:700">${summary.total || 0}</div>
         </div>
-        <div style="background:var(--bg-card);border:1px solid #ffc107;border-radius:10px;padding:12px 16px">
-          <div class="text-sm" style="color:#d97706;font-weight:600">&#9900; Pending</div>
+        <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">? Pending</div>
           <div style="font-size:22px;font-weight:700;color:#d97706">${summary.pending || 0}</div>
         </div>
-        <div style="background:var(--bg-card);border:1px solid #93c5fd;border-radius:10px;padding:12px 16px">
-          <div class="text-sm" style="color:#2563eb;font-weight:600">&#9654; In Progress</div>
+        <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">?? In Progress</div>
           <div style="font-size:22px;font-weight:700;color:#2563eb">${summary.in_progress || 0}</div>
         </div>
-        <div style="background:var(--bg-card);border:1px solid #86efac;border-radius:10px;padding:12px 16px">
-          <div class="text-sm" style="color:#16a34a;font-weight:600">&#10003; Completed</div>
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px">
+          <div class="text-muted text-sm">? Completed</div>
           <div style="font-size:22px;font-weight:700;color:#16a34a">${summary.completed || 0}</div>
         </div>
       </div>`;
