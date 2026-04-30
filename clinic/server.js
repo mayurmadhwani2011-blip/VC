@@ -3117,7 +3117,7 @@ function buildThermalReceiptText(bill, clinicProfile, settledBy) {
   lines.push(`MR #    : ${String(bill?.mr_number || '—')}`);
   if (bill?.patient_phone) lines.push(`Phone   : ${String(bill.patient_phone)}`);
   lines.push(sep);
-  lines.push('Item                     Qty      Amount');
+  lines.push('Item                 Qty   Rate   Amt');
   lines.push(sep);
 
   const items = Array.isArray(bill?.line_items) ? bill.line_items : [];
@@ -3126,14 +3126,24 @@ function buildThermalReceiptText(bill, clinicProfile, settledBy) {
       const name = String(item?.package_name || item?.name || 'Item');
       const qty = parseFloat(item?.qty || item?.quantity || 1) || 1;
       const amt = parseFloat(item?.amount || 0) || 0;
-      const wrapped = wrapText(name, 23);
+      const rate = qty > 0 ? (amt / qty) : amt;
+      const qtyDisp = Number.isInteger(qty) || qty % 1 === 0 ? String(Math.round(qty)) : qty.toFixed(3);
+      const rateDisp = String(Math.round(rate));
+      const amtDisp = String(Math.round(amt));
+      const wrapped = wrapText(name, 20);
       wrapped.forEach((line, idx) => {
         if (idx === 0) {
-          lines.push(`${padRight(line, 23)} ${padLeft(qty.toFixed(3), 7)} ${padLeft(money3(amt), 10)}`);
+          lines.push(`${padRight(line, 20)} ${padLeft(qtyDisp, 5)} ${padLeft(rateDisp, 6)} ${padLeft(amtDisp, 6)}`);
         } else {
           lines.push(line);
         }
       });
+
+      // Print package selected services on separate full-width lines for clarity.
+      const selectedNames = Array.isArray(item?.selected_service_names) ? item.selected_service_names.filter(Boolean).map(String) : [];
+      for (const svc of selectedNames) {
+        wrapText(`${svc}`, width - 2).forEach(l => lines.push(` ${l}`));
+      }
     }
   } else {
     const fallback = [
@@ -3143,7 +3153,9 @@ function buildThermalReceiptText(bill, clinicProfile, settledBy) {
     ];
     for (const [label, amount] of fallback) {
       if (parseFloat(amount || 0) > 0) {
-        lines.push(`${padRight(label, 23)} ${padLeft('1.000', 7)} ${padLeft(money3(amount), 10)}`);
+        const amt = parseFloat(amount || 0) || 0;
+        const amtDisp = String(Math.round(amt));
+        lines.push(`${padRight(label, 20)} ${padLeft('1', 5)} ${padLeft(amtDisp, 6)} ${padLeft(amtDisp, 6)}`);
       }
     }
   }
