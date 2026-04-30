@@ -6677,6 +6677,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
             }
             if (updated && typeof renderCalendar === 'function') renderCalendar();
           }
+          await refreshAppointmentViewsAfterBilling();
         }
         closeModal();
         if (finalPaymentStatus === 'Paid') {
@@ -6697,6 +6698,20 @@ async function openBillModal(prePatientId = null, preAptId = null) {
     if (btn) btn.innerHTML = `${IC.print || '???'} Save &amp; Print`;
   }, 0);
   if (prePatientId) loadBillPackageSessions(prePatientId);
+}
+
+async function refreshAppointmentViewsAfterBilling() {
+  if (currentPageId === 'scheduler' || document.querySelector('.sched-container')) {
+    await scheduler();
+    return;
+  }
+  if (currentPageId === 'appointments') {
+    await appointments();
+    return;
+  }
+  if (currentPageId === 'billing') {
+    await billing();
+  }
 }
 
 function billSwitchTab(tab, btn) {
@@ -7484,6 +7499,7 @@ async function markBillPaid(id) {
   const b = await apiFetch(`/api/bills/${id}`);
   try {
     await apiFetch(`/api/bills/${id}`, { method: 'PUT', body: JSON.stringify({ ...b, payment_status: 'Paid' }) });
+    await refreshAppointmentViewsAfterBilling();
     const created = await autoCreateFollowUpFromContext(
       parseInt(b.patient_id, 10),
       parseInt(b.doctor_id, 10) || null,
