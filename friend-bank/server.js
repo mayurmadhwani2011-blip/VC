@@ -8,7 +8,11 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BUILD_STAMP = process.env.BUILD_STAMP || '2026-04-29-fix-1';
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(__dirname, 'data');
+const isProduction = process.env.NODE_ENV === 'production';
+const inferredProductionDataDir = isProduction ? '/var/data' : null;
+const DATA_DIR = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : (inferredProductionDataDir || path.join(__dirname, 'data'));
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 const DATA_BACKUP_FILE = path.join(DATA_DIR, 'data.backup.json');
