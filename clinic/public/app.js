@@ -8766,8 +8766,13 @@ function renderSelectedReport() {
               <option value="Partially Paid">Partially Paid</option>
               <option value="Paid">Paid</option>
             </select>
+            <select id="poRptOrdStatus" onchange="loadPendingOrdersReport()">
+              <option value="">All Order Statuses</option>
+              <option value="Pending">Pending (Not Received)</option>
+              <option value="Received">Received</option>
+            </select>
             <button class="btn btn-sm report-apply-btn" onclick="loadPendingOrdersReport()">Apply</button>
-            <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('poRptSearch').value='';document.getElementById('poRptFrom').value='';document.getElementById('poRptTo').value='';document.getElementById('poRptPayStatus').value='';loadPendingOrdersReport()">Clear</button>
+            <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('poRptSearch').value='';document.getElementById('poRptFrom').value='';document.getElementById('poRptTo').value='';document.getElementById('poRptPayStatus').value='';document.getElementById('poRptOrdStatus').value='';loadPendingOrdersReport()">Clear</button>
           </div>
         </div>
         <div id="pendingOrdersBody">${skeletonTable(5)}</div>
@@ -9205,29 +9210,30 @@ async function loadPendingOrdersReport() {
   wrap.innerHTML = skeletonTable(5);
   try {
     const orders = await apiFetch('/api/store/purchase-orders');
-    const pending = orders.filter(o => String(o.status || '') === 'Pending');
     const search = (document.getElementById('poRptSearch')?.value || '').toLowerCase();
     const from   = document.getElementById('poRptFrom')?.value || '';
     const to     = document.getElementById('poRptTo')?.value || '';
     const paySt  = document.getElementById('poRptPayStatus')?.value || '';
-    const filtered = pending.filter(o => {
+    const ordSt  = document.getElementById('poRptOrdStatus')?.value || '';
+    const filtered = orders.filter(o => {
       const d = String(o.order_date || '').slice(0, 10);
       if (search && !String(o.supplier_name || '').toLowerCase().includes(search) && !String(o.invoice_number || '').toLowerCase().includes(search)) return false;
       if (from && d < from) return false;
       if (to   && d > to)   return false;
       if (paySt && String(o.payment_status || 'Unpaid') !== paySt) return false;
+      if (ordSt && String(o.status || 'Pending') !== ordSt) return false;
       return true;
     });
     const totalCost = filtered.reduce((s, o) => s + parseFloat(o.total_cost || 0), 0);
     const totalDue  = filtered.reduce((s, o) => s + parseFloat(o.due_amount  || 0), 0);
     if (!filtered.length) {
-      wrap.innerHTML = emptyState(IC.supplier, 'No pending orders', 'All purchase orders have been received or no orders match the filters');
+      wrap.innerHTML = emptyState(IC.supplier, 'No orders found', 'No purchase orders match the selected filters');
       return;
     }
     wrap.innerHTML = `
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
         <div style="padding:10px 16px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border)">
-          <div style="font-size:11px;color:var(--text-muted)">PENDING ORDERS</div>
+          <div style="font-size:11px;color:var(--text-muted)">TOTAL ORDERS</div>
           <div style="font-size:20px;font-weight:700">${filtered.length}</div>
         </div>
         <div style="padding:10px 16px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border)">
@@ -9242,7 +9248,7 @@ async function loadPendingOrdersReport() {
       <div class="table-wrap"><table>
         <thead><tr>
           <th>#</th><th>Supplier</th><th>Invoice #</th><th>Order Date</th>
-          <th>Items</th><th style="text-align:right">Total Cost</th>
+          <th>Items</th><th>Order Status</th><th style="text-align:right">Total Cost</th>
           <th style="text-align:right">Paid</th><th style="text-align:right">Due</th><th>Payment Status</th>
         </tr></thead>
         <tbody>${filtered.map((o, i) => {
@@ -9256,6 +9262,7 @@ async function loadPendingOrdersReport() {
             <td class="text-muted text-sm">${escHtml(o.invoice_number || '-')}</td>
             <td class="text-muted text-sm">${escHtml(o.order_date || '-')}</td>
             <td>${(o.items || []).length} item(s)</td>
+            <td>${o.status === 'Received' ? '<span class="badge badge-paid">Received</span>' : '<span class="badge badge-scheduled">Pending</span>'}</td>
             <td style="text-align:right"><strong>KD ${parseFloat(o.total_cost || 0).toFixed(3)}</strong></td>
             <td style="text-align:right">KD ${parseFloat(o.paid_amount || 0).toFixed(3)}</td>
             <td style="text-align:right;color:var(--c-danger)"><strong>KD ${parseFloat(o.due_amount || 0).toFixed(3)}</strong></td>
