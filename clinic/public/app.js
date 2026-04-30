@@ -8775,6 +8775,8 @@ function renderSelectedReport() {
     loadPendingOrdersReport();
     return;
   }
+
+  panel.innerHTML = `
     <div class="card" style="margin:0;border:1px solid var(--border-light)">
       <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
         <div class="card-title">${IC.reports} Activity Logs</div>
