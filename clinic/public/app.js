@@ -6145,7 +6145,7 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
           <button type="button" class="bill-tab" onclick="billSwitchTab('custom',this)">+ Custom</button>
         </div>
         <div id="billTab-services" class="bill-tab-panel">
-          <div class="bill-search-row">${IC.search}<input id="billSvcSearch" placeholder="Search services..." oninput="billFilterServices(this.value)"/></div>
+          <div class="bill-search-row">${IC.search}<input id="billSvcSearch" placeholder="Search services..." oninput="billFilterServices(this.value)"/><select id="billSvcCategoryFilter" style="width:auto;min-width:170px" onchange="billFilterServices(document.getElementById('billSvcSearch')?.value || '')">${billServiceGroupOptionsHtml()}</select></div>
           ${window._billServices.length
             ? `<div class="bill-svc-grid" id="billSvcGrid">${window._billServices.map(s=>`
               <label class="bill-svc-card" data-svc-id="${s.id}">
@@ -6450,6 +6450,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
         <div id="billTab-services" class="bill-tab-panel">
           <div class="bill-search-row">
             ${IC.search}<input id="billSvcSearch" placeholder="Search services..." oninput="billFilterServices(this.value)"/>
+            <select id="billSvcCategoryFilter" style="width:auto;min-width:170px" onchange="billFilterServices(document.getElementById('billSvcSearch')?.value || '')">${billServiceGroupOptionsHtml()}</select>
           </div>
           ${window._billServices.length
             ? `<div class="bill-svc-grid" id="billSvcGrid">${window._billServices.map(s=>`
@@ -6718,6 +6719,21 @@ function showBillLoadingModal(message = 'Loading billing details...') {
     </div>`, null, 'modal-sm');
 }
 
+function billServiceGroupOptionsHtml() {
+  const seen = new Set();
+  const groups = [];
+  (window._billServices || []).forEach((service) => {
+    const name = String(service.category || '').trim() || 'Other';
+    const key = name.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      groups.push(name);
+    }
+  });
+  groups.sort((a, b) => a.localeCompare(b));
+  return ['<option value="">All Groups</option>', ...groups.map((group) => `<option value="${escHtml(group)}">${escHtml(group)}</option>`)].join('');
+}
+
 function billSwitchTab(tab, btn) {
   document.querySelectorAll('.bill-tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.bill-tab-panel').forEach(p => p.style.display = 'none');
@@ -6727,10 +6743,13 @@ function billSwitchTab(tab, btn) {
 }
 function billFilterServices(q) {
   const v = q.toLowerCase().trim();
+  const selectedGroup = String(document.getElementById('billSvcCategoryFilter')?.value || '').toLowerCase().trim();
   document.querySelectorAll('#billSvcGrid .bill-svc-card').forEach(card => {
     const name  = (card.querySelector('.bill-svc-card-name')?.textContent || '').toLowerCase();
     const cat   = (card.querySelector('.bill-svc-card-cat')?.textContent  || '').toLowerCase();
-    card.style.display = (!v || name.includes(v) || cat.includes(v)) ? '' : 'none';
+    const matchesText = !v || name.includes(v) || cat.includes(v);
+    const matchesGroup = !selectedGroup || cat === selectedGroup;
+    card.style.display = (matchesText && matchesGroup) ? '' : 'none';
   });
 }
 function billFilterPackages(q) {
