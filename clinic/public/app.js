@@ -7634,16 +7634,14 @@ async function printBill(id) {
       const svcStatus = item.service_status || 'Completed';
       const serviceNames = Array.isArray(item.selected_service_names) ? item.selected_service_names.filter(Boolean) : [];
       let descHtml = escHtml(item.name || '');
+      let packageUsageLines = [];
 
       if (item.type === 'package' && item.package_name) {
         const sub = serviceNames.length
           ? escHtml(serviceNames.join(', '))
           : escHtml(String(item.name || '').replace(`${item.package_name} - `, '').replace(item.package_name, '').trim());
-        const usageLines = getPackageUsageDetailLines(item, b, printPatientPackages);
-        const usageHtml = usageLines.length
-          ? `<div style="font-size:13px;color:#111;margin-top:2px">${usageLines.map(line => `<div><strong>${escHtml(line)}</strong></div>`).join('')}</div>`
-          : '';
-        descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>` : ''}${usageHtml}`;
+        packageUsageLines = getPackageUsageDetailLines(item, b, printPatientPackages);
+        descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>` : ''}`;
       } else if (item.type === 'pkg_session' && item.package_name) {
         const sub = serviceNames.length ? escHtml(serviceNames.join(', ')) : escHtml(item.name || '');
         const pp = getPkgSessionPackageForItem(item, b, pkgProgressByPkgId, printPatientPackages);
@@ -7659,13 +7657,18 @@ async function printBill(id) {
         descHtml += `<div style="font-size:13px;color:${statusColor};margin-top:3px"><strong>${statusIcon} ${escHtml(svcStatus)}${completionText}</strong></div>`;
       }
 
-      return `<tr style="border-bottom:1px solid #bbb">
+      const mainRow = `<tr style="${packageUsageLines.length ? '' : 'border-bottom:1px solid #bbb'}">
         <td style="padding:6px 3px;font-size:14px;line-height:1.28;color:#000;vertical-align:top;white-space:normal;word-break:break-word;overflow-wrap:anywhere">${descHtml}</td>
         <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
         <td style="padding:6px 3px;font-size:14px;text-align:center;color:#000;white-space:nowrap;vertical-align:top">${escHtml(unit)}</td>
         <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineRateDisplay}</td>
         <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineAmountDisplay}</td>
       </tr>`;
+      if (!packageUsageLines.length) return mainRow;
+      const detailRows = packageUsageLines.map((line, idx) => `<tr style="${idx === packageUsageLines.length - 1 ? 'border-bottom:1px solid #bbb' : ''}">
+        <td colspan="5" style="padding:2px 3px 2px 8px;font-size:13px;line-height:1.26;color:#000;white-space:normal;word-break:break-word;overflow-wrap:anywhere"><strong>${escHtml(line)}</strong></td>
+      </tr>`).join('');
+      return `${mainRow}${detailRows}`;
     }).join('');
   } else {
     if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1</td><td style="text-align:center">svc</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.consultation_fee)||0)}</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.consultation_fee)||0)}</td></tr>`;
