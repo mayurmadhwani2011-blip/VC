@@ -1288,6 +1288,63 @@ function collectServiceUsageFromBillItems(lineItems = []) {
   return [...usageByService.entries()].map(([service_id, service_qty]) => ({ service_id, service_qty }));
 }
 
+function buildPackageUsageSnapshotLinesFromPatientPackage(patientPackage, selectedServiceIds = []) {
+  if (!patientPackage || !Array.isArray(patientPackage.services)) return [];
+  const selectedSet = new Set((Array.isArray(selectedServiceIds) ? selectedServiceIds : []).map(v => parseInt(v, 10)).filter(Boolean));
+  return patientPackage.services
+    .filter(s => (parseInt(s && s.total || 0, 10) || 0) > 0)
+    .map((s) => {
+      const used = parseInt(s && s.used || 0, 10) || 0;
+      const total = parseInt(s && s.total || 0, 10) || 0;
+      if (!(total > 0)) return '';
+      const left = Math.max(0, total - used);
+      const sid = parseInt(s && s.service_id || 0, 10) || 0;
+      const nm = s && s.service_name ? s.service_name : `Service #${sid || '?'}`;
+      const selectedMark = sid && selectedSet.has(sid) ? ' (this visit)' : '';
+      return `${nm}${selectedMark}: Used ${used}/${total}, Left ${left}`;
+    })
+    .filter(Boolean);
+}
+
+function attachBillLineItemUsageSnapshots(db, billId, lineItems = []) {
+  const items = Array.isArray(lineItems) ? lineItems : [];
+  if (!items.length) return;
+
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const type = String(item.type || '').toLowerCase();
+
+    if (type === 'package') {
+      const pkgId = parseInt(item.ref_id, 10) || 0;
+      const selectedIds = Array.isArray(item.selected_service_ids) ? item.selected_service_ids.map(Number) : [];
+      const pp = (db.patient_packages || []).find((p) => parseInt(p && p.bill_id, 10) === parseInt(billId, 10) && (!pkgId || parseInt(p && p.package_id, 10) === pkgId));
+      const lines = buildPackageUsageSnapshotLinesFromPatientPackage(pp, selectedIds);
+      if (lines.length) {
+        item.package_usage_snapshot_lines = lines;
+        item.package_usage_snapshot = lines.join(' - ');
+      }
+      continue;
+    }
+
+    if (type === 'pkg_session') {
+      const ppId = parseInt(item.ref_id, 10) || 0;
+      const sid = parseInt(item.service_id, 10) || 0;
+      const pp = (db.patient_packages || []).find((p) => parseInt(p && p.id, 10) === ppId);
+      const svc = pp && Array.isArray(pp.services) ? pp.services.find((s) => parseInt(s && s.service_id, 10) === sid) : null;
+      const total = parseInt(svc && svc.total || 0, 10) || 0;
+      if (svc && total > 0) {
+        const used = parseInt(svc && svc.used || 0, 10) || 0;
+        const left = Math.max(0, total - used);
+        const nm = svc.service_name || item.name || `Service #${sid}`;
+        const line = `${nm}: Used ${used}/${total}, Left ${left}`;
+        item.pkg_session_snapshot = line;
+        item.package_usage_snapshot_lines = [line];
+        item.package_usage_snapshot = line;
+      }
+    }
+  }
+}
+
 const MANUAL_CONSUMPTION_REASONS = [
   'Treatment Usage',
   'Wastage',
@@ -3139,9 +3196,13 @@ function buildThermalReceiptText(bill, clinicProfile, settledBy) {
         }
       });
 
-      // Print package selected services on separate full-width lines for clarity.
+      // Print persisted snapshot lines first so historical bill details remain immutable.
+      const snapshotLines = Array.isArray(item?.package_usage_snapshot_lines)
+        ? item.package_usage_snapshot_lines.filter(Boolean).map(String)
+        : (item?.package_usage_snapshot ? [String(item.package_usage_snapshot)] : []);
       const selectedNames = Array.isArray(item?.selected_service_names) ? item.selected_service_names.filter(Boolean).map(String) : [];
-      for (const svc of selectedNames) {
+      const detailLines = snapshotLines.length ? snapshotLines : selectedNames;
+      for (const svc of detailLines) {
         wrapText(`${svc}`, width - 2).forEach(l => lines.push(` ${l}`));
       }
     }
@@ -5165,6 +5226,9 @@ app.post('/api/bills', requirePermission('billing.create'), (req, res) => {
     }
   }
 
+  // Freeze package/session usage text on this bill so historical bills never change later.
+  attachBillLineItemUsageSnapshots(db, id, items);
+
   // Deduct stock for billed product sales from configured billing store.
   const soldProductItems = items.filter(i => i.type === 'product');
   if (soldProductItems.length) {
@@ -5236,6 +5300,8 @@ app.put('/api/bills/:id', requirePermission('billing.edit'), (req, res) => {
     payment_status: payment_status || db.bills[idx].payment_status,
     payment_splits: splits
   };
+  // Refresh snapshots for this edited bill based on current line items.
+  attachBillLineItemUsageSnapshots(db, db.bills[idx].id, db.bills[idx].line_items);
   // Auto-complete appointment when marked Paid
   const apt_id = db.bills[idx].appointment_id;
   if (before.payment_status !== db.bills[idx].payment_status) {

@@ -5820,6 +5820,8 @@ function getPkgSessionPackageForItem(item, bill, pkgByRefId, patientPackages = [
   return candidates[0] || null;
 }
 function getPkgSessionProgressLabel(item, bill, patientPackage) {
+  if (item && item.pkg_session_snapshot) return String(item.pkg_session_snapshot);
+  if (item && item.package_usage_snapshot && !Array.isArray(item.package_usage_snapshot_lines)) return String(item.package_usage_snapshot);
   if (!item || !bill || !patientPackage || !Array.isArray(patientPackage.services)) return '';
   const sid = resolvePkgSessionServiceId(item, patientPackage);
   if (!sid) return '';
@@ -5855,6 +5857,10 @@ function getPkgSessionProgressLabel(item, bill, patientPackage) {
   return `${base} - Used ${usedAfter}/${totalSessions} - Left ${leftAfter}`;
 }
 function getPackageUsageDetailLabel(item, bill, patientPackages = []) {
+  if (item && Array.isArray(item.package_usage_snapshot_lines) && item.package_usage_snapshot_lines.length) {
+    return item.package_usage_snapshot_lines.map(v => String(v || '').trim()).filter(Boolean).join(' - ');
+  }
+  if (item && item.package_usage_snapshot) return String(item.package_usage_snapshot);
   if (!item || item.type !== 'package' || !bill) return '';
   const pkgId = parseInt(item.ref_id || 0) || 0;
   const billId = parseInt(bill.id || 0) || 0;
@@ -5883,6 +5889,12 @@ function getPackageUsageDetailLabel(item, bill, patientPackages = []) {
   return rows.join(' - ');
 }
 function getPackageUsageDetailLines(item, bill, patientPackages = []) {
+  if (item && Array.isArray(item.package_usage_snapshot_lines) && item.package_usage_snapshot_lines.length) {
+    return item.package_usage_snapshot_lines.map(v => String(v || '').trim()).filter(Boolean);
+  }
+  if (item && item.package_usage_snapshot) {
+    return [String(item.package_usage_snapshot)];
+  }
   if (!item || item.type !== 'package' || !bill) return [];
   const pkgId = parseInt(item.ref_id || 0) || 0;
   const billId = parseInt(bill.id || 0) || 0;
