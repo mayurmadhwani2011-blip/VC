@@ -6292,18 +6292,20 @@ async function openAddServicesToBillModal(aptId, patientId, patientName) {
 
 async function openBillModal(prePatientId = null, preAptId = null) {
   _billPaymentMode = 'full';
+  showBillLoadingModal(preAptId ? 'Opening billing for appointment...' : 'Loading billing details...');
   // If patient came via quick register, check for missing mandatory info first
+  let prePatient = null;
   if (prePatientId) {
     try {
-      const p = await apiFetch(`/api/patients/${prePatientId}`);
+      prePatient = await apiFetch(`/api/patients/${prePatientId}`);
       const missing = [];
-      if (!p.age)      missing.push('Age');
-      if (!p.gender)   missing.push('Gender');
-      if (!p.civil_id) missing.push('Civil ID');
-      if (!p.dob)      missing.push('Date of Birth');
+      if (!prePatient.age)      missing.push('Age');
+      if (!prePatient.gender)   missing.push('Gender');
+      if (!prePatient.civil_id) missing.push('Civil ID');
+      if (!prePatient.dob)      missing.push('Date of Birth');
       if (missing.length) {
         const proceed = await new Promise(resolve => {
-          showModal(`Complete Patient Profile - ${escHtml(p.name)}`, `
+          showModal(`Complete Patient Profile - ${escHtml(prePatient.name)}`, `
             <div class="alert" style="background:var(--c-warning,#f59e0b)22;border:1px solid var(--c-warning,#f59e0b);border-radius:8px;padding:12px;margin-bottom:16px;color:var(--text)">
               <strong>Missing required information:</strong> ${missing.join(', ')}<br>
               <span class="text-sm text-muted">Please complete these fields before creating a bill.</span>
@@ -6311,37 +6313,37 @@ async function openBillModal(prePatientId = null, preAptId = null) {
             <form id="completePatientForm">
               <div class="form-row">
                 <div class="form-group"><label>Civil ID <span style="color:var(--c-danger)">*</span></label>
-                  <input name="civil_id" id="pfCivilId" value="${escHtml(p.civil_id||'')}" pattern="\\d{12}" maxlength="12" placeholder="12-digit number" inputmode="numeric" oninput="checkPatDup('civil_id',this.value,${p.id})"/>
+                  <input name="civil_id" id="pfCivilId" value="${escHtml(prePatient.civil_id||'')}" pattern="\\d{12}" maxlength="12" placeholder="12-digit number" inputmode="numeric" oninput="checkPatDup('civil_id',this.value,${prePatient.id})"/>
                   <div id="pfCivilIdMsg" class="text-sm" style="min-height:16px;margin-top:3px"></div>
                 </div>
                 <div class="form-group"><label>Date of Birth <span style="color:var(--c-danger)">*</span></label>
-                  <input name="dob" type="date" value="${escHtml(p.dob||'')}"/>
+                  <input name="dob" type="date" value="${escHtml(prePatient.dob||'')}"/>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group"><label>Age <span style="color:var(--c-danger)">*</span></label>
-                  <div class="num-stepper"><button type="button" class="num-step-btn" onclick="stepNum(this,-1)">-</button><input name="age" type="number" min="0" max="120" value="${escHtml(String(p.age||''))}"/><button type="button" class="num-step-btn" onclick="stepNum(this,1)">+</button></div>
+                  <div class="num-stepper"><button type="button" class="num-step-btn" onclick="stepNum(this,-1)">-</button><input name="age" type="number" min="0" max="120" value="${escHtml(String(prePatient.age||''))}"/><button type="button" class="num-step-btn" onclick="stepNum(this,1)">+</button></div>
                 </div>
                 <div class="form-group"><label>Gender <span style="color:var(--c-danger)">*</span></label>
                   <select name="gender">
                     <option value="">Select</option>
-                    <option ${p.gender==='Male'?'selected':''}>Male</option>
-                    <option ${p.gender==='Female'?'selected':''}>Female</option>
-                    <option ${p.gender==='Other'?'selected':''}>Other</option>
+                    <option ${prePatient.gender==='Male'?'selected':''}>Male</option>
+                    <option ${prePatient.gender==='Female'?'selected':''}>Female</option>
+                    <option ${prePatient.gender==='Other'?'selected':''}>Other</option>
                   </select>
                 </div>
               </div>
               <div class="form-row">
                 <div class="form-group"><label>Alternative Phone</label>
-                  <input name="alt_phone" id="pfAltPhone" type="tel" value="${escHtml(p.alt_phone||'')}" placeholder="Optional" oninput="checkPatDup('alt_phone',this.value,${p.id})"/>
+                  <input name="alt_phone" id="pfAltPhone" type="tel" value="${escHtml(prePatient.alt_phone||'')}" placeholder="Optional" oninput="checkPatDup('alt_phone',this.value,${prePatient.id})"/>
                   <div id="pfAltPhoneMsg" class="text-sm" style="min-height:16px;margin-top:3px"></div>
                 </div>
                 <div class="form-group"><label>Address</label>
-                  <input name="address" value="${escHtml(p.address||'')}"/>
+                  <input name="address" value="${escHtml(prePatient.address||'')}"/>
                 </div>
               </div>
               <div class="form-group"><label>Medical History</label>
-                <textarea name="medical_history" rows="2">${escHtml(p.medical_history||'')}</textarea>
+                <textarea name="medical_history" rows="2">${escHtml(prePatient.medical_history||'')}</textarea>
               </div>
             </form>`,
             async () => {
@@ -6353,9 +6355,10 @@ async function openBillModal(prePatientId = null, preAptId = null) {
               if (!body.dob)    { toast('Date of Birth is required','error'); return false; }
               if (!/^\d{12}$/.test(body.civil_id)) { toast('Civil ID must be exactly 12 digits','error'); return false; }
               try {
-                await apiFetch(`/api/patients/${p.id}`, { method:'PUT', body: JSON.stringify(body) });
+                await apiFetch(`/api/patients/${prePatient.id}`, { method:'PUT', body: JSON.stringify(body) });
                 toast('Patient profile updated', 'success');
                 closeModal();
+                prePatient = { ...prePatient, ...body };
                 resolve(true);
               } catch(e) { toast(e.message,'error'); return false; }
             }, 'modal-lg');
@@ -6370,13 +6373,14 @@ async function openBillModal(prePatientId = null, preAptId = null) {
 
   _billLineItems = [];
   _billPkgSessions = [];
-  let patName = '';
-  const [pms, svcs, pkgs, docs, discountsRaw] = await Promise.all([
+  let patName = prePatient && prePatient.name ? prePatient.name : '';
+  const [pms, svcs, pkgs, docs, discountsRaw, aptData] = await Promise.all([
     apiFetch('/api/payment-methods').catch(()=>[]),
     apiFetch('/api/services').catch(()=>[]),
     apiFetch('/api/packages').catch(()=>[]),
     apiFetch('/api/doctors').catch(()=>[]),
     apiFetch('/api/discounts').catch(()=>[]),
+    preAptId ? apiFetch(`/api/appointments/${preAptId}`).catch(()=>null) : Promise.resolve(null),
   ]);
   const todayISO = new Date().toISOString().slice(0,10);
   const activeDiscounts = (discountsRaw||[]).filter(d => d.active !== false && (!d.valid_from || d.valid_from <= todayISO) && (!d.valid_to || d.valid_to >= todayISO));
@@ -6407,16 +6411,7 @@ async function openBillModal(prePatientId = null, preAptId = null) {
     .map(p => ({ ...p, current_stock: parseFloat((productStockById[parseInt(p.id)] || 0).toFixed(3)) }));
   window._billProductQtyMap = {};
   const billDoctors = (docs||[]).filter(d => d.active !== false);
-  let preDoctorId = '';
-  if (preAptId) {
-    try {
-      const apt = await apiFetch(`/api/appointments/${preAptId}`);
-      preDoctorId = apt && apt.doctor_id ? String(apt.doctor_id) : '';
-    } catch (e) { /* keep empty */ }
-  }
-  if (prePatientId) {
-    try { const p = await apiFetch(`/api/patients/${prePatientId}`); patName = p.name; } catch {}
-  }
+  const preDoctorId = aptData && aptData.doctor_id ? String(aptData.doctor_id) : '';
   showModal('Create Receipt', `
     <div class="bill-layout">
       <!-- LEFT: patient + item picker -->
@@ -6712,6 +6707,15 @@ async function refreshAppointmentViewsAfterBilling() {
   if (currentPageId === 'billing') {
     await billing();
   }
+}
+
+function showBillLoadingModal(message = 'Loading billing details...') {
+  showModal('Create Receipt', `
+    <div style="display:flex;align-items:center;justify-content:center;min-height:180px;padding:20px 12px;flex-direction:column;gap:12px">
+      <div style="padding:8px 12px;border-radius:999px;background:var(--bg-hover);color:var(--c-primary);font-weight:700">${IC.clock || '...'}</div>
+      <div style="font-weight:700;color:var(--text)">${escHtml(message)}</div>
+      <div class="text-sm text-muted">Please wait...</div>
+    </div>`, null, 'modal-sm');
 }
 
 function billSwitchTab(tab, btn) {
