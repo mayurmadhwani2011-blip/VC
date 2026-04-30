@@ -9266,7 +9266,7 @@ async function loadPendingOrdersReport() {
             <td style="text-align:right"><strong>KD ${parseFloat(o.total_cost || 0).toFixed(3)}</strong></td>
             <td style="text-align:right">KD ${parseFloat(o.paid_amount || 0).toFixed(3)}</td>
             <td style="text-align:right;color:var(--c-danger)"><strong>KD ${parseFloat(o.due_amount || 0).toFixed(3)}</strong></td>
-            <td>${payBadge}</td>
+            <td>${payBadge} <button type="button" class="btn btn-sm" onclick="viewPODetails(${o.id})" style="margin-left:4px">${IC.eye} View</button></td>
           </tr>`;
         }).join('')}</tbody>
       </table></div>`;
