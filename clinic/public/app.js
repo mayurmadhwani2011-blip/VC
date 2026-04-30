@@ -7602,6 +7602,8 @@ async function printBill(id) {
         ? (item.unit || 'pcs')
         : (item.type === 'pkg_session' ? 'sess' : (item.type === 'package' ? 'pkg' : 'svc'));
       const rate = qty > 0 ? (amount / qty) : amount;
+      const lineRateDisplay = String(Math.round(rate));
+      const lineAmountDisplay = String(Math.round(amount));
       const svcStatus = item.service_status || 'Completed';
       const serviceNames = Array.isArray(item.selected_service_names) ? item.selected_service_names.filter(Boolean) : [];
       let descHtml = escHtml(item.name || '');
@@ -7632,14 +7634,14 @@ async function printBill(id) {
         <td style="padding:6px 3px;font-size:14px;line-height:1.28;color:#000;vertical-align:top;white-space:normal;word-break:break-word;overflow-wrap:anywhere">${descHtml}</td>
         <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
         <td style="padding:6px 3px;font-size:14px;text-align:center;color:#000;white-space:nowrap;vertical-align:top">${escHtml(unit)}</td>
-        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${rate.toFixed(3)}</td>
-        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">KD ${amount.toFixed(3)}</td>
+        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineRateDisplay}</td>
+        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineAmountDisplay}</td>
       </tr>`;
     }).join('');
   } else {
-    if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1</td><td style="text-align:center">svc</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.consultation_fee).toFixed(3)}</td></tr>`;
-    if (b.medicine_charge)  itemRows += `<tr><td>Medicine Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.medicine_charge).toFixed(3)}</td></tr>`;
-    if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td><td style="text-align:right;white-space:nowrap">KD ${parseFloat(b.other_charges).toFixed(3)}</td></tr>`;
+    if (b.consultation_fee) itemRows += `<tr><td>Consultation Fee</td><td style="text-align:right">1</td><td style="text-align:center">svc</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.consultation_fee)||0)}</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.consultation_fee)||0)}</td></tr>`;
+    if (b.medicine_charge)  itemRows += `<tr><td>Medicine Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.medicine_charge)||0)}</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.medicine_charge)||0)}</td></tr>`;
+    if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.other_charges)||0)}</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.other_charges)||0)}</td></tr>`;
   }
   const paymentSection = (b.payment_splits && b.payment_splits.length > 1)
     ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
@@ -7691,7 +7693,7 @@ async function printBill(id) {
     <div style="width:100%;text-align:center;padding:0 0 10px;border-bottom:3px solid #000;margin-bottom:14px;box-sizing:border-box">
       ${logoHtml}
       <h2 style="margin:0 0 3px;font-size:28px;font-weight:700;font-family:Arial,sans-serif;color:#000">${escHtml(printClinicName)}</h2>
-      <p style="margin:0;font-size:16px;color:#000">${escHtmlMultiline(printHeader)}</p>
+      <p style="margin:0;font-size:18px;font-weight:700;line-height:1.25;letter-spacing:.2px;color:#000">${escHtmlMultiline(printHeader)}</p>
       <p style="margin:5px 0 0;font-size:19px;font-weight:700;color:#000">PAYMENT RECEIPT</p>
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed">
