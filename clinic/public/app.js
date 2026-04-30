@@ -7777,20 +7777,20 @@ async function printBill(id) {
     </table>
     <table id="receiptItemsTable" style="width:100%;border-collapse:collapse;margin-bottom:8px;table-layout:fixed">
       <colgroup>
-        <col style="width:42%"/>
-        <col style="width:10%"/>
-        <col style="width:12%"/>
-        <col style="width:16%"/>
-        <col style="width:20%"/>
+        <col style="width:44%"/>
+        <col style="width:9%"/>
+        <col style="width:11%"/>
+        <col style="width:14%"/>
+        <col style="width:22%"/>
       </colgroup>
-      <thead><tr><th style="text-align:left;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Description</th><th style="text-align:right;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Qty</th><th style="text-align:center;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Unit</th><th style="text-align:right;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Rate</th><th style="text-align:right;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Amount</th></tr></thead>
+      <thead><tr><th style="text-align:left;padding:5px 2px;font-size:12px;background:#e0e0e0;border-bottom:2px solid #000;letter-spacing:.2px">DESCRIPTION</th><th style="text-align:right;padding:5px 2px;font-size:12px;background:#e0e0e0;border-bottom:2px solid #000;letter-spacing:.2px">QTY</th><th style="text-align:center;padding:5px 2px;font-size:12px;background:#e0e0e0;border-bottom:2px solid #000;letter-spacing:.2px">UNIT</th><th style="text-align:right;padding:5px 2px;font-size:12px;background:#e0e0e0;border-bottom:2px solid #000;letter-spacing:.2px">RATE</th><th style="text-align:right;padding:5px 2px;font-size:12px;background:#e0e0e0;border-bottom:2px solid #000;letter-spacing:.2px">AMOUNT</th></tr></thead>
       <tbody>${itemRows}</tbody>
       <tfoot>
         ${hasDiscount
           ? `<tr style="border-top:2px solid #000"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>Subtotal</strong></td><td style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</strong></td></tr>
              <tr><td colspan="4" style="text-align:right;padding:6px 3px;font-size:14px;color:#000"><strong>Discount (${escHtml(discountTypeLabel)})</strong></td><td style="text-align:right;padding:6px 3px;font-size:14px;color:#d32f2f"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></td></tr>`
           : ''}
-        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:16px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:7px 3px;font-size:16px;font-weight:700;color:#000;white-space:nowrap"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
+        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:6px 2px;font-size:15px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:6px 2px;font-size:15px;font-weight:700;color:#000;white-space:nowrap"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
       </tfoot>
     </table>
     ${hasDiscount ? `<p style="margin:6px 0;color:#000;font-size:15px;line-height:1.35"><strong>Discount Name:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <strong>Discount Type:</strong> ${escHtml(discountTypeLabel)}</p>` : ''}
