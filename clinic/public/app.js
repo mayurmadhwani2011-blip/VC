@@ -7710,10 +7710,10 @@ async function printBill(id) {
   }
   const paymentSection = (b.payment_splits && b.payment_splits.length > 1)
     ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
-        <thead><tr><th style="text-align:left;padding:6px 3px;font-size:17px;color:#000;border-bottom:1px solid #999">Payment Method</th><th style="text-align:right;padding:6px 3px;font-size:17px;color:#000;border-bottom:1px solid #999">Amount</th></tr></thead>
-        <tbody>${b.payment_splits.map(s=>`<tr><td style="padding:6px 3px;font-size:17px;color:#000">${escHtml(s.method)}</td><td style="padding:6px 3px;font-size:17px;text-align:right;color:#000">KD ${parseFloat(s.amount).toFixed(3)}</td></tr>`).join('')}</tbody>
+        <thead><tr><th style="text-align:left;padding:5px 3px;font-size:14px;color:#000;border-bottom:1px solid #999">Payment Method</th><th style="text-align:right;padding:5px 3px;font-size:14px;color:#000;border-bottom:1px solid #999">Amount</th></tr></thead>
+        <tbody>${b.payment_splits.map(s=>`<tr><td style="padding:5px 3px;font-size:14px;color:#000">${escHtml(s.method)}</td><td style="padding:5px 3px;font-size:14px;text-align:right;color:#000">KD ${parseFloat(s.amount).toFixed(3)}</td></tr>`).join('')}</tbody>
        </table>`
-    : `<p style="margin:8px 0;color:#000;font-size:18px;line-height:1.35"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'-')} &nbsp;|&nbsp; <strong>Status:</strong> ${escHtml(b.payment_status||'-')}</p>`;
+    : `<p style="margin:8px 0;color:#000;font-size:15px;line-height:1.3"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'-')} &nbsp;|&nbsp; <strong>Status:</strong> ${escHtml(b.payment_status||'-')}</p>`;
   const hasDiscount = (parseFloat(b.discount_amount || 0) || 0) > 0;
   const hasRefunds = Array.isArray(refunds) && refunds.length > 0;
   const isCancelled = String(b.payment_status || '') === 'Cancelled';
@@ -7797,8 +7797,8 @@ async function printBill(id) {
     <div id="printPaymentRow">${paymentSection}</div>
     ${refundDetailsHtml}
     ${cancellationHtml}
-    <p style="margin:8px 0 0;font-size:15px;color:#000"><strong>Settled By:</strong> ${escHtml(createdByName)}</p>
-    <p style="text-align:center;margin-top:12px;font-size:15px;color:#000">${escHtmlMultiline(printFooter)}</p>`;
+    <p style="margin:8px 0 0;font-size:13px;color:#000"><strong>Settled By:</strong> ${escHtml(createdByName)}</p>
+    <p style="text-align:center;margin-top:10px;font-size:12px;line-height:1.3;color:#000">${escHtmlMultiline(printFooter)}</p>`;
   // If bill total is zero and appears to be a package-session bill, show original package purchase amount instead of 'Paid (Cash)'
   if ((b.total || 0) === 0 && b.patient_id) {
     try {
