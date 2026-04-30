@@ -7694,18 +7694,18 @@ async function printBill(id) {
       <p style="margin:0;font-size:16px;color:#000">${escHtmlMultiline(printHeader)}</p>
       <p style="margin:5px 0 0;font-size:19px;font-weight:700;color:#000">PAYMENT RECEIPT</p>
     </div>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:10px">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed">
       <tr>
         <td style="padding:5px 3px;font-size:15px;width:50%;color:#000"><strong>Bill No:</strong> ${escHtml(b.bill_number||'-')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
+        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000;vertical-align:top"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
       </tr>
       <tr>
         <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Patient:</strong> ${escHtml(b.patient_name||'-')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>MR #:</strong> ${escHtml(b.mr_number||'-')}</td>
+        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000;white-space:nowrap;vertical-align:top"><strong>MR #:</strong> ${escHtml(b.mr_number||'-')}</td>
       </tr>
       <tr>
         <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Phone:</strong> ${escHtml(b.patient_phone||'-')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
+        <td style="padding:5px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;letter-spacing:.2px;vertical-align:top"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
       </tr>
     </table>
     <table id="receiptItemsTable" style="width:100%;border-collapse:collapse;margin-bottom:8px;table-layout:fixed">
