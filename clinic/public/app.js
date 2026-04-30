@@ -7583,7 +7583,7 @@ async function printBill(id) {
 
       if (item.type !== 'package') {
         const statusColor = svcStatus === 'Completed' ? '#1b5e20' : (svcStatus === 'In Progress' ? '#0d47a1' : '#b45309');
-        const statusIcon = svcStatus === 'Completed' ? '?' : (svcStatus === 'In Progress' ? '??' : '?');
+        const statusIcon = svcStatus === 'Completed' ? '&#10003;' : (svcStatus === 'In Progress' ? '&#9654;' : '&#9679;');
         const completionText = item.completion_date ? ` - ${escHtml(String(item.completion_date).slice(0, 10))}` : '';
         descHtml += `<div style="font-size:13px;color:${statusColor};margin-top:3px"><strong>${statusIcon} ${escHtml(svcStatus)}${completionText}</strong></div>`;
       }
@@ -7907,10 +7907,10 @@ async function viewBillModal(id) {
       const svcStatus = item.service_status || 'Completed';
       const isPackageType = item.type === 'package' || item.type === 'pkg_session';
       const statusColor = svcStatus === 'Completed' ? '#16a34a' : (svcStatus === 'In Progress' ? '#2563eb' : '#d97706');
-      const statusIcon = svcStatus === 'Completed' ? '?' : (svcStatus === 'In Progress' ? '??' : '?');
+      const statusIcon = svcStatus === 'Completed' ? '&#10003;' : (svcStatus === 'In Progress' ? '&#9654;' : '&#9679;');
       const statusBadgeHtml = isPackageType ? '' : `<div style="margin-top:4px;font-size:11px;color:${statusColor};font-weight:600">${statusIcon} ${escHtml(svcStatus)}${item.completion_date ? ` - ${escHtml(String(item.completion_date).slice(0,10))}` : ''}</div>`;
       const canComplete = !isPackageType && svcStatus !== 'Completed';
-      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '? Mark Completed' : '?? Start'}</button>` : (svcStatus === 'Completed' ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">? Revert</button>` : '');
+      const actionBtn = canComplete ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, '${svcStatus === 'In Progress' ? 'Completed' : 'In Progress'}')" style="background:none;border:1px solid ${statusColor};color:${statusColor};border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">${svcStatus === 'In Progress' ? '&#10003; Mark Completed' : '&#9654; Start'}</button>` : (svcStatus === 'Completed' ? `<button type="button" onclick="markServiceComplete(${b.id}, ${idx}, 'Pending')" style="background:none;border:1px solid #999;color:#666;border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;margin-top:4px">&#8635; Revert</button>` : '');
       const viewNameWithStatus = `<div>${viewName}${statusBadgeHtml}${actionBtn ? `<div>${actionBtn}</div>` : ''}</div>`;
       return `<tr><td>${viewNameWithStatus}</td><td style="text-align:right">${qty.toFixed(3)}</td><td style="text-align:center">${escHtml(unit)}</td><td style="text-align:right">KD ${rate.toFixed(3)}</td><td style="text-align:right"><strong>KD ${amount.toFixed(3)}</strong></td></tr>`;
     }).join('');
@@ -9048,7 +9048,7 @@ function _psvRenderBatch() {
       <td style="text-align:right" class="text-sm">KD ${parseFloat(r.amount || 0).toFixed(3)}</td>
       <td>
         ${r.service_status !== 'Completed'
-          ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '? Complete' : '?? Start'}</button>`
+          ? `<button class="btn btn-sm" style="padding:2px 8px;font-size:11px" onclick="markServiceComplete(${r.bill_id},${r.item_index},'${r.service_status === 'In Progress' ? 'Completed' : 'In Progress'}',{refreshBillModal:false,refreshPendingReport:true})">${r.service_status === 'In Progress' ? '&#10003; Complete' : '&#9654; Start'}</button>`
           : '<span class="text-muted text-sm">-</span>'}
       </td>
     </tr>`).join(''));
