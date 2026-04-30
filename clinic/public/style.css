@@ -3110,7 +3110,11 @@ tbody tr:last-child td { border-bottom: none; }
     line-height: 1.28 !important;
   }
   #printArea #receiptItemsTable tfoot td:last-child {
-    padding-right: 10px !important;
+    padding-right: 14px !important;
+  }
+  #printArea table:first-of-type td:last-child {
+    padding-right: 12px !important;
+    white-space: nowrap !important;
   }
 }
 

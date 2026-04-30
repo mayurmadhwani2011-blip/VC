@@ -7764,15 +7764,15 @@ async function printBill(id) {
     <table style="width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed">
       <tr>
         <td style="padding:5px 3px;font-size:15px;width:50%;color:#000"><strong>Bill No:</strong> ${escHtml(b.bill_number||'-')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000;vertical-align:top"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
+        <td style="padding:5px 12px 5px 3px;font-size:14px;text-align:right;color:#000;vertical-align:top;white-space:nowrap"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
       </tr>
       <tr>
         <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Patient:</strong> ${escHtml(b.patient_name||'-')}</td>
-        <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000;white-space:nowrap;vertical-align:top"><strong>MR #:</strong> ${escHtml(b.mr_number||'-')}</td>
+        <td style="padding:5px 12px 5px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top"><strong>MR #:</strong> ${escHtml(b.mr_number||'-')}</td>
       </tr>
       <tr>
         <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Phone:</strong> ${escHtml(b.patient_phone||'-')}</td>
-        <td style="padding:5px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;letter-spacing:.2px;vertical-align:top"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
+        <td style="padding:5px 12px 5px 3px;font-size:13px;text-align:right;color:#000;white-space:nowrap;letter-spacing:0;vertical-align:top"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
       </tr>
     </table>
     <table id="receiptItemsTable" style="width:100%;border-collapse:collapse;margin-bottom:8px;table-layout:fixed">
@@ -7790,7 +7790,7 @@ async function printBill(id) {
           ? `<tr style="border-top:2px solid #000"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>Subtotal</strong></td><td style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</strong></td></tr>
              <tr><td colspan="4" style="text-align:right;padding:6px 3px;font-size:14px;color:#000"><strong>Discount (${escHtml(discountTypeLabel)})</strong></td><td style="text-align:right;padding:6px 3px;font-size:14px;color:#d32f2f"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></td></tr>`
           : ''}
-        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:6px 2px;font-size:14px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:6px 10px 6px 2px;font-size:14px;font-weight:700;color:#000;white-space:nowrap"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
+        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:6px 2px;font-size:14px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:6px 14px 6px 2px;font-size:14px;font-weight:700;color:#000;white-space:nowrap"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
       </tfoot>
     </table>
     ${hasDiscount ? `<p style="margin:6px 0;color:#000;font-size:15px;line-height:1.35"><strong>Discount Name:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <strong>Discount Type:</strong> ${escHtml(discountTypeLabel)}</p>` : ''}
