@@ -5895,7 +5895,25 @@ function getPackageUsageDetailLines(item, bill, patientPackages = []) {
   if (item && item.package_usage_snapshot) {
     return [String(item.package_usage_snapshot)];
   }
-  if (!item || item.type !== 'package' || !bill) return [];
+  if (!item || !bill) return [];
+  if (item.type === 'pkg_session') {
+    const pp = getPkgSessionPackageForItem(item, bill, new Map(), patientPackages);
+    if (!pp || !Array.isArray(pp.services) || !pp.services.length) return [];
+    const sid = parseInt(item.service_id || 0) || 0;
+    return pp.services
+      .filter(s => (parseInt(s.total || 0) || 0) > 0)
+      .map(s => {
+        const used = parseInt(s.used || 0) || 0;
+        const total = parseInt(s.total || 0) || 0;
+        if (!(total > 0)) return '';
+        const left = Math.max(0, total - used);
+        const nm = s.service_name || `Service #${s.service_id}`;
+        const selectedMark = sid && parseInt(s.service_id || 0) === sid ? ' (this visit)' : '';
+        return `${nm}${selectedMark}: Used ${used}/${total}, Left ${left}`;
+      })
+      .filter(Boolean);
+  }
+  if (item.type !== 'package') return [];
   const pkgId = parseInt(item.ref_id || 0) || 0;
   const billId = parseInt(bill.id || 0) || 0;
   const selectedIds = Array.isArray(item.selected_service_ids) ? item.selected_service_ids.map(Number) : [];
@@ -7655,15 +7673,9 @@ async function printBill(id) {
         detailLines = getPackageUsageDetailLines(item, b, printPatientPackages);
         descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>` : ''}`;
       } else if (item.type === 'pkg_session' && item.package_name) {
-        const sub = serviceNames.length ? escHtml(serviceNames.join(', ')) : escHtml(item.name || '');
-        const pp = getPkgSessionPackageForItem(item, b, pkgProgressByPkgId, printPatientPackages);
-        const progress = getPkgSessionProgressLabel(item, b, pp);
-        const subText = String(sub || '').trim();
-        const progressText = String(progress || '').trim();
-        if (subText && (!progressText || !progressText.toLowerCase().startsWith(subText.toLowerCase()))) {
-          detailLines.push(subText);
-        }
-        if (progressText) detailLines.push(progressText);
+        detailLines = getPackageUsageDetailLines(item, b, printPatientPackages);
+        const subText = String(serviceNames.length ? serviceNames.join(', ') : (item.name || '')).trim();
+        if (!detailLines.length && subText) detailLines.push(subText);
         if (svcStatus || item.completion_date) {
           const completedOn = item.completion_date ? ` - ${String(item.completion_date).slice(0, 10)}` : '';
           detailLines.push(`Status: ${svcStatus}${completedOn}`);

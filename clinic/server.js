@@ -1330,16 +1330,12 @@ function attachBillLineItemUsageSnapshots(db, billId, lineItems = []) {
       const ppId = parseInt(item.ref_id, 10) || 0;
       const sid = parseInt(item.service_id, 10) || 0;
       const pp = (db.patient_packages || []).find((p) => parseInt(p && p.id, 10) === ppId);
-      const svc = pp && Array.isArray(pp.services) ? pp.services.find((s) => parseInt(s && s.service_id, 10) === sid) : null;
-      const total = parseInt(svc && svc.total || 0, 10) || 0;
-      if (svc && total > 0) {
-        const used = parseInt(svc && svc.used || 0, 10) || 0;
-        const left = Math.max(0, total - used);
-        const nm = svc.service_name || item.name || `Service #${sid}`;
-        const line = `${nm}: Used ${used}/${total}, Left ${left}`;
-        item.pkg_session_snapshot = line;
-        item.package_usage_snapshot_lines = [line];
-        item.package_usage_snapshot = line;
+      const lines = buildPackageUsageSnapshotLinesFromPatientPackage(pp, sid ? [sid] : []);
+      if (lines.length) {
+        const firstLine = lines[0];
+        item.pkg_session_snapshot = firstLine;
+        item.package_usage_snapshot_lines = lines;
+        item.package_usage_snapshot = lines.join(' - ');
       }
     }
   }
