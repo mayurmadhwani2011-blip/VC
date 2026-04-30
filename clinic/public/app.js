@@ -8037,7 +8037,7 @@ async function viewBillModal(id) {
       <input type="file" id="billAttachInput_${id}" accept="*/*" style="display:none" onchange="billHandleAttachFile(${id}, this)"/>
       <div id="billAttachList_${id}">${renderBillAttachList(attachments, id)}</div>
     </div>
-  `, null, 'close'); // read-only modal
+  `, canPrintBill(b.created_at) ? [{label: `${IC.print} Print Bill`, class: 'btn-primary', onclick: () => { printBill(id); return false; }}] : null, 'close'); // read-only modal
 }
 
 function renderBillAttachList(attachments, billId) {
