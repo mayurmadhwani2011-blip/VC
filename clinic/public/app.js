@@ -5882,6 +5882,33 @@ function getPackageUsageDetailLabel(item, bill, patientPackages = []) {
     .filter(Boolean);
   return rows.join(' - ');
 }
+function getPackageUsageDetailLines(item, bill, patientPackages = []) {
+  if (!item || item.type !== 'package' || !bill) return [];
+  const pkgId = parseInt(item.ref_id || 0) || 0;
+  const billId = parseInt(bill.id || 0) || 0;
+  const selectedIds = Array.isArray(item.selected_service_ids) ? item.selected_service_ids.map(Number) : [];
+  const candidates = (Array.isArray(patientPackages) ? patientPackages : []).filter(pp => {
+    const sameBill = billId && parseInt(pp && pp.bill_id || 0) === billId;
+    const samePkg = pkgId && parseInt(pp && pp.package_id || 0) === pkgId;
+    const byName = !samePkg && String(pp && pp.package_name || '').trim() && String(item.package_name || item.name || '').includes(String(pp.package_name || '').trim());
+    return sameBill && (samePkg || byName);
+  });
+  const pp = candidates[0];
+  if (!pp || !Array.isArray(pp.services) || !pp.services.length) return [];
+  return pp.services
+    .filter(s => (parseInt(s.total || 0) || 0) > 0)
+    .map(s => {
+      const used = parseInt(s.used || 0) || 0;
+      const total = parseInt(s.total || 0) || 0;
+      if (!(total > 0)) return '';
+      const left = Math.max(0, total - used);
+      const nm = s.service_name || `Service #${s.service_id}`;
+      const sid = parseInt(s.service_id || 0) || 0;
+      const selectedMark = selectedIds.length && sid && selectedIds.includes(sid) ? ' (this visit)' : '';
+      return `${nm}${selectedMark}: Used ${used}/${total}, Left ${left}`;
+    })
+    .filter(Boolean);
+}
 async function enrichBillingPkgSessionProgress(list) {
   const bills = Array.isArray(list) ? list : [];
   const billsWithPackages = bills.filter(b => (Array.isArray(b && b.line_items) ? b.line_items : []).some(it => it && (it.type === 'pkg_session' || it.type === 'package')));
@@ -7612,8 +7639,10 @@ async function printBill(id) {
         const sub = serviceNames.length
           ? escHtml(serviceNames.join(', '))
           : escHtml(String(item.name || '').replace(`${item.package_name} - `, '').replace(item.package_name, '').trim());
-        const usage = getPackageUsageDetailLabel(item, b, printPatientPackages);
-        const usageHtml = usage ? `<div style="font-size:13px;color:#111;margin-top:2px"><strong>${escHtml(usage)}</strong></div>` : '';
+        const usageLines = getPackageUsageDetailLines(item, b, printPatientPackages);
+        const usageHtml = usageLines.length
+          ? `<div style="font-size:13px;color:#111;margin-top:2px">${usageLines.map(line => `<div><strong>${escHtml(line)}</strong></div>`).join('')}</div>`
+          : '';
         descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>` : ''}${usageHtml}`;
       } else if (item.type === 'pkg_session' && item.package_name) {
         const sub = serviceNames.length ? escHtml(serviceNames.join(', ')) : escHtml(item.name || '');
