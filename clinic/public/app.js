@@ -8219,7 +8219,8 @@ async function reports() {
     { value: 'stock-movement', label: 'Stock Movement', desc: 'Incoming and outgoing stock transactions', icon: IC.transfer || IC.store },
     { value: 'stock-status', label: 'Stock Status', desc: 'Current stock levels with low-stock highlights', icon: IC.store },
     { value: 'supplier-ledger', label: 'Supplier Ledger', desc: 'Per-supplier debit, credit and outstanding balance', icon: IC.billing || IC.reports },
-    { value: 'pending-services', label: 'Pending Services', desc: 'Services billed but not yet completed across all patients', icon: IC.pending || IC.services }
+    { value: 'pending-services', label: 'Pending Services', desc: 'Services billed but not yet completed across all patients', icon: IC.pending || IC.services },
+    { value: 'pending-orders', label: 'Pending Orders', desc: 'Purchase orders awaiting receipt from suppliers', icon: IC.supplier }
   ];
   if (currentUser.role === 'admin') options.push({ value: 'revenue', label: 'Revenue', desc: 'Last 30 days billing trend', icon: IC.revenue });
   if (currentUser.role === 'admin') options.push({ value: 'discounts-report', label: 'Discount Report', desc: 'Total discounts given by type and user', icon: IC.discount });
@@ -8352,7 +8353,7 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.pending} No-Show Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#noShowReportBody table', 'no_show_report_${today}.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#noShowReportBody table', 'no_show_report_${today}.csv')">${IC.download} CSV</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8376,8 +8377,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.revenue} Revenue - Last 30 Days</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#revenueReportBody table', 'revenue_report_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#revenueReportBody', 'revenue_report')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#revenueReportBody table', 'revenue_report_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#revenueReportBody', 'revenue_report')">${IC.print} PDF</button>
           </div>
         </div>
         <div id="revenueReportBody">${skeletonTable(5)}</div>
@@ -8396,7 +8397,7 @@ function renderSelectedReport() {
             <input id="discRptTo" type="date" value="${today}" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadDiscountsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('discRptFrom').value='';document.getElementById('discRptTo').value='';loadDiscountsReport()">All Time</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#discountReportBody table', 'discounts_report.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#discountReportBody table', 'discounts_report.csv')">${IC.download} CSV</button>
           </div>
         </div>
         <div id="discountReportBody">${skeletonTable(4)}</div>
@@ -8415,7 +8416,7 @@ function renderSelectedReport() {
             <input id="refRptTo" type="date" value="${today}" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadRefundsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('refRptFrom').value='';document.getElementById('refRptTo').value='';loadRefundsReport()">All Time</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#refundReportBody table', 'refunds_report.csv')">?? CSV</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#refundReportBody table', 'refunds_report.csv')">${IC.download} CSV</button>
           </div>
         </div>
         <div id="refundReportBody">${skeletonTable(4)}</div>
@@ -8434,8 +8435,8 @@ function renderSelectedReport() {
             <input id="canRptTo" type="date" value="" title="To date"/>
             <button class="btn btn-sm report-apply-btn" onclick="loadCancelledBillsReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('canRptFrom').value='';document.getElementById('canRptTo').value='';loadCancelledBillsReport()">All Time</button>
-            <button class="btn btn-sm" onclick="exportTableToCSV('#cancelledBillReportBody table', 'cancelled_bills_report.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#cancelledBillReportBody', 'cancelled_bills_report')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#cancelledBillReportBody table', 'cancelled_bills_report.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#cancelledBillReportBody', 'cancelled_bills_report')">${IC.print} PDF</button>
           </div>
         </div>
         <div id="cancelledBillReportBody">${skeletonTable(4)}</div>
@@ -8454,8 +8455,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.users} Doctor Performance</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#doctorPerformanceBody table', 'doctor_performance_report.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#doctorPerformanceBody', 'doctor_performance_report')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#doctorPerformanceBody table', 'doctor_performance_report.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#doctorPerformanceBody', 'doctor_performance_report')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8491,8 +8492,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.billing} User Collection Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#userCollectionBody table', 'user_collection_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#userCollectionBody', 'user_collection')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#userCollectionBody table', 'user_collection_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#userCollectionBody', 'user_collection')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8517,8 +8518,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.services} Billed Services Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#billedServicesBody table', 'billed_services_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#billedServicesBody', 'billed_services')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#billedServicesBody table', 'billed_services_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#billedServicesBody', 'billed_services')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8545,8 +8546,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.product || IC.store} Service Consumption</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#serviceConsumptionBody table', 'service_consumption_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#serviceConsumptionBody', 'service_consumption')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#serviceConsumptionBody table', 'service_consumption_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#serviceConsumptionBody', 'service_consumption')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8570,8 +8571,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.store} Product Cost Summary</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#productConsumptionBody table', 'product_consumption_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#productConsumptionBody', 'product_consumption')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#productConsumptionBody table', 'product_consumption_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#productConsumptionBody', 'product_consumption')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8595,8 +8596,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.store} Manual Consumption Cost</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#manualConsumptionCostBody table', 'manual_consumption_cost_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#manualConsumptionCostBody', 'manual_consumption_cost')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#manualConsumptionCostBody table', 'manual_consumption_cost_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#manualConsumptionCostBody', 'manual_consumption_cost')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8630,8 +8631,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.transfer || IC.store} Stock Movement</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#stockMovementBody table', 'stock_movement_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#stockMovementBody', 'stock_movement')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#stockMovementBody table', 'stock_movement_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#stockMovementBody', 'stock_movement')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8665,8 +8666,8 @@ function renderSelectedReport() {
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.store} Stock Status</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#stockStatusBody table', 'stock_status_${today}.csv')">?? CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#stockStatusBody', 'stock_status')">?? PDF</button>
+            <button class="btn btn-sm" onclick="exportTableToCSV('#stockStatusBody table', 'stock_status_${today}.csv')">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportContentToPDF('#stockStatusBody', 'stock_status')">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8744,13 +8745,42 @@ function renderSelectedReport() {
     return;
   }
 
-  panel.innerHTML = `
+  if (_reportView === 'pending-orders') {
+    const today3 = new Date().toLocaleDateString('sv');
+    panel.innerHTML = `
+      <div class="card" style="margin:0;border:1px solid var(--border-light)">
+        <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
+          <div class="card-title">${IC.supplier} Pending Orders Report</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="exportTableToCSV('#pendingOrdersBody table', 'pending_orders_${today3}.csv')">${IC.download} CSV</button>
+          </div>
+        </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="search-box"><input id="poRptSearch" type="text" placeholder="Search supplier, invoice #..." oninput="loadPendingOrdersReport()"/></div>
+          <div class="bill-filter-group report-filter-group">
+            <input id="poRptFrom" type="date" title="From order date" onchange="loadPendingOrdersReport()"/>
+            <input id="poRptTo"   type="date" title="To order date"   onchange="loadPendingOrdersReport()"/>
+            <select id="poRptPayStatus" onchange="loadPendingOrdersReport()">
+              <option value="">All Payment Statuses</option>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Partially Paid">Partially Paid</option>
+              <option value="Paid">Paid</option>
+            </select>
+            <button class="btn btn-sm report-apply-btn" onclick="loadPendingOrdersReport()">Apply</button>
+            <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('poRptSearch').value='';document.getElementById('poRptFrom').value='';document.getElementById('poRptTo').value='';document.getElementById('poRptPayStatus').value='';loadPendingOrdersReport()">Clear</button>
+          </div>
+        </div>
+        <div id="pendingOrdersBody">${skeletonTable(5)}</div>
+      </div>`;
+    loadPendingOrdersReport();
+    return;
+  }
     <div class="card" style="margin:0;border:1px solid var(--border-light)">
       <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
         <div class="card-title">${IC.reports} Activity Logs</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <button class="btn btn-sm" onclick="exportTableToCSV('#activityLogBody table', 'activity_logs_${today}.csv')">?? CSV</button>
-          <button class="btn btn-sm" onclick="exportContentToPDF('#activityLogBody', 'activity_logs')">?? PDF</button>
+          <button class="btn btn-sm" onclick="exportTableToCSV('#activityLogBody table', 'activity_logs_${today}.csv')">${IC.download} CSV</button>
+          <button class="btn btn-sm" onclick="exportContentToPDF('#activityLogBody', 'activity_logs')">${IC.print} PDF</button>
         </div>
       </div>
       <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -9166,6 +9196,73 @@ async function loadPendingSvcReport() {
   }
 }
 
+
+async function loadPendingOrdersReport() {
+  const wrap = document.getElementById('pendingOrdersBody');
+  if (!wrap) return;
+  wrap.innerHTML = skeletonTable(5);
+  try {
+    const orders = await apiFetch('/api/store/purchase-orders');
+    const pending = orders.filter(o => String(o.status || '') === 'Pending');
+    const search = (document.getElementById('poRptSearch')?.value || '').toLowerCase();
+    const from   = document.getElementById('poRptFrom')?.value || '';
+    const to     = document.getElementById('poRptTo')?.value || '';
+    const paySt  = document.getElementById('poRptPayStatus')?.value || '';
+    const filtered = pending.filter(o => {
+      const d = String(o.order_date || '').slice(0, 10);
+      if (search && !String(o.supplier_name || '').toLowerCase().includes(search) && !String(o.invoice_number || '').toLowerCase().includes(search)) return false;
+      if (from && d < from) return false;
+      if (to   && d > to)   return false;
+      if (paySt && String(o.payment_status || 'Unpaid') !== paySt) return false;
+      return true;
+    });
+    const totalCost = filtered.reduce((s, o) => s + parseFloat(o.total_cost || 0), 0);
+    const totalDue  = filtered.reduce((s, o) => s + parseFloat(o.due_amount  || 0), 0);
+    if (!filtered.length) {
+      wrap.innerHTML = emptyState(IC.supplier, 'No pending orders', 'All purchase orders have been received or no orders match the filters');
+      return;
+    }
+    wrap.innerHTML = `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+        <div style="padding:10px 16px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-muted)">PENDING ORDERS</div>
+          <div style="font-size:20px;font-weight:700">${filtered.length}</div>
+        </div>
+        <div style="padding:10px 16px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-muted)">TOTAL COST</div>
+          <div style="font-size:20px;font-weight:700">KD ${totalCost.toFixed(3)}</div>
+        </div>
+        <div style="padding:10px 16px;background:var(--bg-hover);border-radius:8px;border:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text-muted)">TOTAL DUE</div>
+          <div style="font-size:20px;font-weight:700;color:var(--c-danger)">KD ${totalDue.toFixed(3)}</div>
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>#</th><th>Supplier</th><th>Invoice #</th><th>Order Date</th>
+          <th>Items</th><th style="text-align:right">Total Cost</th>
+          <th style="text-align:right">Paid</th><th style="text-align:right">Due</th><th>Payment Status</th>
+        </tr></thead>
+        <tbody>${filtered.map((o, i) => {
+          const payStatus = String(o.payment_status || 'Unpaid');
+          const payBadge = payStatus === 'Paid'
+            ? '<span class="badge badge-paid">Paid</span>'
+            : (payStatus === 'Partially Paid' ? '<span class="badge badge-arrived">Partly Paid</span>' : '<span class="badge badge-unpaid">Unpaid</span>');
+          return `<tr>
+            <td>${i + 1}</td>
+            <td><strong>${escHtml(o.supplier_name || '-')}</strong></td>
+            <td class="text-muted text-sm">${escHtml(o.invoice_number || '-')}</td>
+            <td class="text-muted text-sm">${escHtml(o.order_date || '-')}</td>
+            <td>${(o.items || []).length} item(s)</td>
+            <td style="text-align:right"><strong>KD ${parseFloat(o.total_cost || 0).toFixed(3)}</strong></td>
+            <td style="text-align:right">KD ${parseFloat(o.paid_amount || 0).toFixed(3)}</td>
+            <td style="text-align:right;color:var(--c-danger)"><strong>KD ${parseFloat(o.due_amount || 0).toFixed(3)}</strong></td>
+            <td>${payBadge}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+  } catch (e) { wrap.innerHTML = `<div class="text-muted p-3">Error loading orders: ${escHtml(e.message)}</div>`; }
+}
 
 function debounceFullPatientsReportSearch() {
   clearTimeout(_fullPatientsReportSearchTimer);
