@@ -9170,15 +9170,15 @@ async function loadPendingSvcReport() {
           <div style="font-size:22px;font-weight:700">${summary.total || 0}</div>
         </div>
         <div style="background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:12px 16px">
-          <div class="text-muted text-sm">? Pending</div>
+          <div class="text-muted text-sm">&#9679; Pending</div>
           <div style="font-size:22px;font-weight:700;color:#d97706">${summary.pending || 0}</div>
         </div>
         <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px">
-          <div class="text-muted text-sm">?? In Progress</div>
+          <div class="text-muted text-sm">&#9654; In Progress</div>
           <div style="font-size:22px;font-weight:700;color:#2563eb">${summary.in_progress || 0}</div>
         </div>
         <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:12px 16px">
-          <div class="text-muted text-sm">? Completed</div>
+          <div class="text-muted text-sm">&#10003; Completed</div>
           <div style="font-size:22px;font-weight:700;color:#16a34a">${summary.completed || 0}</div>
         </div>
       </div>`;
