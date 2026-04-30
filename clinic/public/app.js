@@ -7629,11 +7629,11 @@ async function printBill(id) {
       }
 
       return `<tr style="border-bottom:1px solid #bbb">
-        <td style="padding:6px 3px;font-size:15px;color:#000">${descHtml}</td>
-        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000;white-space:nowrap">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
-        <td style="padding:6px 3px;font-size:15px;text-align:center;color:#000">${escHtml(unit)}</td>
-        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">${rate.toFixed(3)}</td>
-        <td style="padding:6px 3px;font-size:15px;text-align:right;color:#000">KD ${amount.toFixed(3)}</td>
+        <td style="padding:6px 3px;font-size:14px;line-height:1.28;color:#000;vertical-align:top;white-space:normal;word-break:break-word;overflow-wrap:anywhere">${descHtml}</td>
+        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
+        <td style="padding:6px 3px;font-size:14px;text-align:center;color:#000;white-space:nowrap;vertical-align:top">${escHtml(unit)}</td>
+        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${rate.toFixed(3)}</td>
+        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">KD ${amount.toFixed(3)}</td>
       </tr>`;
     }).join('');
   } else {
@@ -7708,8 +7708,15 @@ async function printBill(id) {
         <td style="padding:5px 3px;font-size:15px;text-align:right;color:#000"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
       </tr>
     </table>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
-      <thead><tr><th style="text-align:left;padding:6px 3px;font-size:15px;background:#e0e0e0;border-bottom:2px solid #000">Description</th><th style="text-align:right;padding:6px 3px;font-size:15px;background:#e0e0e0;border-bottom:2px solid #000;width:50px">Qty</th><th style="text-align:center;padding:6px 3px;font-size:15px;background:#e0e0e0;border-bottom:2px solid #000;width:50px">Unit</th><th style="text-align:right;padding:6px 3px;font-size:15px;background:#e0e0e0;border-bottom:2px solid #000;width:65px">Rate</th><th style="text-align:right;padding:6px 3px;font-size:15px;background:#e0e0e0;border-bottom:2px solid #000;width:65px">Amount</th></tr></thead>
+    <table id="receiptItemsTable" style="width:100%;border-collapse:collapse;margin-bottom:8px;table-layout:fixed">
+      <colgroup>
+        <col style="width:42%"/>
+        <col style="width:10%"/>
+        <col style="width:12%"/>
+        <col style="width:16%"/>
+        <col style="width:20%"/>
+      </colgroup>
+      <thead><tr><th style="text-align:left;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Description</th><th style="text-align:right;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Qty</th><th style="text-align:center;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Unit</th><th style="text-align:right;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Rate</th><th style="text-align:right;padding:6px 3px;font-size:14px;background:#e0e0e0;border-bottom:2px solid #000">Amount</th></tr></thead>
       <tbody>${itemRows}</tbody>
       <tfoot>
         ${hasDiscount
@@ -7758,10 +7765,10 @@ async function printBill(id) {
     const html = String(printArea.innerHTML || '').trim();
     if (!html) return '';
 
-    // Thermal-only readability boost: enlarge inline font sizes for TM receipts.
+    // Keep thermal output close to browser preview; excessive upscaling can break wrapping.
     const boostedHtml = html.replace(/font-size\s*:\s*(\d+(?:\.\d+)?)px/gi, (_, n) => {
       const base = parseFloat(n || '0') || 0;
-      const next = Math.max(base + 2, base * 1.22);
+      const next = Math.max(base + 1, base * 1.08);
       return `font-size:${next.toFixed(1)}px`;
     });
 
@@ -7769,7 +7776,7 @@ async function printBill(id) {
     tempWrap.style.position = 'fixed';
     tempWrap.style.left = '-10000px';
     tempWrap.style.top = '0';
-    tempWrap.style.width = '560px'; // near full 80mm raster width
+    tempWrap.style.width = '512px'; // matches common 80mm (203 dpi) printable width
     tempWrap.style.background = '#ffffff';
     tempWrap.style.padding = '0';
     tempWrap.style.margin = '0';
