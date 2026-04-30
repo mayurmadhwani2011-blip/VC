@@ -8220,7 +8220,7 @@ async function reports() {
     { value: 'stock-status', label: 'Stock Status', desc: 'Current stock levels with low-stock highlights', icon: IC.store },
     { value: 'supplier-ledger', label: 'Supplier Ledger', desc: 'Per-supplier debit, credit and outstanding balance', icon: IC.billing || IC.reports },
     { value: 'pending-services', label: 'Pending Services', desc: 'Services billed but not yet completed across all patients', icon: IC.pending || IC.services },
-    { value: 'pending-orders', label: 'Pending Orders', desc: 'Purchase orders awaiting receipt from suppliers', icon: IC.supplier }
+    { value: 'pending-orders', label: 'Supplier Invoice', desc: 'All supplier purchase orders with payment status', icon: IC.supplier }
   ];
   if (currentUser.role === 'admin') options.push({ value: 'revenue', label: 'Revenue', desc: 'Last 30 days billing trend', icon: IC.revenue });
   if (currentUser.role === 'admin') options.push({ value: 'discounts-report', label: 'Discount Report', desc: 'Total discounts given by type and user', icon: IC.discount });
@@ -8750,7 +8750,7 @@ function renderSelectedReport() {
     panel.innerHTML = `
       <div class="card" style="margin:0;border:1px solid var(--border-light)">
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
-          <div class="card-title">${IC.supplier} Pending Orders Report</div>
+          <div class="card-title">${IC.supplier} Supplier Invoice Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm" onclick="exportTableToCSV('#pendingOrdersBody table', 'pending_orders_${today3}.csv')">${IC.download} CSV</button>
           </div>
