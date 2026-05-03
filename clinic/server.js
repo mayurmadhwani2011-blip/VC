@@ -2398,7 +2398,7 @@ app.post('/api/admin/system-update', requireRole('admin'), async (req, res) => {
   }
   // Accept from request body (UI dialog) or fall back to env vars
   const rawOwner = String(body.github_owner || process.env.CLINIC_GITHUB_OWNER || 'mayurmadhwani2011-blip').trim();
-  const rawRepo  = String(body.github_repo  || process.env.CLINIC_GITHUB_REPO  || 'CMS').trim();
+  const rawRepo  = String(body.github_repo  || process.env.CLINIC_GITHUB_REPO  || 'VC').trim();
   const GITHUB_OWNER = /^[\w.-]+$/.test(rawOwner) ? rawOwner : 'mayurmadhwani2011-blip';
   const GITHUB_REPO  = /^[\w.-]+$/.test(rawRepo)  ? rawRepo  : 'CMS';
   const GITHUB_BRANCH = branch;

@@ -13297,44 +13297,21 @@ async function triggerSystemUpdate() {
     return;
   }
 
-  // Show settings dialog so admin can configure repo/token even if server defaults are wrong
-  const dlgId = 'sysUpdateDlg_' + Date.now();
-  const html = `
-    <div id="${dlgId}" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center">
-      <div style="background:var(--bg-card);border-radius:14px;padding:28px 28px 20px;width:420px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.35)">
-        <div style="font-size:1.1rem;font-weight:700;margin-bottom:16px">System Update Settings</div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label style="font-size:.85rem;font-weight:600">GitHub Owner</label>
-          <input id="su_owner" class="form-control" value="mayurmadhwani2011-blip" placeholder="e.g. mayurmadhwani2011-blip" style="width:100%" />
-        </div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label style="font-size:.85rem;font-weight:600">Repository Name</label>
-          <input id="su_repo" class="form-control" value="CMS" placeholder="e.g. CMS" style="width:100%" />
-        </div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label style="font-size:.85rem;font-weight:600">Branch</label>
-          <input id="su_branch" class="form-control" value="main" placeholder="main" style="width:100%" />
-        </div>
-        <div class="form-group" style="margin-bottom:16px">
-          <label style="font-size:.85rem;font-weight:600">GitHub Token <span class="text-muted" style="font-weight:400">(required for private repos)</span></label>
-          <input id="su_token" class="form-control" type="password" placeholder="ghp_xxxxxxxxxxxx (leave blank if public)" style="width:100%" />
-        </div>
-        <div class="text-muted" style="font-size:.8rem;margin-bottom:16px">A safety backup of your data will be created before updating. The service will restart automatically after the update.</div>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button class="btn" onclick="document.getElementById('${dlgId}').remove()">Cancel</button>
-          <button class="btn btn-warning" id="su_runBtn" onclick="runSystemUpdateNow('${dlgId}')">Run Update</button>
-        </div>
-      </div>
-    </div>`;
-  document.body.insertAdjacentHTML('beforeend', html);
+  if (!confirm('Run system update now? A safety backup will be created automatically.')) return;
+  await runSystemUpdateNow(null, {
+    owner: 'mayurmadhwani2011-blip',
+    repo: 'VC',
+    branch: 'main',
+    token: ''
+  });
 }
 
-async function runSystemUpdateNow(dlgId) {
-  const dlg = document.getElementById(dlgId);
-  const owner = (document.getElementById('su_owner').value || '').trim();
-  const repo = (document.getElementById('su_repo').value || '').trim();
-  const branch = (document.getElementById('su_branch').value || 'main').trim();
-  const token = (document.getElementById('su_token').value || '').trim();
+async function runSystemUpdateNow(dlgId, preset) {
+  const dlg = dlgId ? document.getElementById(dlgId) : null;
+  const owner = (preset && preset.owner) ? String(preset.owner).trim() : ((document.getElementById('su_owner')?.value || '').trim());
+  const repo = (preset && preset.repo) ? String(preset.repo).trim() : ((document.getElementById('su_repo')?.value || '').trim());
+  const branch = (preset && preset.branch) ? String(preset.branch).trim() : ((document.getElementById('su_branch')?.value || 'main').trim());
+  const token = (preset && typeof preset.token === 'string') ? preset.token.trim() : ((document.getElementById('su_token')?.value || '').trim());
 
   if (!owner || !repo) { toast('Owner and Repo are required.', 'error'); return; }
 
