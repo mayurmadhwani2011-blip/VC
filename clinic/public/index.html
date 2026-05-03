@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ClinicMS — Clinic Management System</title>
+  <title>CTMS — Clinic Top Management System</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -19,16 +19,15 @@
       <!-- Dermiq logo -->
       <div class="login-logo-ring">
         <svg width="38" height="38" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="2" width="68" height="68" rx="14" fill="white" opacity="0.15"/>
-          <rect x="10" y="16" width="52" height="8" rx="4" fill="white" opacity="0.95"/>
-          <rect x="10" y="30" width="52" height="13" rx="4" fill="white" opacity="0.55"/>
-          <rect x="10" y="49" width="52" height="14" rx="4" fill="white" opacity="0.22"/>
+          <defs><linearGradient id="ctmsbg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#0F4C75"/><stop offset="100%" stop-color="#0A7EA4"/></linearGradient></defs>
+          <rect x="2" y="2" width="68" height="68" rx="14" fill="url(#ctmsbg)"/>
+          <text x="36" y="44" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" fill="white">CT</text>
           <rect x="52" y="6" width="3" height="10" rx="1.5" fill="#5EEAD4"/>
           <rect x="48" y="10" width="10" height="3" rx="1.5" fill="#5EEAD4"/>
         </svg>
       </div>
-      <h1 id="loginClinicName"><span style="font-weight:300;letter-spacing:1px">DERM</span><span style="font-weight:800;color:#0A7EA4;letter-spacing:1px">IQ</span></h1>
-      <p class="login-sub" id="loginClinicSub">Dermatology Management Suite</p>
+      <h1 id="loginClinicName"><span style="font-weight:300;letter-spacing:1px">CT</span><span style="font-weight:800;color:#0A7EA4;letter-spacing:1px">MS</span></h1>
+      <p class="login-sub" id="loginClinicSub">Clinic Top Management System</p>
     </div>
     <div id="loginError" class="alert alert-error hidden" role="alert"></div>
     <div class="form-group">
@@ -68,7 +67,7 @@
   <aside id="sidebar" role="navigation" aria-label="Main navigation">
     <div class="sidebar-header">
       <div class="sidebar-brand">
-        <!-- Dermiq icon (always visible) -->
+        <!-- CTMS icon (always visible) -->
         <svg class="dermiq-icon" width="36" height="36" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="dqbg" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -77,14 +76,12 @@
             </linearGradient>
           </defs>
           <rect x="2" y="2" width="68" height="68" rx="14" fill="url(#dqbg)"/>
-          <rect x="14" y="18" width="44" height="7" rx="3.5" fill="white" opacity="0.95"/>
-          <rect x="14" y="31" width="44" height="11" rx="3.5" fill="white" opacity="0.55"/>
-          <rect x="14" y="48" width="44" height="13" rx="3.5" fill="white" opacity="0.22"/>
+          <text x="36" y="46" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="26" font-weight="800" fill="white">CT</text>
           <rect x="53" y="8" width="3" height="10" rx="1.5" fill="#5EEAD4"/>
           <rect x="49" y="12" width="10" height="3" rx="1.5" fill="#5EEAD4"/>
         </svg>
         <!-- Wordmark (hidden when sidebar collapsed) -->
-        <span class="logo-text dermiq-wordmark"><span style="font-weight:300;color:var(--text)">DERM</span><span style="font-weight:800;color:#0A7EA4">IQ</span></span>
+        <span class="logo-text dermiq-wordmark"><span style="font-weight:300;color:var(--text)">CT</span><span style="font-weight:800;color:#0A7EA4">MS</span></span>
       </div>
       <div class="sidebar-header-actions">
         <button class="sidebar-collapse" onclick="toggleSidebarCollapsed()" aria-label="Collapse sidebar" title="Collapse sidebar">
@@ -107,6 +104,7 @@
           <span>Logout</span>
         </button>
       </div>
+      <div class="sidebar-copyright">&copy; <span id="copyrightYear"></span> CTMS. All rights reserved.</div>
     </div>
   </aside>
 

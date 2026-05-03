@@ -19,6 +19,90 @@ const APP_STARTED_AT = nowIso();
 function nowIso() {
   return new Date().toISOString();
 }
+
+function rollbackPackageSessionUsageForBill(db, billId) {
+  const targetBillId = parseInt(billId, 10);
+  if (!targetBillId || !Array.isArray(db.patient_packages)) {
+    return { affected_packages: 0, reversed_logs: 0, reversed_sessions: 0 };
+  }
+
+  let affectedPackages = 0;
+  let reversedLogs = 0;
+  let reversedSessions = 0;
+
+  for (const pp of db.patient_packages) {
+    if (!pp || !Array.isArray(pp.services) || !Array.isArray(pp.session_log)) continue;
+
+    let touched = false;
+    const nextLogs = [];
+
+    for (const log of pp.session_log) {
+      if (parseInt(log && log.bill_id, 10) !== targetBillId) {
+        nextLogs.push(log);
+        continue;
+      }
+
+      reversedLogs += 1;
+      const serviceIds = Array.isArray(log && log.service_ids) ? log.service_ids.map(Number).filter(Boolean) : [];
+      const quantities = (log && log.quantities && typeof log.quantities === 'object') ? log.quantities : {};
+
+      for (const sid of serviceIds) {
+        const svc = pp.services.find(s => parseInt(s && s.service_id, 10) === parseInt(sid, 10));
+        if (!svc) continue;
+
+        const qty = Math.max(
+          1,
+          parseInt(quantities[sid], 10)
+          || parseInt(quantities[String(sid)], 10)
+          || 1
+        );
+
+        const before = parseInt(svc.used, 10) || 0;
+        const after = Math.max(0, before - qty);
+        if (after !== before) {
+          svc.used = after;
+          reversedSessions += (before - after);
+          touched = true;
+        }
+      }
+    }
+
+    if (nextLogs.length !== pp.session_log.length) {
+      pp.session_log = nextLogs;
+      touched = true;
+    }
+
+    if (touched) {
+      pp.status = pp.services.every(s => (parseInt(s && s.used, 10) || 0) >= (parseInt(s && s.total, 10) || 0))
+        ? 'Completed'
+        : 'Active';
+      affectedPackages += 1;
+    }
+  }
+
+  return {
+    affected_packages: affectedPackages,
+    reversed_logs: reversedLogs,
+    reversed_sessions: reversedSessions
+  };
+}
+
+function removePatientPackagesCreatedByBill(db, billId) {
+  const targetBillId = parseInt(billId, 10);
+  if (!targetBillId || !Array.isArray(db.patient_packages)) {
+    return { removed_count: 0, removed_package_ids: [] };
+  }
+
+  const removed = db.patient_packages
+    .filter(pp => parseInt(pp && pp.bill_id, 10) === targetBillId)
+    .map(pp => parseInt(pp.id, 10))
+    .filter(Boolean);
+
+  if (!removed.length) return { removed_count: 0, removed_package_ids: [] };
+
+  db.patient_packages = db.patient_packages.filter(pp => parseInt(pp && pp.bill_id, 10) !== targetBillId);
+  return { removed_count: removed.length, removed_package_ids: removed };
+}
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const DB_FILE = path.join(DATA_DIR, 'clinic-data.json');
@@ -104,7 +188,7 @@ function blankDB() {
     discounts:[], refunds:[], expenses:[],
     store_products:[], store_suppliers:[], store_sub_stores:[], store_stock:[],
     store_purchase_orders:[], store_supplier_invoice_payments:[], store_supplier_returns:[], store_transfers:[], store_adjustments:[], store_service_products:[], store_service_consumptions:[], store_manual_consumptions:[], uoms:[], store_product_categories:[], store_product_uoms:[],
-    activity_logs:[], doctor_schedules:[], clinic_profile:null, follow_ups:[]
+    activity_logs:[], doctor_schedules:[], clinic_profile:null, follow_ups:[], sales_returns:[]
   };
 }
 
@@ -649,7 +733,7 @@ async function executeSystemResetJob(jobId) {
       'patients','appointments','follow_ups','prescriptions','bills','refunds','expenses','services','packages','patient_packages',
       'store_purchase_orders','store_supplier_invoice_payments','store_transfers','store_adjustments',
       'store_service_consumptions','store_manual_consumptions','store_stock','store_service_products','clinical_notes','lab_records',
-      'reports_cache','report_cache','report_logs'
+      'reports_cache','report_cache','report_logs','sales_returns'
     ].forEach((k) => { db._seq[k] = 0; });
 
     const finishedAt = now();
@@ -1728,10 +1812,21 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
       if (!db._seq.patient_packages) db._seq.patient_packages = 0;
       db._seq.patient_packages += 1;
       const selIds = Array.isArray(item.selected_service_ids) ? item.selected_service_ids.map(Number) : [];
-      const services = (pkg.service_ids||[]).map(sid => {
-        const svc = (db.services||[]).find(s => s.id === sid);
-        return { service_id: sid, service_name: svc ? svc.name : '', total: 1, used: selIds.includes(sid) ? 1 : 0 };
-      });
+      // Support new `services` format {service_id, total} as well as legacy `service_ids`
+      let services;
+      if (Array.isArray(pkg.services) && pkg.services.length) {
+        services = pkg.services.map(it => {
+          const sid = parseInt(it.service_id);
+          const svc = (db.services||[]).find(s => s.id === sid);
+          const totalSessions = parseInt(it.total) || 1;
+          return { service_id: sid, service_name: svc ? svc.name : '', total: totalSessions, used: selIds.includes(sid) ? 1 : 0 };
+        });
+      } else {
+        services = (pkg.service_ids||[]).map(sid => {
+          const svc = (db.services||[]).find(s => s.id === sid);
+          return { service_id: sid, service_name: svc ? svc.name : '', total: 1, used: selIds.includes(sid) ? 1 : 0 };
+        });
+      }
       const dateStr = (bill.created_at||'').slice(0,10) || today();
       db.patient_packages.push({
         id: db._seq.patient_packages,
@@ -1750,6 +1845,46 @@ function getPatientConsecutiveNoShowStreak(db, patientId) {
     }
   }
   if (changed) { writeDB(db); console.log(`Migrated ${db.patient_packages.length} patient package record(s).`); }
+})();
+
+// ---------- Startup migration: repair patient_packages with empty services (0/0 sessions) ----------
+(function repairEmptyPatientPackageServices() {
+  const db = readDB();
+  if (!Array.isArray(db.patient_packages) || !db.patient_packages.length) return;
+  let changed = false;
+  for (const pp of db.patient_packages) {
+    if (Array.isArray(pp.services) && pp.services.length) continue; // already has services
+    const pkg = (db.packages||[]).find(p => p.id === parseInt(pp.package_id));
+    if (!pkg) continue;
+    // Rebuild services from current package definition
+    let services;
+    if (Array.isArray(pkg.services) && pkg.services.length) {
+      services = pkg.services.map(it => {
+        const sid = parseInt(it.service_id);
+        const svc = (db.services||[]).find(s => s.id === sid);
+        const totalSessions = parseInt(it.total) || 1;
+        // Try to recover used count from existing session_log
+        const usedCount = (pp.session_log||[]).reduce((sum, log) => {
+          return sum + (Array.isArray(log.service_ids) && log.service_ids.map(Number).includes(sid) ? (parseInt((log.quantities||{})[sid]) || 1) : 0);
+        }, 0);
+        return { service_id: sid, service_name: svc ? svc.name : '', total: totalSessions, used: usedCount };
+      });
+    } else {
+      services = (pkg.service_ids||[]).map(sid => {
+        const svc = (db.services||[]).find(s => s.id === sid);
+        const usedCount = (pp.session_log||[]).reduce((sum, log) => {
+          return sum + (Array.isArray(log.service_ids) && log.service_ids.map(Number).includes(sid) ? (parseInt((log.quantities||{})[sid]) || 1) : 0);
+        }, 0);
+        return { service_id: sid, service_name: svc ? svc.name : '', total: 1, used: usedCount };
+      });
+    }
+    if (!services.length) continue;
+    pp.services = services;
+    pp.status = services.every(s => s.used >= s.total) ? 'Completed' : 'Active';
+    changed = true;
+    console.log(`Repaired patient_package #${pp.id} (${pp.package_name}): restored ${services.length} service(s).`);
+  }
+  if (changed) writeDB(db);
 })();
 
 // ---------- Startup migration: backfill missing prescription visit_id ----------
@@ -3613,10 +3748,29 @@ app.put('/api/users/:id', requireRole('admin'), (req, res) => {
   const db = readDB(); const idx = db.users.findIndex(u => u.id === parseInt(req.params.id));
   ensureStore(db);
   if (idx === -1) return res.status(404).json({ error:'Not found' });
-  const { name, slot_duration, department_id, active } = req.body;
+  const { name, slot_duration, department_id, active, role } = req.body;
   const submittedStores = getSubmittedStoreIds(req.body || {});
+  const currentRole = String(db.users[idx].role || '').trim();
+  let nextRole = currentRole;
+  if (role !== undefined) {
+    const requestedRole = String(role || '').trim();
+    const isSelf = req.session.user && req.session.user.id === db.users[idx].id;
+    if (isSelf && req.session.user && req.session.user.role === 'admin' && requestedRole !== currentRole) {
+      return res.status(400).json({ error:'You cannot change your own role' });
+    }
+    if (!requestedRole) return res.status(400).json({ error:'Role is required' });
+    const builtInRoles = ['admin','doctor','receptionist'];
+    const customRoleNames = (db.custom_roles || []).map(r => r.name);
+    const allValidRoles = [...builtInRoles, ...customRoleNames];
+    if (!allValidRoles.includes(requestedRole)) return res.status(400).json({ error:'Invalid role' });
+    if (currentRole === 'doctor' && requestedRole !== currentRole) {
+      return res.status(400).json({ error:'Doctor role cannot be changed' });
+    }
+    nextRole = requestedRole;
+  }
   if (name) db.users[idx].name = name;
-  if (db.users[idx].role === 'doctor' && slot_duration) db.users[idx].slot_duration = parseInt(slot_duration) || 30;
+  if (nextRole === 'doctor' && slot_duration) db.users[idx].slot_duration = parseInt(slot_duration) || 30;
+  if (role !== undefined) db.users[idx].role = nextRole;
   if (active !== undefined) {
     const isSelf = req.session.user && req.session.user.id === db.users[idx].id;
     if (isSelf && (active === false || active === 'false')) {
@@ -3626,14 +3780,14 @@ app.put('/api/users/:id', requireRole('admin'), (req, res) => {
   }
   // Multi-department support: accept department_ids array from body
   const rawDeptIds = req.body.department_ids;
-  if (rawDeptIds !== undefined && db.users[idx].role !== 'admin') {
+  if (rawDeptIds !== undefined && nextRole !== 'admin') {
     const ids = (Array.isArray(rawDeptIds) ? rawDeptIds : [rawDeptIds])
       .map(x => parseInt(x)).filter(x => x > 0);
     const validIds = ids.filter(id => (db.doctor_departments || []).some(d => d.id === id && d.active !== false));
     db.users[idx].department_ids = validIds;
     // keep legacy single field in sync (first selection)
     db.users[idx].department_id = validIds.length ? validIds[0] : null;
-  } else if (department_id !== undefined && db.users[idx].role !== 'admin') {
+  } else if (department_id !== undefined && nextRole !== 'admin') {
     const depId = parseInt(department_id);
     const dep = (db.doctor_departments || []).find(d => d.id === depId && d.active !== false);
     if (dep) {
@@ -3641,8 +3795,16 @@ app.put('/api/users/:id', requireRole('admin'), (req, res) => {
       db.users[idx].department_ids = [depId];
     }
   }
-  if (db.users[idx].role !== 'admin' && submittedStores.provided) {
+  if (nextRole !== 'admin' && submittedStores.provided) {
     db.users[idx].store_ids = parseSubmittedStoreIds(db, submittedStores.value);
+  }
+  if (nextRole === 'admin') {
+    delete db.users[idx].department_id;
+    delete db.users[idx].department_ids;
+    delete db.users[idx].store_ids;
+  }
+  if (nextRole === 'doctor' && !db.users[idx].slot_duration) {
+    db.users[idx].slot_duration = 30;
   }
   writeDB(db); const { password:_, ...safe } = db.users[idx]; res.json(safe);
 });
@@ -5010,7 +5172,7 @@ app.put('/api/prescriptions/:id', requireRole('doctor','admin'), (req, res) => {
 
 // ===================== BILLING =====================
 app.get('/api/bills', requireLogin, (req, res) => {
-  const db=readDB(); const { patient_id,payment_status,date:fd,appointment_id } = req.query;
+  const db=readDB(); const { patient_id,payment_status,date:fd,appointment_id,search } = req.query;
   const visibleDoctorIds = getVisibleDoctorIds(db, req);
   let list=db.bills.map(b=>{ const pat=db.patients.find(p=>p.id===b.patient_id)||{}; const doc=db.users.find(u=>u.id===parseInt(b.doctor_id))||{}; return { ...b, line_items: enrichBillLineItems(db, b.line_items), patient_name:pat.name, patient_phone:pat.phone, mr_number:pat.mr_number||'', doctor_name: doc.name || '' }; });
   if (visibleDoctorIds) list = list.filter(b => {
@@ -5021,6 +5183,7 @@ app.get('/api/bills', requireLogin, (req, res) => {
   if (payment_status) list=list.filter(b=>b.payment_status===payment_status);
   if (fd)             list=list.filter(b=>(b.created_at||'').startsWith(fd));
   if (appointment_id) list=list.filter(b=>b.appointment_id===parseInt(appointment_id));
+  if (search) { const q=search.toLowerCase(); list=list.filter(b=>String(b.bill_number||'').toLowerCase().includes(q)); }
   list.sort((a,b)=>b.created_at>a.created_at?1:-1);
   res.json(list);
 });
@@ -5382,6 +5545,9 @@ app.post('/api/bills/:id/cancel', requirePermission('billing.delete'), (req, res
   const reason = String(req.body.reason || '').trim();
   if (!reason) return res.status(400).json({ error:'Cancellation reason is required.' });
 
+  const rollback = rollbackPackageSessionUsageForBill(db, bill.id);
+  const removedPackages = removePatientPackagesCreatedByBill(db, bill.id);
+
   bill.payment_status = 'Cancelled';
   bill.cancelled_at = now();
   bill.cancelled_by = (req.session && req.session.user && req.session.user.id) || req.session.userId || null;
@@ -5397,11 +5563,23 @@ app.post('/api/bills/:id/cancel', requirePermission('billing.delete'), (req, res
     appointment_id: bill.appointment_id,
     visit_id: bill.visit_id,
     notes: `Bill ${bill.bill_number || bill.id} cancelled. Reason: ${reason}`,
-    meta: { payment_method: bill.payment_method, total: bill.total, reason }
+    meta: {
+      payment_method: bill.payment_method,
+      total: bill.total,
+      reason,
+      package_session_rollback: rollback,
+      removed_patient_packages: removedPackages
+    }
   });
 
   writeDB(db);
-  res.json({ success:true, id: bill.id, payment_status: bill.payment_status });
+  res.json({
+    success:true,
+    id: bill.id,
+    payment_status: bill.payment_status,
+    package_session_rollback: rollback,
+    removed_patient_packages: removedPackages
+  });
 });
 
 // ===================== SERVICE COMPLETION =====================
@@ -5730,26 +5908,128 @@ app.get('/api/reports/no-show', requireRole('admin','doctor','receptionist'), (r
   });
 });
 app.get('/api/reports/revenue', requireRole('admin'), (req, res) => {
-  const db=readDB();
+  const db = readDB();
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo = String(req.query.date_to || '').slice(0, 10);
+  const doctorId = req.query.doctor_id ? parseInt(req.query.doctor_id, 10) : null;
+
+  const appointmentsById = new Map((db.appointments || []).map(a => [parseInt(a.id), a]));
+
+  const resolveBillDoctorId = (bill) => {
+    const apt = appointmentsById.get(parseInt(bill.appointment_id));
+    if (apt && apt.doctor_id != null) return parseInt(apt.doctor_id);
+    if (bill.doctor_id != null) return parseInt(bill.doctor_id);
+    return null;
+  };
+
+  const billById = new Map((db.bills || []).map(b => [parseInt(b.id), b]));
+  const calcFinancialSnapshotFiltered = (dayFrom, dayTo) => {
+    const inRange = (day) => {
+      const d = String(day || '').slice(0, 10);
+      if (!d) return false;
+      if (dayFrom && d < dayFrom) return false;
+      if (dayTo && d > dayTo) return false;
+      return true;
+    };
+
+    let grossRevenue = 0;
+    let totalDiscount = 0;
+    let netRevenue = 0;
+    let totalRefund = 0;
+    let cancelledBillsCount = 0;
+    let activeBillsCount = 0;
+
+    for (const bill of (db.bills || [])) {
+      const billDay = String(bill.created_at || '').slice(0, 10);
+      if (!inRange(billDay)) continue;
+
+      const billDoctorId = resolveBillDoctorId(bill);
+      if (doctorId && billDoctorId !== doctorId) continue;
+
+      const discount = Math.max(0, parseFloat(bill.discount_amount || 0) || 0);
+      const gross = Math.max(0, parseFloat(bill.subtotal != null ? bill.subtotal : ((parseFloat(bill.total || 0) || 0) + discount)) || 0);
+      const net = Math.max(0, parseFloat(bill.total != null ? bill.total : (gross - discount)) || 0);
+
+      if (String(bill.payment_status || '') === 'Cancelled') {
+        cancelledBillsCount += 1;
+        continue;
+      }
+
+      activeBillsCount += 1;
+      grossRevenue += gross;
+      totalDiscount += discount;
+      netRevenue += net;
+    }
+
+    for (const refund of (db.refunds || [])) {
+      const refundDay = String(refund.created_at || '').slice(0, 10);
+      if (!inRange(refundDay)) continue;
+
+      const linkedBill = billById.get(parseInt(refund.bill_id));
+      if (!linkedBill) continue;
+      if (String(linkedBill.payment_status || '') === 'Cancelled') continue;
+
+      const billDoctorId = resolveBillDoctorId(linkedBill);
+      if (doctorId && billDoctorId !== doctorId) continue;
+
+      totalRefund += Math.max(0, parseFloat(refund.refund_amount || 0) || 0);
+    }
+
+    const finalRevenue = netRevenue - totalRefund;
+    return {
+      gross_revenue: parseFloat(grossRevenue.toFixed(3)),
+      total_discount: parseFloat(totalDiscount.toFixed(3)),
+      net_revenue: parseFloat(netRevenue.toFixed(3)),
+      total_refund: parseFloat(totalRefund.toFixed(3)),
+      final_revenue: parseFloat(finalRevenue.toFixed(3)),
+      cancelled_bills_count: cancelledBillsCount,
+      active_bills_count: activeBillsCount
+    };
+  };
+
   const out = [];
-  const base = new Date();
-  for (let i = 0; i < 30; i++) {
-    const dt = new Date(base);
-    dt.setDate(base.getDate() - i);
-    const day = dt.toLocaleDateString('sv');
-    const finance = calcFinancialSnapshot(db, day, day);
-    out.push({
-      day,
-      bills: finance.active_bills_count,
-      cancelled_bills: finance.cancelled_bills_count,
-      gross_revenue: finance.gross_revenue,
-      total_discount: finance.total_discount,
-      net_revenue: finance.net_revenue,
-      total_refund: finance.total_refund,
-      final_revenue: finance.final_revenue,
-      revenue: finance.final_revenue
-    });
+  if (dateFrom || dateTo) {
+    const from = dateFrom || dateTo;
+    const to = dateTo || dateFrom;
+    let dt = new Date(`${from}T00:00:00`);
+    const end = new Date(`${to}T00:00:00`);
+    while (dt <= end) {
+      const day = dt.toLocaleDateString('sv');
+      const finance = calcFinancialSnapshotFiltered(day, day);
+      out.push({
+        day,
+        bills: finance.active_bills_count,
+        cancelled_bills: finance.cancelled_bills_count,
+        gross_revenue: finance.gross_revenue,
+        total_discount: finance.total_discount,
+        net_revenue: finance.net_revenue,
+        total_refund: finance.total_refund,
+        final_revenue: finance.final_revenue,
+        revenue: finance.final_revenue
+      });
+      dt.setDate(dt.getDate() + 1);
+    }
+  } else {
+    const base = new Date();
+    for (let i = 0; i < 30; i++) {
+      const dt = new Date(base);
+      dt.setDate(base.getDate() - i);
+      const day = dt.toLocaleDateString('sv');
+      const finance = calcFinancialSnapshotFiltered(day, day);
+      out.push({
+        day,
+        bills: finance.active_bills_count,
+        cancelled_bills: finance.cancelled_bills_count,
+        gross_revenue: finance.gross_revenue,
+        total_discount: finance.total_discount,
+        net_revenue: finance.net_revenue,
+        total_refund: finance.total_refund,
+        final_revenue: finance.final_revenue,
+        revenue: finance.final_revenue
+      });
+    }
   }
+
   res.json(out);
 });
 app.get('/api/reports/billed-services', requireRole('admin','doctor','receptionist'), (req, res) => {
@@ -6075,10 +6355,35 @@ app.get('/api/reports/service-consumption', requireRole('admin','doctor','recept
   const db = readDB();
   ensureStore(db);
   const { date_from, date_to, service_id, product_id, search } = req.query;
+  const doctorFilter = req.query.doctor_id ? parseInt(req.query.doctor_id, 10) : null;
   const safePage = Math.max(1, parseInt(req.query.page, 10) || 1);
   const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
   const serviceById = new Map((db.services || []).map(s => [s.id, s]));
   const productById = new Map((db.store_products || []).map(p => [p.id, p]));
+  const billById = new Map((db.bills || []).map(b => [parseInt(b.id, 10), b]));
+  const apptById = new Map((db.appointments || []).map(a => [parseInt(a.id, 10), a]));
+  const doctorById = new Map((db.users || [])
+    .filter(u => String(u.role || '').toLowerCase() === 'doctor')
+    .map(u => [parseInt(u.id, 10), u]));
+
+  const resolveDoctorId = (r) => {
+    const fromRow = parseInt(r.doctor_id, 10) || null;
+    if (fromRow) return fromRow;
+    const bill = billById.get(parseInt(r.bill_id, 10));
+    if (bill && parseInt(bill.doctor_id, 10)) return parseInt(bill.doctor_id, 10);
+    const appt = apptById.get(parseInt(r.appointment_id, 10));
+    if (appt && parseInt(appt.doctor_id, 10)) return parseInt(appt.doctor_id, 10);
+    if (bill && bill.appointment_id) {
+      const linkedAppt = apptById.get(parseInt(bill.appointment_id, 10));
+      if (linkedAppt && parseInt(linkedAppt.doctor_id, 10)) return parseInt(linkedAppt.doctor_id, 10);
+    }
+    return null;
+  };
+
+  const availableDoctors = [...doctorById.values()]
+    .filter(d => d && d.active !== false)
+    .map(d => ({ id: parseInt(d.id, 10), name: d.name || `Doctor #${d.id}` }))
+    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
 
   const rows = (db.store_service_consumptions || []).filter(r => {
     const d = String((r.at || r.date || '')).slice(0,10);
@@ -6086,25 +6391,37 @@ app.get('/api/reports/service-consumption', requireRole('admin','doctor','recept
     if (date_to && d > date_to) return false;
     if (service_id && parseInt(r.service_id) !== parseInt(service_id)) return false;
     if (product_id && parseInt(r.product_id) !== parseInt(product_id)) return false;
+
+    const resolvedDoctorId = resolveDoctorId(r);
+    if (req.session && req.session.user && req.session.user.role === 'doctor' && parseInt(req.session.user.id, 10) !== resolvedDoctorId) return false;
+    if (doctorFilter && resolvedDoctorId !== doctorFilter) return false;
+
     if (search) {
-      const svc = serviceById.get(parseInt(r.service_id)) || {};
-      const prod = productById.get(parseInt(r.product_id)) || {};
+      const svc = serviceById.get(parseInt(r.service_id, 10)) || {};
+      const prod = productById.get(parseInt(r.product_id, 10)) || {};
+      const doc = doctorById.get(parseInt(resolvedDoctorId, 10)) || {};
       const q = String(search).toLowerCase().trim();
-      const blob = `${svc.name || ''} ${prod.name || ''} ${prod.sku || ''}`.toLowerCase();
+      const blob = `${svc.name || ''} ${prod.name || ''} ${prod.sku || ''} ${doc.name || ''}`.toLowerCase();
       if (!blob.includes(q)) return false;
     }
     return true;
   });
 
   const grouped = new Map();
+  const doctorTotals = new Map();
   for (const r of rows) {
-    const sid = parseInt(r.service_id);
-    const pid = parseInt(r.product_id);
-    const key = `${sid}-${pid}`;
+    const sid = parseInt(r.service_id, 10);
+    const pid = parseInt(r.product_id, 10);
+    const did = resolveDoctorId(r);
+    const doc = doctorById.get(parseInt(did, 10)) || {};
+    const doctorName = doc.name || (did ? `Doctor #${did}` : 'Unassigned');
+    const key = `${did || 0}-${sid}-${pid}`;
     if (!grouped.has(key)) {
       const svc = serviceById.get(sid) || {};
       const prod = productById.get(pid) || {};
       grouped.set(key, {
+        doctor_id: did || null,
+        doctor_name: doctorName,
         service_id: sid,
         service_name: svc.name || `Service #${sid}`,
         product_id: pid,
@@ -6126,6 +6443,12 @@ app.get('/api/reports/service-consumption', requireRole('admin','doctor','recept
     g.total_cost += rowCost;
     g.avg_unit_cost += unitCost;
     g.records += 1;
+
+    const dt = doctorTotals.get(doctorName) || { doctor_id: did || null, doctor_name: doctorName, total_cost: 0, total_consumed_qty: 0, total_service_qty: 0 };
+    dt.total_cost += rowCost;
+    dt.total_consumed_qty += parseFloat(r.consumed_qty || 0);
+    dt.total_service_qty += parseFloat(r.service_qty || 0);
+    doctorTotals.set(doctorName, dt);
   }
 
   const groupedRows = [...grouped.values()]
@@ -6137,10 +6460,21 @@ app.get('/api/reports/service-consumption', requireRole('admin','doctor','recept
       total_cost: parseFloat(x.total_cost.toFixed(3))
     }))
     .sort((a, b) => {
+      const dn = String(a.doctor_name || '').localeCompare(String(b.doctor_name || ''));
+      if (dn !== 0) return dn;
       const sn = String(a.service_name || '').localeCompare(String(b.service_name || ''));
       if (sn !== 0) return sn;
       return String(a.product_name || '').localeCompare(String(b.product_name || ''));
     });
+
+  const doctorTotalsRows = [...doctorTotals.values()]
+    .map(d => ({
+      ...d,
+      total_cost: parseFloat((d.total_cost || 0).toFixed(3)),
+      total_consumed_qty: parseFloat((d.total_consumed_qty || 0).toFixed(3)),
+      total_service_qty: parseFloat((d.total_service_qty || 0).toFixed(3))
+    }))
+    .sort((a, b) => String(a.doctor_name || '').localeCompare(String(b.doctor_name || '')));
 
   const total = groupedRows.length;
   const pages = Math.max(1, Math.ceil(total / limit));
@@ -6160,6 +6494,12 @@ app.get('/api/reports/service-consumption', requireRole('admin','doctor','recept
       total_service_qty: parseFloat(groupedRows.reduce((s, r) => s + (r.total_service_qty || 0), 0).toFixed(3)),
       total_consumed_qty: parseFloat(groupedRows.reduce((s, r) => s + (r.total_consumed_qty || 0), 0).toFixed(3)),
       total_cost: parseFloat(groupedRows.reduce((s, r) => s + (r.total_cost || 0), 0).toFixed(3))
+    },
+    doctor_totals: doctorTotalsRows,
+    filters: {
+      doctors: req.session && req.session.user && req.session.user.role === 'doctor'
+        ? availableDoctors.filter(d => parseInt(d.id, 10) === parseInt(req.session.user.id, 10))
+        : availableDoctors
     }
   });
 });
@@ -6863,7 +7203,88 @@ app.get('/api/reports/stock-movement', requireRole('admin','doctor','receptionis
     }
   }
 
-  rows.sort((a, b) => {
+  // Product sales — each billed product line is an OUT movement
+  const billingStore = getBillingProductStore(db);
+  const billingStoreId = billingStore ? parseInt(billingStore.id) : null;
+  const billingStoreName = billingStore ? (billingStore.name || 'Billing Store') : 'Billing Store';
+  if (!typeFilter || typeFilter === 'sale') {
+    for (const bill of (db.bills || [])) {
+      if (String(bill.payment_status || '') === 'Cancelled') continue;
+      const at = String(bill.created_at || '');
+      const day = at.slice(0, 10);
+      if (!day) continue;
+      if (dateFrom && day < dateFrom) continue;
+      if (dateTo && day > dateTo) continue;
+      if (storeFilter && billingStoreId !== storeFilter) continue;
+      const patient = (db.patients || []).find(p => p.id === bill.patient_id) || {};
+      for (const li of (bill.line_items || [])) {
+        if (li.type !== 'product') continue;
+        const pid = parseInt(li.ref_id);
+        const p = productsById.get(pid) || {};
+        const qty = parseFloat(li.qty || 0) || 0;
+        const unitCost = parseFloat(p.cost_price || 0) || 0;
+        const totalCost = parseFloat((qty * unitCost).toFixed(3));
+        const blob = [day, 'Sale', 'OUT', billingStoreName, p.name, p.sku, bill.bill_number || `BILL#${bill.id}`, patient.name, patient.mr_number].map(v => String(v || '').toLowerCase()).join(' ');
+        if (q && !blob.includes(q)) continue;
+        rows.push({
+          at, date: day,
+          movement_type: 'Sale',
+          direction: 'OUT',
+          store_id: billingStoreId,
+          store_name: billingStoreName,
+          product_id: pid,
+          product_name: p.name || li.name || `Product #${pid}`,
+          product_sku: p.sku || '',
+          qty: parseFloat(qty.toFixed(3)),
+          unit: li.unit || p.unit || '',
+          unit_cost: parseFloat(unitCost.toFixed(3)),
+          total_cost: totalCost,
+          reference: bill.bill_number || `BILL#${bill.id}`,
+          note: patient.name ? `Patient: ${patient.name}${patient.mr_number ? ' ('+patient.mr_number+')' : ''}` : ''
+        });
+      }
+    }
+  }
+
+  // Sales returns — each returned product line is an IN movement
+  if (!typeFilter || typeFilter === 'sales-return') {
+    for (const ret of (db.sales_returns || [])) {
+      if (ret.status === 'Voided') continue;
+      const at = String(ret.created_at || '');
+      const day = at.slice(0, 10);
+      if (!day) continue;
+      if (dateFrom && day < dateFrom) continue;
+      if (dateTo && day > dateTo) continue;
+      if (storeFilter && billingStoreId !== storeFilter) continue;
+      const patient = (db.patients || []).find(p => p.id === ret.patient_id) || {};
+      const bill = (db.bills || []).find(b => b.id === ret.bill_id) || {};
+      for (const item of (ret.items || [])) {
+        const pid = parseInt(item.ref_id);
+        const p = productsById.get(pid) || {};
+        const qty = parseFloat(item.qty || 0) || 0;
+        const unitCost = parseFloat(p.cost_price || 0) || 0;
+        const totalCost = parseFloat((qty * unitCost).toFixed(3));
+        const blob = [day, 'Sales Return', 'IN', billingStoreName, p.name, p.sku, ret.return_no, bill.bill_number, patient.name, patient.mr_number].map(v => String(v || '').toLowerCase()).join(' ');
+        if (q && !blob.includes(q)) continue;
+        rows.push({
+          at, date: day,
+          movement_type: 'Sales Return',
+          direction: 'IN',
+          store_id: billingStoreId,
+          store_name: billingStoreName,
+          product_id: pid,
+          product_name: p.name || item.name || `Product #${pid}`,
+          product_sku: p.sku || '',
+          qty: parseFloat(qty.toFixed(3)),
+          unit: item.unit || p.unit || '',
+          unit_cost: parseFloat(unitCost.toFixed(3)),
+          total_cost: totalCost,
+          reference: ret.return_no || `RET#${ret.id}`,
+          note: [patient.name ? `Patient: ${patient.name}` : '', bill.bill_number ? `Bill: ${bill.bill_number}` : ''].filter(Boolean).join(' | ')
+        });
+      }
+    }
+  }((a, b) => {
     const ad = String(a.at || a.date || '');
     const bd = String(b.at || b.date || '');
     if (ad !== bd) return ad < bd ? 1 : -1;
@@ -7024,6 +7445,164 @@ app.get('/api/activity-logs/actions', requireRole('admin','receptionist','doctor
 app.get('/api/reports/top-patients', requireRole('admin'), (req, res) => {
   const db=readDB();
   res.json(db.patients.map(p=>({ name:p.name, phone:p.phone, visits:db.appointments.filter(a=>a.patient_id===p.id).length })).sort((a,b)=>b.visits-a.visits).slice(0,10));
+});
+
+// ===================== TOP SERVICES REPORT =====================
+app.get('/api/reports/top-services', requireRole('admin', 'receptionist'), (req, res) => {
+  const db = readDB();
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo   = String(req.query.date_to   || '').slice(0, 10);
+  const topN     = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+
+  const servicesById = new Map((db.services || []).map(s => [String(s.id), s]));
+  const counts = {};    // key -> { name, category, count, direct_count, pkg_count, total_revenue }
+
+  for (const bill of (db.bills || [])) {
+    if (bill.status === 'Cancelled') continue;
+    const day = String(bill.created_at || '').slice(0, 10);
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo   && day > dateTo)   continue;
+
+    for (const li of (bill.line_items || [])) {
+      const type = String(li.type || '').toLowerCase();
+
+      // For package line items: skip the package itself but extract the services used via selected_service_ids
+      if (type === 'package' || type === 'patient_package') {
+        const selIds = Array.isArray(li.selected_service_ids) ? li.selected_service_ids.map(String).filter(Boolean) : [];
+        if (!selIds.length) continue;
+        for (const sid of selIds) {
+          if (!counts[sid]) {
+            const svc = servicesById.get(sid);
+            counts[sid] = { service_id: parseInt(sid), name: svc ? svc.name : `Service #${sid}`, category: svc ? (svc.category || '-') : '-', count: 0, direct_count: 0, pkg_count: 0, total_revenue: 0 };
+          }
+          counts[sid].count += 1;
+          counts[sid].pkg_count += 1;
+          // Revenue not added here — package revenue is captured in the Top Packages report
+        }
+        continue;
+      }
+
+      // For pkg_session lines the name may be "SvcName [PackageName]" or "SvcName ×N [PackageName]".
+      // Extract just the service part for name-based matching fallback.
+      const rawName = String(li.name || '');
+      let effectiveName = rawName;
+      if (type === 'pkg_session') {
+        // Format: "SvcName [PkgName]" or "SvcName ×N [PkgName]"
+        const bracketMatch = rawName.match(/^(.+?)\s*\[.+\]$/);
+        // Format: "PkgName — SvcName"
+        const separatorMatch = rawName.match(/^.+?\s+[—–\-·|/]\s+(.+)$/);
+        if (bracketMatch) effectiveName = bracketMatch[1].replace(/\s*×\d+$/, '').trim();
+        else if (separatorMatch) effectiveName = separatorMatch[1].trim();
+      }
+
+      const price = parseFloat(li.price || li.unit_price || li.amount || 0);
+      const qty   = parseFloat(li.qty   || li.quantity  || 1);
+      // For pkg_session lines price is not stored on the line item; use 0 (revenue is captured on the package purchase bill)
+      const lineTotal = price * qty;
+
+      // Resolve service ids for this line
+      let ids = [];
+      if (Array.isArray(li.selected_service_ids) && li.selected_service_ids.length) {
+        ids = li.selected_service_ids.map(String).filter(Boolean);
+      } else if (li.service_id) {
+        ids = [String(li.service_id)];
+      }
+
+      if (!ids.length) {
+        // Fallback: match by effectiveName (handles combined 'PackageName — ServiceName' strings)
+        const svc = (db.services || []).find(s => String(s.name || '').toLowerCase() === effectiveName.toLowerCase());
+        if (svc) ids = [String(svc.id)];
+      }
+
+      const isPkgSession = type === 'pkg_session';
+      for (const sid of ids) {
+        if (!counts[sid]) {
+          const svc = servicesById.get(sid);
+          counts[sid] = { service_id: parseInt(sid), name: svc ? svc.name : (effectiveName || `Service #${sid}`), category: svc ? (svc.category || '-') : '-', count: 0, direct_count: 0, pkg_count: 0, total_revenue: 0 };
+        }
+        counts[sid].count += qty;
+        if (isPkgSession) counts[sid].pkg_count += qty;
+        else counts[sid].direct_count += qty;
+        counts[sid].total_revenue += lineTotal / (ids.length || 1);
+      }
+
+      // Also count un-linked name-only lines
+      if (!ids.length && effectiveName) {
+        const key = `_name_${effectiveName.toLowerCase().replace(/\s+/g,'_')}`;
+        if (!counts[key]) counts[key] = { service_id: null, name: effectiveName, category: '-', count: 0, direct_count: 0, pkg_count: 0, total_revenue: 0 };
+        counts[key].count += qty;
+        if (isPkgSession) counts[key].pkg_count += qty;
+        else counts[key].direct_count += qty;
+        counts[key].total_revenue += lineTotal;
+      }
+    }
+  }
+
+  const rows = Object.values(counts)
+    .sort((a, b) => b.count - a.count || b.total_revenue - a.total_revenue)
+    .slice(0, topN)
+    .map((r, i) => ({ rank: i + 1, ...r, total_revenue: Math.round(r.total_revenue * 100) / 100 }));
+
+  res.json({ rows, date_from: dateFrom, date_to: dateTo });
+});
+
+// ===================== TOP PACKAGES REPORT =====================
+app.get('/api/reports/top-packages', requireRole('admin', 'receptionist'), (req, res) => {
+  const db = readDB();
+  const dateFrom = String(req.query.date_from || '').slice(0, 10);
+  const dateTo   = String(req.query.date_to   || '').slice(0, 10);
+  const topN     = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+
+  const packagesById = new Map((db.packages || []).map(p => [String(p.id), p]));
+  // Build a lookup: cleaned package name → package object (for name-based fallback matching)
+  const packagesByCleanName = new Map((db.packages || []).map(p => [String(p.name || '').toLowerCase().trim(), p]));
+  const counts = {};
+
+  // Strip appended service name from combined line-item names like "PackageName — Service" or "PackageName · Service"
+  function extractBasePkgName(raw) {
+    return String(raw || '').split(/\s+[—–\-·|/]\s+/)[0].trim();
+  }
+
+  for (const bill of (db.bills || [])) {
+    if (bill.status === 'Cancelled') continue;
+    const day = String(bill.created_at || '').slice(0, 10);
+    if (dateFrom && day < dateFrom) continue;
+    if (dateTo   && day > dateTo)   continue;
+
+    for (const li of (bill.line_items || [])) {
+      const type = String(li.type || '').toLowerCase();
+      // Only count the package header line, not individual session rows
+      if (type !== 'package' && type !== 'patient_package') continue;
+
+      const price = parseFloat(li.price || li.unit_price || li.amount || 0);
+      const qty   = parseFloat(li.qty   || li.quantity  || 1);
+
+      // Resolve key: prefer package_id, then match by clean name against known packages
+      let pid = li.package_id ? String(li.package_id) : null;
+      if (!pid) {
+        const baseName = extractBasePkgName(li.name);
+        const matched = packagesByCleanName.get(baseName.toLowerCase());
+        if (matched) pid = String(matched.id);
+      }
+
+      const key = pid || `_name_${extractBasePkgName(li.name).toLowerCase().replace(/\s+/g,'_')}`;
+
+      if (!counts[key]) {
+        const pkg = pid ? packagesById.get(pid) : null;
+        const displayName = pkg ? pkg.name : extractBasePkgName(li.name || `Package #${key}`);
+        counts[key] = { package_id: pid ? parseInt(pid) : null, name: displayName, sessions: pkg ? (pkg.sessions || pkg.session_count || null) : null, count: 0, total_revenue: 0 };
+      }
+      counts[key].count += qty;
+      counts[key].total_revenue += price * qty;
+    }
+  }
+
+  const rows = Object.values(counts)
+    .sort((a, b) => b.count - a.count || b.total_revenue - a.total_revenue)
+    .slice(0, topN)
+    .map((r, i) => ({ rank: i + 1, ...r, total_revenue: Math.round(r.total_revenue * 100) / 100 }));
+
+  res.json({ rows, date_from: dateFrom, date_to: dateTo });
 });
 
 // WhatsApp Campaign API removed
@@ -9552,6 +10131,175 @@ app.delete('/api/store/supplier-returns/:id', requireRole('admin'), (req, res) =
   res.json({ success: true });
 });
 
+// ===================== SALES RETURNS =====================
+
+// GET /api/sales-returns — list all sales returns
+app.get('/api/sales-returns', requirePermission('billing.view'), (req, res) => {
+  const db = readDB();
+  const list = (db.sales_returns || []).map(r => {
+    const bill = (db.bills || []).find(b => b.id === r.bill_id) || {};
+    const patient = (db.patients || []).find(p => p.id === r.patient_id) || {};
+    return {
+      ...r,
+      bill_number: bill.bill_number || `#${r.bill_id}`,
+      patient_name: patient.name || '-',
+      mr_number: patient.mr_number || '-'
+    };
+  }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  res.json(list);
+});
+
+// GET /api/sales-returns/:id — single return detail
+app.get('/api/sales-returns/:id', requirePermission('billing.view'), (req, res) => {
+  const db = readDB();
+  const r = (db.sales_returns || []).find(x => x.id === parseInt(req.params.id));
+  if (!r) return res.status(404).json({ error: 'Not found' });
+  const bill = (db.bills || []).find(b => b.id === r.bill_id) || {};
+  const patient = (db.patients || []).find(p => p.id === r.patient_id) || {};
+  res.json({ ...r, bill_number: bill.bill_number || `#${r.bill_id}`, patient_name: patient.name || '-', mr_number: patient.mr_number || '-' });
+});
+
+// GET /api/bills/:id/returnable-products — products on this bill that can still be returned
+app.get('/api/bills/:id/returnable-products', requirePermission('billing.view'), (req, res) => {
+  const db = readDB();
+  const bill = (db.bills || []).find(b => b.id === parseInt(req.params.id));
+  if (!bill) return res.status(404).json({ error: 'Bill not found' });
+  if (String(bill.payment_status || '') === 'Cancelled') return res.status(400).json({ error: 'Cannot return from a cancelled bill' });
+
+  // Collect product lines from this bill
+  const productLines = (bill.line_items || []).filter(li => li.type === 'product');
+
+  // Sum already-returned qty per product for this bill
+  const returnedQty = {};
+  (db.sales_returns || []).filter(r => r.bill_id === bill.id && r.status !== 'Voided').forEach(r => {
+    (r.items || []).forEach(it => {
+      returnedQty[it.ref_id] = (returnedQty[it.ref_id] || 0) + parseFloat(it.qty || 0);
+    });
+  });
+
+  const items = productLines.map(li => {
+    const sold = parseFloat(li.qty || 0);
+    const alreadyReturned = parseFloat(returnedQty[li.ref_id] || 0);
+    const returnable = parseFloat((sold - alreadyReturned).toFixed(3));
+    return {
+      ref_id: li.ref_id,
+      name: li.name || `Product #${li.ref_id}`,
+      unit_price: parseFloat(li.amount || 0) / (sold || 1),
+      sold_qty: sold,
+      already_returned: alreadyReturned,
+      returnable_qty: returnable,
+      unit: li.unit || ''
+    };
+  }).filter(i => i.returnable_qty > 0);
+
+  res.json({ bill_number: bill.bill_number, patient_id: bill.patient_id, items });
+});
+
+// POST /api/sales-returns — create a new sales return
+app.post('/api/sales-returns', requirePermission('billing.edit'), (req, res) => {
+  const db = readDB();
+  const { bill_id, items, notes, refund_method } = req.body;
+
+  if (!bill_id || !Array.isArray(items) || !items.length)
+    return res.status(400).json({ error: 'bill_id and items are required' });
+
+  const bill = (db.bills || []).find(b => b.id === parseInt(bill_id));
+  if (!bill) return res.status(404).json({ error: 'Bill not found' });
+  if (String(bill.payment_status || '') === 'Cancelled') return res.status(400).json({ error: 'Cannot return from a cancelled bill' });
+
+  const billingStore = getBillingProductStore(db);
+  if (!billingStore) return res.status(400).json({ error: 'Billing product store not configured' });
+
+  // Validate each item
+  const returnedQty = {};
+  (db.sales_returns || []).filter(r => r.bill_id === parseInt(bill_id) && r.status !== 'Voided').forEach(r => {
+    (r.items || []).forEach(it => {
+      returnedQty[it.ref_id] = (returnedQty[it.ref_id] || 0) + parseFloat(it.qty || 0);
+    });
+  });
+
+  const validatedItems = [];
+  for (const item of items) {
+    const refId = parseInt(item.ref_id);
+    const qty = parseFloat(item.qty || 0);
+    if (!refId || qty <= 0) return res.status(400).json({ error: 'Invalid item or qty' });
+
+    const billLine = (bill.line_items || []).find(li => li.type === 'product' && parseInt(li.ref_id) === refId);
+    if (!billLine) return res.status(400).json({ error: `Product #${refId} was not on this bill` });
+
+    const soldQty = parseFloat(billLine.qty || 0);
+    const alreadyReturned = parseFloat(returnedQty[refId] || 0);
+    const returnable = parseFloat((soldQty - alreadyReturned).toFixed(3));
+    if (qty > returnable) return res.status(400).json({ error: `Cannot return ${qty} of ${billLine.name || 'product'} — only ${returnable} returnable` });
+
+    const unitPrice = parseFloat(billLine.amount || 0) / (soldQty || 1);
+    validatedItems.push({ ref_id: refId, name: billLine.name || `Product #${refId}`, qty: parseFloat(qty.toFixed(3)), unit_price: parseFloat(unitPrice.toFixed(3)), line_total: parseFloat((qty * unitPrice).toFixed(3)), unit: billLine.unit || '' });
+  }
+
+  // Generate return number
+  if (!db.sales_returns) db.sales_returns = [];
+  const returnNo = `SR-${String(db.sales_returns.length + 1).padStart(4, '0')}`;
+  const id = nextId(db, 'sales_returns');
+  const totalAmount = parseFloat(validatedItems.reduce((s, i) => s + i.line_total, 0).toFixed(3));
+
+  const record = {
+    id, return_no: returnNo, bill_id: parseInt(bill_id), patient_id: bill.patient_id,
+    items: validatedItems, total_amount: totalAmount,
+    refund_method: refund_method || 'Cash', notes: notes || '',
+    status: 'Active', created_at: now(),
+    created_by: (req.session?.user?.id) || req.session?.userId || null
+  };
+  db.sales_returns.push(record);
+
+  // Restore stock
+  for (const item of validatedItems) {
+    const stock = getStock(db, item.ref_id, billingStore.id);
+    stock.qty = parseFloat((parseFloat(stock.qty || 0) + item.qty).toFixed(3));
+  }
+
+  logActivity(db, req, {
+    module: 'billing', action: 'sales_return_created',
+    entity_type: 'sales_return', entity_id: id,
+    bill_id: parseInt(bill_id), patient_id: bill.patient_id,
+    notes: `Sales return ${returnNo} created for bill ${bill.bill_number || bill_id}`,
+    meta: { return_no: returnNo, total: totalAmount, items: validatedItems.length }
+  });
+
+  writeDB(db);
+  res.json({ success: true, id, return_no: returnNo, total_amount: totalAmount });
+});
+
+// DELETE /api/sales-returns/:id — void a sales return (removes stock again)
+app.delete('/api/sales-returns/:id', requireRole('admin'), (req, res) => {
+  const db = readDB();
+  const r = (db.sales_returns || []).find(x => x.id === parseInt(req.params.id));
+  if (!r) return res.status(404).json({ error: 'Not found' });
+  if (r.status === 'Voided') return res.status(400).json({ error: 'Already voided' });
+
+  const billingStore = getBillingProductStore(db);
+  if (!billingStore) return res.status(400).json({ error: 'Billing product store not configured' });
+
+  r.status = 'Voided';
+  r.voided_at = now();
+  r.voided_by = (req.session?.user?.id) || req.session?.userId || null;
+
+  // Deduct stock again
+  for (const item of (r.items || [])) {
+    const stock = getStock(db, item.ref_id, billingStore.id);
+    stock.qty = parseFloat((parseFloat(stock.qty || 0) - item.qty).toFixed(3));
+  }
+
+  logActivity(db, req, {
+    module: 'billing', action: 'sales_return_voided',
+    entity_type: 'sales_return', entity_id: r.id,
+    notes: `Sales return ${r.return_no} voided`,
+    meta: { return_no: r.return_no }
+  });
+
+  writeDB(db);
+  res.json({ success: true });
+});
+
 // ===================== SPA fallback =====================
 app.get('*', (req,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
@@ -9563,11 +10311,32 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\nClinic Management System -> http://localhost:${PORT}`);
+  console.log(`\nCTMS — Clinic Top Management System -> http://localhost:${PORT}`);
   console.log(`Logins: admin/admin123  |  doctor1/doctor123  |  receptionist1/recep123\n`);
 
   // Checkpoint WAL on startup to clear any leftover WAL from previous run
   try { sqlite.pragma('wal_checkpoint(TRUNCATE)'); } catch (_) {}
+
+  // Startup migration: remove patient_packages whose originating bill is Cancelled
+  try {
+    const db = readDB();
+    if (Array.isArray(db.patient_packages)) {
+      const before = db.patient_packages.length;
+      db.patient_packages = db.patient_packages.filter(pp => {
+        if (!pp.bill_id) return true; // no bill link — keep
+        const bill = (db.bills || []).find(b => b.id === pp.bill_id);
+        if (!bill) return true; // bill not found — keep to be safe
+        return bill.payment_status !== 'Cancelled';
+      });
+      const removed = before - db.patient_packages.length;
+      if (removed > 0) {
+        writeDB(db);
+        console.log(`[Startup] Removed ${removed} patient_package(s) linked to cancelled bills.`);
+      }
+    }
+  } catch (e) {
+    console.error('[Startup] patient_packages cleanup error:', e.message);
+  }
 
   // Periodic WAL checkpoint every 5 minutes to prevent WAL from growing too large
   setInterval(() => {

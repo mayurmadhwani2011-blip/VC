@@ -101,6 +101,7 @@ const IC = {
   discount:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M21 3h-4"/><path d="M21 21h-4"/><path d="M9 21H5a2 2 0 0 1-2-2v-4"/><line x1="17" y1="3" x2="21" y2="3"/><line x1="17" y1="21" x2="21" y2="21"/><path d="m15 9-6 6"/><circle cx="9.5" cy="9.5" r="0.5" fill="currentColor"/><circle cx="14.5" cy="14.5" r="0.5" fill="currentColor"/></svg>',
   refund:       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
   supreturn:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
+  salesreturn:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/><line x1="4" y1="20" x2="10" y2="20"/></svg>',
   download:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
 };
 
@@ -122,6 +123,7 @@ const NAV_ALL = [
   { id: 'billing',           label: 'Billing',             icon: IC.billing,        perm: 'billing.view',            roles: ['admin','receptionist'] },
   { id: 'expenses',          label: 'Expenses',            icon: IC.expense,        perm: 'expenses.view',           roles: ['admin','receptionist'] },
   { id: 'discount-master',   label: 'Discounts',           icon: IC.discount,       perm: 'billing.discount.view',   roles: ['admin','receptionist'] },
+  { id: 'store-sales-returns',    label: 'Sales Returns',    icon: IC.salesreturn,    perm: 'billing.view',            roles: ['admin','receptionist'] },
   { section: 'Reports' },
   { id: 'reports',           label: 'Reports',             icon: IC.reports,        perm: 'reports.view',            roles: ['admin','doctor','receptionist'] },
   { section: 'Settings' },
@@ -157,6 +159,7 @@ const PAGE_PERM = {
   store: 'store.view', 'store-products': 'store.view', 'store-suppliers': 'store.manage',
   'store-purchase': 'store.purchase', 'store-transfers': 'store.transfer', 'store-adjustments': 'store.adjust', 'store-consumption': 'store.consume', 'store-sub-stores': 'store.manage',
   'store-supplier-returns': 'store.purchase',
+  'store-sales-returns': 'billing.view',
 };
 
 const PAGE_TITLES = {
@@ -185,6 +188,7 @@ const PAGE_TITLES = {
   'store-consumption': ['Manual Consumption', 'Consume stock manually with cost tracking'],
   'store-sub-stores': ['Sub-Stores', 'Manage store locations'],
   'store-supplier-returns': ['Supplier Returns', 'Return items to suppliers from received purchase orders'],
+  'store-sales-returns': ['Sales Returns', 'Return products sold to patients and restore stock'],
 };
 
 function getAccessibleNavPages() {
@@ -628,6 +632,10 @@ async function doLogout() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Set copyright year dynamically
+  const yrEl = document.getElementById('copyrightYear');
+  if (yrEl) yrEl.textContent = new Date().getFullYear();
+
   // Always show login page and hide main app on load
   document.getElementById('loginPage').classList.remove('hidden');
   document.getElementById('mainApp').classList.add('hidden');
@@ -976,7 +984,7 @@ function navigate(page) {
   ca.style.animation = '';
 
   const pages = { dashboard, patients, appointments, 'follow-ups': followUps, scheduler, prescriptions, billing, expenses, reports, users, services, packages, setup, 'owner-control': ownerControl, 'patient-packages': patientPackages, 'role-permissions': rolePermissions,
-    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-adjustments': storeAdjustments, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster, 'store-supplier-returns': storeSupplierReturns };
+    store: storeOverview, 'store-products': storeProducts, 'store-suppliers': storeSuppliers, 'store-purchase': storePurchase, 'store-transfers': storeTransfers, 'store-adjustments': storeAdjustments, 'store-consumption': storeManualConsumption, 'store-sub-stores': storeSubStores, 'discount-master': discountMaster, 'store-supplier-returns': storeSupplierReturns, 'store-sales-returns': storeSalesReturns };
   if (pages[page]) {
     if (page === 'scheduler' || page === 'patient-packages') {
       pages[page](renderSeq);
@@ -5304,7 +5312,7 @@ function renderDiscountTable() {
         <td>${escHtml(valueLabel)}</td>
         <td>${escHtml(d.applicable_on||'all')}</td>
         <td>${d.max_limit ? `KD ${parseFloat(d.max_limit).toFixed(3)}` : '-'}</td>
-        <td style="font-size:12px">${escHtml(d.valid_from||'-')} ? ${escHtml(d.valid_to||'-')}<br/>${validLabel}</td>
+        <td style="font-size:12px">${escHtml(d.valid_from||'-')} - ${escHtml(d.valid_to||'-')}<br/>${validLabel}</td>
         <td>${d.active !== false ? '<span class="badge badge-confirmed">Active</span>' : '<span class="badge badge-cancelled">Inactive</span>'}</td>
         <td class="td-actions">
           <button class="btn btn-sm" onclick="openDiscountModal(${d.id})">${IC.edit}</button>
@@ -6868,11 +6876,27 @@ function billToggleService(id) {
   const idx = _billLineItems.findIndex(i => !i._locked && i.type === 'service' && i.ref_id === id);
   const card = document.querySelector(`.bill-svc-card[data-svc-id="${id}"]`);
   if (idx >= 0) {
+    // Already in cart — increment qty
+    const item = _billLineItems[idx];
+    item.qty = (item.qty || 1) + 1;
+    item.amount = parseFloat((item.unit_price * item.qty).toFixed(3));
+  } else {
+    _billLineItems.push({ ref_id: id, name: svc.name, unit_price: svc.price, amount: svc.price, type: 'service', qty: 1 });
+    if (card) card.classList.add('selected');
+  }
+  renderBillItemsList();
+}
+function billChangeServiceQty(idx, delta) {
+  const item = _billLineItems[idx];
+  if (!item || item.type !== 'service' || item._locked) return;
+  const newQty = (item.qty || 1) + delta;
+  if (newQty <= 0) {
     _billLineItems.splice(idx, 1);
+    const card = document.querySelector(`.bill-svc-card[data-svc-id="${item.ref_id}"]`);
     if (card) card.classList.remove('selected');
   } else {
-    _billLineItems.push({ ref_id: id, name: svc.name, amount: svc.price, type: 'service' });
-    if (card) card.classList.add('selected');
+    item.qty = newQty;
+    item.amount = parseFloat((item.unit_price * newQty).toFixed(3));
   }
   renderBillItemsList();
 }
@@ -7029,6 +7053,7 @@ function renderBillItemsList() {
       <span class="badge badge-${typeClr[item.type]||'secondary'} bill-item-type">${item.type}</span>
       ${item._locked ? `<span class="bill-item-locked-badge" title="Previously billed - cannot be removed">\uD83D\uDD12</span>` : ''}
       <span class="bill-item-name">${escHtml(billItemDisplayName(item))}${item.type==='product' ? ` <span class="text-muted text-sm">x ${parseFloat(item.qty||0).toFixed(3)} ${escHtml(item.unit||'')}</span>` : ''}</span>
+      ${item.type==='service' && !item._locked ? `<span class="bill-item-qty-ctrl"><button type="button" class="qty-btn" onclick="billChangeServiceQty(${i},-1)" title="Decrease">−</button><span class="qty-val">${item.qty||1}</span><button type="button" class="qty-btn" onclick="billChangeServiceQty(${i},1)" title="Increase">+</button></span>` : ''}
       <span class="bill-item-amount">KD ${parseFloat(item.amount).toFixed(3)}</span>
       ${item._locked ? '' : `<button type="button" class="btn-icon-sm" onclick="billRemoveItem(${i})" title="Remove">${IC.x}</button>`}
     </div>`).join('');
@@ -7671,7 +7696,7 @@ async function printBill(id) {
           ? escHtml(serviceNames.join(', '))
           : escHtml(String(item.name || '').replace(`${item.package_name} - `, '').replace(item.package_name, '').trim());
         detailLines = getPackageUsageDetailLines(item, b, printPatientPackages);
-        descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:14px;color:#333;margin-top:2px">${sub}</div>` : ''}`;
+        descHtml = `<div style="font-weight:700;font-size:11px">${escHtml(item.package_name)}</div>${sub ? `<div style="font-size:10px;color:#333;margin-top:1px">${sub}</div>` : ''}`;
       } else if (item.type === 'pkg_session' && item.package_name) {
         detailLines = getPackageUsageDetailLines(item, b, printPatientPackages);
         const subText = String(serviceNames.length ? serviceNames.join(', ') : (item.name || '')).trim();
@@ -7680,26 +7705,26 @@ async function printBill(id) {
           const completedOn = item.completion_date ? ` - ${String(item.completion_date).slice(0, 10)}` : '';
           detailLines.push(`Status: ${svcStatus}${completedOn}`);
         }
-        descHtml = `<div style="font-weight:700;font-size:16px">${escHtml(item.package_name)}</div>`;
+        descHtml = `<div style="font-weight:700;font-size:11px">${escHtml(item.package_name)}</div>`;
       }
 
       if (item.type !== 'package' && item.type !== 'pkg_session') {
         const statusColor = svcStatus === 'Completed' ? '#1b5e20' : (svcStatus === 'In Progress' ? '#0d47a1' : '#b45309');
         const statusIcon = svcStatus === 'Completed' ? '&#10003;' : (svcStatus === 'In Progress' ? '&#9654;' : '&#9679;');
         const completionText = item.completion_date ? ` - ${escHtml(String(item.completion_date).slice(0, 10))}` : '';
-        descHtml += `<div style="font-size:13px;color:${statusColor};margin-top:3px"><strong>${statusIcon} ${escHtml(svcStatus)}${completionText}</strong></div>`;
+        descHtml += `<div style="font-size:10px;color:${statusColor};margin-top:2px"><strong>${statusIcon} ${escHtml(svcStatus)}${completionText}</strong></div>`;
       }
 
       const mainRow = `<tr style="${detailLines.length ? '' : 'border-bottom:1px solid #bbb'}">
-        <td style="padding:6px 3px;font-size:14px;line-height:1.28;color:#000;vertical-align:top;white-space:normal;word-break:break-word;overflow-wrap:anywhere">${descHtml}</td>
-        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
-        <td style="padding:6px 3px;font-size:14px;text-align:center;color:#000;white-space:nowrap;vertical-align:top">${escHtml(unit)}</td>
-        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineRateDisplay}</td>
-        <td style="padding:6px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineAmountDisplay}</td>
+        <td style="padding:3px 2px;font-size:11px;line-height:1.25;color:#000;vertical-align:top;white-space:normal;word-break:break-word;overflow-wrap:anywhere">${descHtml}</td>
+        <td style="padding:3px 2px;font-size:11px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${Number.isInteger(qty) || qty % 1 === 0 ? Math.round(qty) : qty.toFixed(3)}</td>
+        <td style="padding:3px 2px;font-size:11px;text-align:center;color:#000;white-space:nowrap;vertical-align:top">${escHtml(unit)}</td>
+        <td style="padding:3px 2px;font-size:11px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineRateDisplay}</td>
+        <td style="padding:3px 2px;font-size:11px;text-align:right;color:#000;white-space:nowrap;vertical-align:top">${lineAmountDisplay}</td>
       </tr>`;
       if (!detailLines.length) return mainRow;
       const detailRows = detailLines.map((line, idx) => `<tr style="${idx === detailLines.length - 1 ? 'border-bottom:1px solid #bbb' : ''}">
-        <td colspan="5" style="padding:2px 3px 2px 8px;font-size:13px;line-height:1.26;color:#000;white-space:normal;word-break:break-word;overflow-wrap:anywhere"><strong>${escHtml(line)}</strong></td>
+        <td colspan="5" style="padding:2px 3px 2px 8px;font-size:10px;line-height:1.25;color:#000;white-space:normal;word-break:break-word;overflow-wrap:anywhere;text-align:left"><strong>${escHtml(line)}</strong></td>
       </tr>`).join('');
       return `${mainRow}${detailRows}`;
     }).join('');
@@ -7709,11 +7734,11 @@ async function printBill(id) {
     if (b.other_charges)    itemRows += `<tr><td>Other Charges</td><td style="text-align:right">1</td><td style="text-align:center">pcs</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.other_charges)||0)}</td><td style="text-align:right;white-space:nowrap">${Math.round(parseFloat(b.other_charges)||0)}</td></tr>`;
   }
   const paymentSection = (b.payment_splits && b.payment_splits.length > 1)
-    ? `<table style="width:100%;border-collapse:collapse;margin-top:6px">
-        <thead><tr><th style="text-align:left;padding:5px 3px;font-size:14px;color:#000;border-bottom:1px solid #999">Payment Method</th><th style="text-align:right;padding:5px 3px;font-size:14px;color:#000;border-bottom:1px solid #999">Amount</th></tr></thead>
-        <tbody>${b.payment_splits.map(s=>`<tr><td style="padding:5px 3px;font-size:14px;color:#000">${escHtml(s.method)}</td><td style="padding:5px 3px;font-size:14px;text-align:right;color:#000">KD ${parseFloat(s.amount).toFixed(3)}</td></tr>`).join('')}</tbody>
+    ? `<table style="width:100%;border-collapse:collapse;margin-top:4px">
+        <thead><tr><th style="text-align:left;padding:3px 2px;font-size:10px;color:#000;border-bottom:1px solid #999">Payment Method</th><th style="text-align:right;padding:3px 2px;font-size:10px;color:#000;border-bottom:1px solid #999">Amount</th></tr></thead>
+        <tbody>${b.payment_splits.map(s=>`<tr><td style="padding:3px 2px;font-size:11px;color:#000">${escHtml(s.method)}</td><td style="padding:3px 2px;font-size:11px;text-align:right;color:#000">KD ${parseFloat(s.amount).toFixed(3)}</td></tr>`).join('')}</tbody>
        </table>`
-    : `<p style="margin:8px 0;color:#000;font-size:15px;line-height:1.3"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'-')} &nbsp;|&nbsp; <strong>Status:</strong> ${escHtml(b.payment_status||'-')}</p>`;
+    : `<p style="margin:4px 0;color:#000;font-size:11px;line-height:1.3"><strong>Payment Method:</strong> ${escHtml(b.payment_method||'-')} &nbsp;|&nbsp; <strong>Status:</strong> ${escHtml(b.payment_status||'-')}</p>`;
   const hasDiscount = (parseFloat(b.discount_amount || 0) || 0) > 0;
   const hasRefunds = Array.isArray(refunds) && refunds.length > 0;
   const isCancelled = String(b.payment_status || '') === 'Cancelled';
@@ -7722,27 +7747,27 @@ async function printBill(id) {
     ? 'Percentage'
     : (discountTypeRaw === 'fixed' ? 'Fixed Amount' : (discountTypeRaw === 'open' ? 'Open / Manual' : (String(b.discount_label || '').includes('%') ? 'Percentage' : 'Discount')));
   const refundDetailsHtml = hasRefunds ? `
-    <div style="margin-top:12px;border-top:2px dashed #b71c1c;padding-top:10px">
-      <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#b71c1c">REFUND DETAILS</p>
+    <div style="margin-top:6px;border-top:1px dashed #b71c1c;padding-top:6px">
+      <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#b71c1c">REFUND DETAILS</p>
       ${refunds.map((r, idx) => {
         const refundItems = Array.isArray(r.refund_items) ? r.refund_items.filter(Boolean) : [];
-        return `<div style="margin-bottom:${idx === refunds.length - 1 ? '0' : '10px'};padding:8px 0;${idx < refunds.length - 1 ? 'border-bottom:1px solid #ddd;' : ''}">
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund ${idx + 1}:</strong> ${escHtml(String(r.refund_type || 'partial').replace(/\b\w/g, c => c.toUpperCase()))}</p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Date:</strong> ${escHtml(formatDateTime(r.created_at || ''))}</p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Amount:</strong> <span style="color:#b71c1c;font-weight:700">KD ${parseFloat(r.refund_amount || 0).toFixed(3)}</span></p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refund Payment Type:</strong> ${escHtml(r.refund_payment_type || '-')}</p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Refunded By:</strong> ${escHtml(r.refunded_by_name || '-')}</p>
-          <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Reason:</strong> ${escHtml(r.refund_reason || '-')}</p>
-          ${refundItems.length ? `<p style="margin:0;font-size:14px;color:#000"><strong>Refunded Items:</strong> ${escHtml(refundItems.join(', '))}</p>` : ''}
+        return `<div style="margin-bottom:${idx === refunds.length - 1 ? '0' : '6px'};padding:4px 0;${idx < refunds.length - 1 ? 'border-bottom:1px solid #ddd;' : ''}">
+          <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Refund ${idx + 1}:</strong> ${escHtml(String(r.refund_type || 'partial').replace(/\b\w/g, c => c.toUpperCase()))}</p>
+          <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Refund Date:</strong> ${escHtml(formatDateTime(r.created_at || ''))}</p>
+          <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Refund Amount:</strong> <span style="color:#b71c1c;font-weight:700">KD ${parseFloat(r.refund_amount || 0).toFixed(3)}</span></p>
+          <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Refund Payment Type:</strong> ${escHtml(r.refund_payment_type || '-')}</p>
+          <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Refunded By:</strong> ${escHtml(r.refunded_by_name || '-')}</p>
+          <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Reason:</strong> ${escHtml(r.refund_reason || '-')}</p>
+          ${refundItems.length ? `<p style="margin:0;font-size:11px;color:#000"><strong>Refunded Items:</strong> ${escHtml(refundItems.join(', '))}</p>` : ''}
         </div>`;
       }).join('')}
     </div>` : '';
   const cancellationHtml = isCancelled ? `
-    <div style="margin-top:12px;border-top:2px dashed #c62828;padding-top:10px">
-      <p style="margin:0 0 8px;font-size:18px;font-weight:700;color:#c62828">BILL CANCELLED</p>
-      <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Cancelled Date:</strong> ${escHtml(formatDateTime(b.cancelled_at || ''))}</p>
-      <p style="margin:0 0 4px;font-size:14px;color:#000"><strong>Cancelled By:</strong> ${escHtml(cancelledByName)}</p>
-      <p style="margin:0;font-size:14px;color:#000"><strong>Reason:</strong> ${escHtml(b.cancellation_reason || '-')}</p>
+    <div style="margin-top:6px;border-top:1px dashed #c62828;padding-top:6px">
+      <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#c62828">BILL CANCELLED</p>
+      <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Cancelled Date:</strong> ${escHtml(formatDateTime(b.cancelled_at || ''))}</p>
+      <p style="margin:0 0 2px;font-size:11px;color:#000"><strong>Cancelled By:</strong> ${escHtml(cancelledByName)}</p>
+      <p style="margin:0;font-size:11px;color:#000"><strong>Reason:</strong> ${escHtml(b.cancellation_reason || '-')}</p>
     </div>` : '';
 
   const clinicCfg = (currentSystem && currentSystem.clinic) ? currentSystem.clinic : {};
@@ -7755,24 +7780,24 @@ async function printBill(id) {
     : '';
 
   printArea.innerHTML = `
-    <div style="width:100%;text-align:center;padding:0 0 10px;border-bottom:3px solid #000;margin-bottom:14px;box-sizing:border-box">
+    <div style="width:100%;text-align:center;padding:0 0 6px;border-bottom:2px solid #000;margin-bottom:8px;box-sizing:border-box">
       ${logoHtml}
-      <h2 style="margin:0 0 3px;font-size:28px;font-weight:700;font-family:Arial,sans-serif;color:#000">${escHtml(printClinicName)}</h2>
-      <p style="margin:0;font-size:18px;font-weight:700;line-height:1.25;letter-spacing:.2px;color:#000">${escHtmlMultiline(printHeader)}</p>
-      <p style="margin:5px 0 0;font-size:19px;font-weight:700;color:#000">PAYMENT RECEIPT</p>
+      <h2 style="margin:0 0 2px;font-size:16px;font-weight:700;font-family:Arial,sans-serif;color:#000;text-align:center">${escHtml(printClinicName)}</h2>
+      <p style="margin:0;font-size:12px;font-weight:700;line-height:1.25;letter-spacing:.2px;color:#000;text-align:center">${escHtmlMultiline(printHeader)}</p>
+      <p style="margin:3px 0 0;font-size:13px;font-weight:700;color:#000;text-align:center">PAYMENT RECEIPT</p>
     </div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:10px;table-layout:fixed">
       <tr>
-        <td style="padding:5px 3px;font-size:15px;width:50%;color:#000"><strong>Bill No:</strong> ${escHtml(b.bill_number||'-')}</td>
-        <td style="padding:5px 12px 5px 3px;font-size:14px;text-align:right;color:#000;vertical-align:top;white-space:nowrap"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
+        <td style="padding:2px 3px;font-size:11px;width:50%;color:#000"><strong>Bill No:</strong> ${escHtml(b.bill_number||'-')}</td>
+        <td style="padding:2px 2px 2px 3px;font-size:10px;text-align:right;color:#000;vertical-align:top;word-break:break-word"><strong>Date:</strong> ${escHtml(formatDateTime(b.created_at||''))}</td>
       </tr>
       <tr>
-        <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Patient:</strong> ${escHtml(b.patient_name||'-')}</td>
-        <td style="padding:5px 12px 5px 3px;font-size:14px;text-align:right;color:#000;white-space:nowrap;vertical-align:top"><strong>MR #:</strong> ${escHtml(b.mr_number||'-')}</td>
+        <td style="padding:2px 3px;font-size:11px;color:#000"><strong>Patient:</strong> ${escHtml(b.patient_name||'-')}</td>
+        <td style="padding:2px 2px 2px 3px;font-size:10px;text-align:right;color:#000;white-space:nowrap;vertical-align:top"><strong>MR #:</strong> ${escHtml(b.mr_number||'-')}</td>
       </tr>
       <tr>
-        <td style="padding:5px 3px;font-size:15px;color:#000"><strong>Phone:</strong> ${escHtml(b.patient_phone||'-')}</td>
-        <td style="padding:5px 12px 5px 3px;font-size:13px;text-align:right;color:#000;white-space:nowrap;letter-spacing:0;vertical-align:top"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
+        <td style="padding:2px 3px;font-size:11px;color:#000"><strong>Phone:</strong> ${escHtml(b.patient_phone||'-')}</td>
+        <td style="padding:2px 2px 2px 3px;font-size:10px;text-align:right;color:#000;white-space:nowrap;letter-spacing:0;vertical-align:top"><strong>Visit ID:</strong> ${escHtml(b.visit_id||'-')}</td>
       </tr>
     </table>
     <table id="receiptItemsTable" style="width:100%;border-collapse:collapse;margin-bottom:8px;table-layout:fixed">
@@ -7787,18 +7812,18 @@ async function printBill(id) {
       <tbody>${itemRows}</tbody>
       <tfoot>
         ${hasDiscount
-          ? `<tr style="border-top:2px solid #000"><td colspan="4" style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>Subtotal</strong></td><td style="text-align:right;padding:7px 3px;font-size:15px;color:#000"><strong>KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</strong></td></tr>
-             <tr><td colspan="4" style="text-align:right;padding:6px 3px;font-size:14px;color:#000"><strong>Discount (${escHtml(discountTypeLabel)})</strong></td><td style="text-align:right;padding:6px 3px;font-size:14px;color:#d32f2f"><strong>- KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></td></tr>`
+          ? `<tr style="border-top:1px solid #000"><td colspan="5" style="text-align:right;padding:4px 3px;font-size:11px;color:#000"><strong>Subtotal &nbsp;&nbsp; KD ${parseFloat(b.subtotal||b.total||0).toFixed(3)}</strong></td></tr>
+             <tr><td colspan="5" style="text-align:right;padding:3px 3px;font-size:11px;color:#d32f2f"><strong>Discount (${escHtml(discountTypeLabel)}) &nbsp;&nbsp; - KD ${parseFloat(b.discount_amount||0).toFixed(3)}</strong></td></tr>`
           : ''}
-        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:2px solid #000'}"><td colspan="4" style="text-align:right;padding:6px 2px;font-size:14px;font-weight:700;color:#000"><strong>Total</strong></td><td style="text-align:right;padding:6px 14px 6px 2px;font-size:14px;font-weight:700;color:#000;white-space:nowrap"><strong>KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
+        <tr style="${hasDiscount ? 'border-top:1px solid #bbb' : 'border-top:1px solid #000'}"><td colspan="5" style="text-align:right;padding:4px 3px;font-size:12px;font-weight:700;color:#000"><strong>Total &nbsp;&nbsp; KD ${parseFloat(b.total||0).toFixed(3)}</strong></td></tr>
       </tfoot>
     </table>
-    ${hasDiscount ? `<p style="margin:6px 0;color:#000;font-size:15px;line-height:1.35"><strong>Discount Name:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <strong>Discount Type:</strong> ${escHtml(discountTypeLabel)}</p>` : ''}
+    ${hasDiscount ? `<p style="margin:3px 0;color:#000;font-size:10px;line-height:1.3"><strong>Discount Name:</strong> ${escHtml(b.discount_label||'Discount')} &nbsp;|&nbsp; <strong>Discount Type:</strong> ${escHtml(discountTypeLabel)}</p>` : ''}
     <div id="printPaymentRow">${paymentSection}</div>
     ${refundDetailsHtml}
     ${cancellationHtml}
-    <p style="margin:8px 0 0;font-size:13px;color:#000"><strong>Settled By:</strong> ${escHtml(createdByName)}</p>
-    <p style="text-align:center;margin-top:10px;font-size:12px;line-height:1.3;color:#000">${escHtmlMultiline(printFooter)}</p>`;
+    <p style="margin:4px 0 0;font-size:10px;color:#000"><strong>Settled By:</strong> ${escHtml(createdByName)}</p>
+    <p style="text-align:center;margin-top:6px;font-size:10px;line-height:1.3;color:#000">${escHtmlMultiline(printFooter)}</p>`;
   // If bill total is zero and appears to be a package-session bill, show original package purchase amount instead of 'Paid (Cash)'
   if ((b.total || 0) === 0 && b.patient_id) {
     try {
@@ -7807,7 +7832,7 @@ async function printBill(id) {
       const matched = (pps||[]).find(pp => Array.isArray(pp.session_log) && pp.session_log.some(sl => sl.bill_id === b.id));
       if (matched) {
         const payRow = document.getElementById('printPaymentRow');
-        if (payRow) payRow.innerHTML = `<p style="margin-top:16px;font-size:18px;line-height:1.35"><strong>Payment:</strong> Package (paid at time of purchase)</p>`;
+        if (payRow) payRow.innerHTML = `<p style="margin-top:4px;font-size:11px;line-height:1.3"><strong>Payment:</strong> Package (paid at time of purchase)</p>`;
       }
     } catch(e) { /* ignore */ }
   }
@@ -8297,6 +8322,8 @@ async function reports() {
     { value: 'pending-services', label: 'Pending Services', desc: 'Services billed but not yet completed across all patients', icon: IC.pending || IC.services },
     { value: 'pending-orders', label: 'Supplier Invoice', desc: 'All supplier purchase orders with payment status', icon: IC.supplier }
   ];
+  if (currentUser.role === 'admin' || currentUser.role === 'receptionist') options.push({ value: 'top-services', label: 'Top Services', desc: 'Most billed services by count & revenue', icon: IC.services });
+  if (currentUser.role === 'admin' || currentUser.role === 'receptionist') options.push({ value: 'top-packages', label: 'Top Packages', desc: 'Most billed packages by count & revenue', icon: IC.packages });
   if (currentUser.role === 'admin') options.push({ value: 'revenue', label: 'Revenue', desc: 'Last 30 days billing trend', icon: IC.revenue });
   if (currentUser.role === 'admin') options.push({ value: 'discounts-report', label: 'Discount Report', desc: 'Total discounts given by type and user', icon: IC.discount });
   if (currentUser.role === 'admin') options.push({ value: 'refunds-report', label: 'Refund Report', desc: 'Refunds issued with reasons and payment types', icon: IC.refund });
@@ -8450,14 +8477,26 @@ function renderSelectedReport() {
     panel.innerHTML = `
       <div class="card" style="margin:0;border:1px solid var(--border-light)">
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
-          <div class="card-title">${IC.revenue} Revenue - Last 30 Days</div>
+          <div class="card-title">${IC.revenue} Revenue Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-sm" onclick="exportTableToCSV('#revenueReportBody table', 'revenue_report_${today}.csv')">${IC.download} CSV</button>
             <button class="btn btn-sm" onclick="exportContentToPDF('#revenueReportBody', 'revenue_report')">${IC.print} PDF</button>
           </div>
         </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="bill-filter-group report-filter-group">
+            <input id="revRptFrom" type="date" value="${today}" title="From date"/>
+            <input id="revRptTo" type="date" value="${today}" title="To date"/>
+            <select id="revRptDoctor" style="min-width:220px">
+              <option value="">All Doctors</option>
+            </select>
+            <button class="btn btn-sm report-apply-btn" onclick="loadRevenueReport()">Apply Filter</button>
+            <button class="btn btn-sm report-clear-btn" onclick="clearRevenueReportFilters()">All Time</button>
+          </div>
+        </div>
         <div id="revenueReportBody">${skeletonTable(5)}</div>
       </div>`;
+    populateRevenueDoctorFilter();
     loadRevenueReport();
     return;
   }
@@ -8561,14 +8600,72 @@ function renderSelectedReport() {
     return;
   }
 
+  if (_reportView === 'top-services') {
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toLocaleDateString('sv');
+    panel.innerHTML = `
+      <div class="card" style="margin:0;border:1px solid var(--border-light)">
+        <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
+          <div class="card-title">${IC.services} Top Services Report</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="exportTableToCSV('#topServicesBody table', 'top_services_report.csv')">${IC.download} CSV</button>
+          </div>
+        </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="bill-filter-group report-filter-group">
+            <input id="tsrFrom" type="date" value="${monthStart}" title="From date"/>
+            <input id="tsrTo"   type="date" value="${today}"      title="To date"/>
+            <select id="tsrLimit" title="Show top N">
+              <option value="10">Top 10</option>
+              <option value="20" selected>Top 20</option>
+              <option value="50">Top 50</option>
+            </select>
+            <button class="btn btn-sm report-apply-btn" onclick="loadTopServicesReport()">Apply</button>
+            <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('tsrFrom').value='';document.getElementById('tsrTo').value='';loadTopServicesReport()">All Time</button>
+          </div>
+        </div>
+        <div id="topServicesBody">${skeletonTable(5)}</div>
+      </div>`;
+    loadTopServicesReport();
+    return;
+  }
+
+  if (_reportView === 'top-packages') {
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toLocaleDateString('sv');
+    panel.innerHTML = `
+      <div class="card" style="margin:0;border:1px solid var(--border-light)">
+        <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
+          <div class="card-title">${IC.packages} Top Packages Report</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="exportTableToCSV('#topPackagesBody table', 'top_packages_report.csv')">${IC.download} CSV</button>
+          </div>
+        </div>
+        <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
+          <div class="bill-filter-group report-filter-group">
+            <input id="tprFrom" type="date" value="${monthStart}" title="From date"/>
+            <input id="tprTo"   type="date" value="${today}"      title="To date"/>
+            <select id="tprLimit" title="Show top N">
+              <option value="10">Top 10</option>
+              <option value="20" selected>Top 20</option>
+              <option value="50">Top 50</option>
+            </select>
+            <button class="btn btn-sm report-apply-btn" onclick="loadTopPackagesReport()">Apply</button>
+            <button class="btn btn-sm report-clear-btn" onclick="document.getElementById('tprFrom').value='';document.getElementById('tprTo').value='';loadTopPackagesReport()">All Time</button>
+          </div>
+        </div>
+        <div id="topPackagesBody">${skeletonTable(4)}</div>
+      </div>`;
+    loadTopPackagesReport();
+    return;
+  }
+
   if (_reportView === 'user-collection') {
     panel.innerHTML = `
       <div class="card" style="margin:0;border:1px solid var(--border-light)">
         <div class="flex-between mb-2" style="gap:10px;flex-wrap:wrap">
           <div class="card-title">${IC.billing} User Collection Report</div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="exportTableToCSV('#userCollectionBody table', 'user_collection_${today}.csv')">${IC.download} CSV</button>
-            <button class="btn btn-sm" onclick="exportContentToPDF('#userCollectionBody', 'user_collection')">${IC.print} PDF</button>
+            <button class="btn btn-sm" onclick="exportUserCollectionCSV()">${IC.download} CSV</button>
+            <button class="btn btn-sm" onclick="exportUserCollectionPDF()">${IC.print} PDF</button>
           </div>
         </div>
         <div class="action-bar bill-action-bar report-filter-bar" style="padding:0;border:0;margin:10px 0 12px;box-shadow:none;background:transparent">
@@ -8630,6 +8727,7 @@ function renderSelectedReport() {
           <div class="bill-filter-group report-filter-group">
             <input id="scnFrom" type="date" value="${today}" onchange="loadServiceConsumptionReport()" title="From date"/>
             <input id="scnTo" type="date" value="${today}" onchange="loadServiceConsumptionReport()" title="To date"/>
+            <select id="scnDoctor" onchange="loadServiceConsumptionReport()"><option value="">All Doctors</option></select>
             <button class="btn btn-sm report-apply-btn" onclick="loadServiceConsumptionReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="clearServiceConsumptionFilters()">Clear</button>
           </div>
@@ -8724,6 +8822,8 @@ function renderSelectedReport() {
               <option value="consumption">Consumption</option>
               <option value="manual-consumption">Manual Consumption</option>
               <option value="supplier-return">Supplier Return</option>
+              <option value="sale">Sale (Billing)</option>
+              <option value="sales-return">Sales Return</option>
             </select>
             <button class="btn btn-sm report-apply-btn" onclick="loadStockMovementReport()">Apply Filter</button>
             <button class="btn btn-sm report-clear-btn" onclick="clearStockMovementFilters()">Clear</button>
@@ -8925,9 +9025,11 @@ function clearServiceConsumptionFilters() {
   const search = document.getElementById('scnSearch');
   const from = document.getElementById('scnFrom');
   const to = document.getElementById('scnTo');
+  const doctor = document.getElementById('scnDoctor');
   if (search) search.value = '';
   if (from) from.value = today;
   if (to) to.value = today;
+  if (doctor) doctor.value = '';
   loadServiceConsumptionReport();
 }
 
@@ -9702,9 +9804,44 @@ async function loadNoShowReport(page = _noShowReportPage || 1) {
   }
 }
 
+async function populateRevenueDoctorFilter() {
+  const sel = document.getElementById('revRptDoctor');
+  if (!sel) return;
+  const keep = sel.value || '';
+  try {
+    const users = await apiFetch('/api/users');
+    const doctors = (Array.isArray(users) ? users : [])
+      .filter(u => String(u.role || '').toLowerCase() === 'doctor' && u.active !== false)
+      .sort((a, b) => String(a.name || a.username || '').localeCompare(String(b.name || b.username || '')));
+    sel.innerHTML = `<option value="">All Doctors</option>${doctors.map(d => `<option value="${d.id}">${escHtml(d.name || d.username || ('Doctor #' + d.id))}</option>`).join('')}`;
+    sel.value = keep;
+  } catch (_) {
+    sel.innerHTML = '<option value="">All Doctors</option>';
+  }
+}
+
+function clearRevenueReportFilters() {
+  const from = document.getElementById('revRptFrom');
+  const to = document.getElementById('revRptTo');
+  const doctor = document.getElementById('revRptDoctor');
+  if (from) from.value = '';
+  if (to) to.value = '';
+  if (doctor) doctor.value = '';
+  loadRevenueReport();
+}
+
 async function loadRevenueReport() {
   try {
-    const rows = await apiFetch('/api/reports/revenue');
+    const params = new URLSearchParams();
+    const from = document.getElementById('revRptFrom')?.value || '';
+    const to = document.getElementById('revRptTo')?.value || '';
+    const doctorId = document.getElementById('revRptDoctor')?.value || '';
+    if (from) params.set('date_from', from);
+    if (to) params.set('date_to', to);
+    if (doctorId) params.set('doctor_id', doctorId);
+
+    const query = params.toString();
+    const rows = await apiFetch(`/api/reports/revenue${query ? `?${query}` : ''}`);
     window._lastRevenueRows = rows || [];
     const el = document.getElementById('revenueReportBody');
     if (!rows.length) { el.innerHTML = emptyState(IC.reports, 'No revenue data', 'Revenue data will appear here when bills are paid'); return; }
@@ -10051,46 +10188,176 @@ async function loadUserCollectionReport(page) {
       return;
     }
 
+    // Build matrix summary by user x payment method (print-style format)
+    const paymentMethods = methodTotals.map(m => m.payment_method).filter(Boolean);
+    const byUser = new Map();
+    for (const r of rows) {
+      const uname = r.user_name || 'Unknown';
+      if (!byUser.has(uname)) byUser.set(uname, {});
+      const map = byUser.get(uname);
+      map[r.payment_method] = (parseFloat(map[r.payment_method] || 0) + (parseFloat(r.amount || 0) || 0));
+    }
+    const userRows = [...byUser.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+
+    const reportFrom = (summary.date_from || from || '').trim();
+    const reportTo = (summary.date_to || to || '').trim();
+    const reportHeader = `Collection Report  From ${reportFrom || 'All Time'}${reportFrom || reportTo ? ':00:00' : ''}  To ${reportTo || 'Now'}${reportFrom || reportTo ? ':23:59' : ''}  For ${userId ? 'Selected User' : 'All Counters'}`;
+
+    const summaryHeadMethods = paymentMethods.map(pm => `<th>${escHtml(pm)}</th>`).join('');
+    const summaryEmptyColspan = paymentMethods.length + 2;
+    const totalAcrossMethods = rows.reduce((s, r) => s + (parseFloat(r.amount || 0) || 0), 0);
+    const summaryBodyRows = userRows.map(([uname, methods]) => {
+      const userTotal = paymentMethods.reduce((s, pm) => s + (parseFloat(methods[pm] || 0) || 0), 0);
+      return `<tr>
+        <td><strong>${escHtml(uname)}</strong></td>
+        ${paymentMethods.map(pm => `<td>KD ${parseFloat(methods[pm] || 0).toFixed(3)}</td>`).join('')}
+        <td class="ucr-amt"><strong>KD ${parseFloat(userTotal).toFixed(3)}</strong></td>
+      </tr>`;
+    }).join('');
+
+    const totalByMethod = paymentMethods.map(pm => {
+      const amt = rows.filter(r => r.payment_method === pm).reduce((s, r) => s + (parseFloat(r.amount || 0) || 0), 0);
+      return `<td><strong>KD ${parseFloat(amt).toFixed(3)}</strong></td>`;
+    }).join('');
+
+    // Build detailed lines grouped by user and payment mode
+    const grouped = new Map();
+    for (const r of rows) {
+      const key = `${r.user_name || 'Unknown'}|${r.payment_method || '-'}`;
+      if (!grouped.has(key)) grouped.set(key, { user_name: r.user_name || 'Unknown', payment_method: r.payment_method || '-', lines: [] });
+      const g = grouped.get(key);
+      for (const b of (Array.isArray(r.bills) ? r.bills : [])) {
+        const dt = String(b.created_at || '').trim();
+        const receiptNo = b.bill_number || `BILL-${b.bill_id || ''}`;
+        const billNo = b.bill_number || `BN${String(b.bill_id || '').padStart(5, '0')}`;
+        const gross = parseFloat(b.split_amount || 0) || 0;
+        const refunded = parseFloat(b.refunded_amount || 0) || 0;
+        if (gross > 0) {
+          g.lines.push({
+            at: dt,
+            receipt_no: receiptNo,
+            type: 'Bill Receipt',
+            bill_no: billNo,
+            mr_no: b.mr_number || '-',
+            patient_name: b.patient_name || '-',
+            amount: gross
+          });
+        }
+        if (refunded > 0) {
+          g.lines.push({
+            at: dt,
+            receipt_no: `${receiptNo}-R`,
+            type: 'Refund',
+            bill_no: billNo,
+            mr_no: b.mr_number || '-',
+            patient_name: b.patient_name || '-',
+            amount: -refunded
+          });
+        }
+      }
+    }
+    const detailGroups = [...grouped.values()].sort((a, b) => {
+      const x = String(a.user_name).localeCompare(String(b.user_name));
+      if (x !== 0) return x;
+      return String(a.payment_method).localeCompare(String(b.payment_method));
+    });
+
     wrap.innerHTML = `
-      <div class="stats-grid" style="margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Net Collection</div><div class="stat-value">KD ${parseFloat(summary.total_collection || 0).toFixed(3)}</div></div></div>
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Gross Collection</div><div class="stat-value">KD ${parseFloat(summary.gross_collection || 0).toFixed(3)}</div></div></div>
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Refund Deduction</div><div class="stat-value" style="color:#d32f2f">- KD ${parseFloat(summary.total_refunded || 0).toFixed(3)}</div></div></div>
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Rows</div><div class="stat-value">${parseInt(summary.rows_count || 0)}</div></div></div>
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Bill Entries</div><div class="stat-value">${parseInt(summary.total_bill_entries || 0)}</div></div></div>
-        <div class="stat-card"><div class="stat-content"><div class="stat-label">Date Range</div><div class="stat-value" style="font-size:14px">${escHtml(summary.date_from || '-')} to ${escHtml(summary.date_to || '-')}</div></div></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        ${methodTotals.map(m => `<span style="padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:var(--bg-hover);font-size:12px"><strong>${escHtml(m.payment_method)}</strong>: KD ${parseFloat(m.amount || 0).toFixed(3)}</span>`).join('')}
-      </div>
-      <div class="table-wrap"><table class="user-collection-table">
-        <thead><tr><th>Date</th><th>User</th><th>Payment Method</th><th>Gross</th><th>Refund</th><th>Net Amount</th><th>Bill Count</th><th>Breakdown</th></tr></thead>
-        <tbody>${rows.map(r => `<tr>
-          <td>${escHtml(r.date || '-')}</td>
-          <td><strong>${escHtml(r.user_name || 'Unknown')}</strong></td>
-          <td>${escHtml(r.payment_method || '-')}</td>
-          <td>KD ${parseFloat(r.gross_amount || 0).toFixed(3)}</td>
-          <td style="color:#d32f2f">- KD ${parseFloat(r.refunded_amount || 0).toFixed(3)}</td>
-          <td><strong>KD ${parseFloat(r.amount || 0).toFixed(3)}</strong></td>
-          <td>${parseInt(r.bills_count || 0)}</td>
-          <td>
-            ${(Array.isArray(r.bills) && r.bills.length)
-              ? `<details class="ucr-breakdown"><summary>${r.bills.length} bill${r.bills.length !== 1 ? 's' : ''}</summary>
-                   <div class="ucr-breakdown-list">${r.bills.map(b => `<div class="ucr-breakdown-item">
-                     <div><strong>${escHtml(b.bill_number || ('Bill #' + b.bill_id))}</strong> - ${escHtml(b.patient_name || 'Unknown')} ${b.mr_number ? `<span class="code-id code-id-muted">${escHtml(b.mr_number)}</span>` : ''}</div>
-                     <div class="text-sm text-muted">Visit: ${escHtml(b.visit_id || '-')} | Status: ${escHtml(b.payment_status || '-')} | Gross: KD ${parseFloat(b.split_amount || 0).toFixed(3)} | Refund: KD ${parseFloat(b.refunded_amount || 0).toFixed(3)} | Net: KD ${parseFloat(b.net_amount || 0).toFixed(3)}</div>
-                   </div>`).join('')}</div>
-                 </details>`
-              : '<span class="text-muted text-sm">-</span>'}
-          </td>
-        </tr>`).join('')}</tbody>
-      </table></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <span class="text-muted text-sm">Showing ${total ? ((safePage - 1) * REPORT_PAGE_SIZE) + 1 : 0}-${Math.min(safePage * REPORT_PAGE_SIZE, total)} of ${total}</span>
-        <div style="display:flex;gap:6px;align-items:center">
-          <button class="btn btn-sm" onclick="loadUserCollectionReport(${safePage - 1})" ${safePage <= 1 ? 'disabled' : ''}>Prev</button>
-          <span class="text-muted text-sm" style="padding:4px 8px">${safePage} / ${pages}</span>
-          <button class="btn btn-sm" onclick="loadUserCollectionReport(${safePage + 1})" ${safePage >= pages ? 'disabled' : ''}>Next</button>
+      <div class="ucr-modern-wrap">
+        <div class="ucr-modern-hero">
+          <div>
+            <div class="ucr-modern-title">User Collection Report</div>
+            <div class="ucr-modern-subtitle">${escHtml(reportHeader)}</div>
+          </div>
+          <div class="ucr-modern-tags">
+            <span class="ucr-tag">Range: ${escHtml(reportFrom || 'All Time')} to ${escHtml(reportTo || 'Now')}</span>
+            <span class="ucr-tag">Collector: ${escHtml(userId ? 'Selected User' : 'All Users')}</span>
+            <span class="ucr-tag">Payment: ${escHtml(method || 'All Methods')}</span>
+          </div>
+        </div>
+
+        <div class="ucr-kpi-grid">
+          <div class="ucr-kpi-card"><div class="ucr-kpi-label">Net Collection</div><div class="ucr-kpi-value">KD ${parseFloat(summary.total_collection || 0).toFixed(3)}</div></div>
+          <div class="ucr-kpi-card"><div class="ucr-kpi-label">Gross Collection</div><div class="ucr-kpi-value">KD ${parseFloat(summary.gross_collection || 0).toFixed(3)}</div></div>
+          <div class="ucr-kpi-card"><div class="ucr-kpi-label">Refunds</div><div class="ucr-kpi-value ucr-kpi-negative">KD ${parseFloat(summary.total_refunded || 0).toFixed(3)}</div></div>
+          <div class="ucr-kpi-card"><div class="ucr-kpi-label">Entries</div><div class="ucr-kpi-value">${parseInt(summary.total_bill_entries || 0, 10)}</div></div>
+        </div>
+
+        <div class="ucr-modern-section">
+          <div class="ucr-modern-section-head">
+            <h3>Collection Summary</h3>
+            <div class="ucr-modern-pills">${methodTotals.map(m => `<span class="ucr-pill">${escHtml(m.payment_method)}: KD ${parseFloat(m.amount || 0).toFixed(3)}</span>`).join('')}</div>
+          </div>
+          <div class="table-wrap ucr-table-wrap">
+            <table class="user-collection-table ucr-summary-table">
+              <thead>
+                <tr>
+                  <th>User Name</th>
+                  ${summaryHeadMethods || '<th>Amount</th>'}
+                  <th class="ucr-amt">Grand Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${summaryBodyRows || `<tr><td colspan="${summaryEmptyColspan}" class="text-muted">No summary rows</td></tr>`}
+                <tr class="ucr-total-row">
+                  <td><strong>Total</strong></td>
+                  ${totalByMethod || '<td><strong>KD 0.000</strong></td>'}
+                  <td class="ucr-amt"><strong>KD ${parseFloat(totalAcrossMethods).toFixed(3)}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="ucr-modern-section">
+          <div class="ucr-modern-section-head"><h3>Collection Details</h3></div>
+          <div class="ucr-group-grid">
+            ${detailGroups.map(g => {
+              const lines = (g.lines || []).sort((a,b) => String(a.at || '').localeCompare(String(b.at || '')));
+              return `
+                <div class="ucr-group-card">
+                  <div class="ucr-group-card-head">
+                    <div><strong>${escHtml(g.user_name)}</strong></div>
+                    <span class="ucr-tag">${escHtml(g.payment_method)}</span>
+                  </div>
+                  <div class="table-wrap ucr-table-wrap">
+                    <table class="user-collection-table ucr-details-table">
+                      <thead>
+                        <tr>
+                          <th>Payment Date/Time</th>
+                          <th>Receipt No</th>
+                          <th>Type</th>
+                          <th>Bill No</th>
+                          <th>MR NO</th>
+                          <th>Patient Name</th>
+                          <th class="ucr-amt">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        ${lines.length ? lines.map(l => `<tr>
+                          <td>${escHtml(formatDateTime(l.at || ''))}</td>
+                          <td>${escHtml(l.receipt_no || '-')}</td>
+                          <td><span class="ucr-type ${l.amount < 0 ? 'ucr-type-refund' : 'ucr-type-receipt'}">${escHtml(l.type || '-')}</span></td>
+                          <td>${escHtml(l.bill_no || '-')}</td>
+                          <td>${escHtml(l.mr_no || '-')}</td>
+                          <td>${escHtml(l.patient_name || '-')}</td>
+                          <td class="ucr-amt ${l.amount < 0 ? 'ucr-neg' : ''}">${l.amount < 0 ? '- ' : ''}KD ${parseFloat(Math.abs(l.amount || 0)).toFixed(3)}</td>
+                        </tr>`).join('') : '<tr><td colspan="7" class="text-muted">No bill lines</td></tr>'}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="ucr-pagination-row">
+          <span class="text-muted text-sm">Showing ${total ? ((safePage - 1) * REPORT_PAGE_SIZE) + 1 : 0}-${Math.min(safePage * REPORT_PAGE_SIZE, total)} of ${total}</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-sm" onclick="loadUserCollectionReport(${safePage - 1})" ${safePage <= 1 ? 'disabled' : ''}>Prev</button>
+            <span class="text-muted text-sm" style="padding:4px 8px">${safePage} / ${pages}</span>
+            <button class="btn btn-sm" onclick="loadUserCollectionReport(${safePage + 1})" ${safePage >= pages ? 'disabled' : ''}>Next</button>
+          </div>
         </div>
       </div>`;
   } catch (e) {
@@ -10144,15 +10411,26 @@ async function loadServiceConsumptionReport(page) {
     const from = document.getElementById('scnFrom')?.value || '';
     const to = document.getElementById('scnTo')?.value || '';
     const q = document.getElementById('scnSearch')?.value || '';
+    const doctorId = document.getElementById('scnDoctor')?.value || '';
     if (from) params.set('date_from', from);
     if (to) params.set('date_to', to);
     if (q.trim()) params.set('search', q.trim());
+    if (doctorId) params.set('doctor_id', doctorId);
     params.set('page', String(_serviceConsumptionReportPage));
     params.set('limit', String(REPORT_PAGE_SIZE));
     const rep = await apiFetch(`/api/reports/service-consumption?${params.toString()}`);
     const rows = rep.rows || [];
     window._lastServiceConsumptionRows = rows;
     const summary = rep.summary || { total_service_qty: 0, total_consumed_qty: 0, total_records: 0, total_cost: 0 };
+    const doctorTotals = Array.isArray(rep.doctor_totals) ? rep.doctor_totals : [];
+    const f = rep.filters || { doctors: [] };
+
+    const drSel = document.getElementById('scnDoctor');
+    if (drSel) {
+      const selected = drSel.value || '';
+      drSel.innerHTML = `<option value="">All Doctors</option>${(f.doctors || []).map(d => `<option value="${d.id}"${String(d.id)===selected?' selected':''}>${escHtml(d.name || `Doctor #${d.id}`)}</option>`).join('')}`;
+    }
+
     const total = Math.max(0, parseInt(rep.total, 10) || parseInt(summary.entries, 10) || 0);
     const pages = Math.max(1, parseInt(rep.pages, 10) || Math.ceil(Math.max(1, total) / REPORT_PAGE_SIZE));
     const safePage = Math.min(Math.max(1, parseInt(rep.page, 10) || _serviceConsumptionReportPage), pages);
@@ -10161,17 +10439,32 @@ async function loadServiceConsumptionReport(page) {
       wrap.innerHTML = emptyState(IC.product || IC.empty, 'No consumption data', 'No service-product consumption found for selected filters');
       return;
     }
+    const doctorSummaryHtml = doctorTotals.length
+      ? `<div class="table-wrap" style="margin-bottom:12px"><table>
+          <thead><tr><th>Doctor</th><th>Service Uses</th><th>Total Consumed</th><th>Total Cost</th></tr></thead>
+          <tbody>${doctorTotals.map(d => `<tr>
+            <td><strong>${escHtml(d.doctor_name || 'Unassigned')}</strong></td>
+            <td>${parseFloat(d.total_service_qty || 0).toFixed(3)}</td>
+            <td>${parseFloat(d.total_consumed_qty || 0).toFixed(3)}</td>
+            <td><strong>KD ${parseFloat(d.total_cost || 0).toFixed(3)}</strong></td>
+          </tr>`).join('')}</tbody>
+        </table></div>`
+      : '';
+
     wrap.innerHTML = `
       <div class="stats-grid" style="margin-bottom:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Service Uses</div><div class="stat-value">${summary.total_service_qty || 0}</div></div></div>
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Total Consumption</div><div class="stat-value">${summary.total_consumed_qty || 0}</div></div></div>
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Total Cost</div><div class="stat-value">KD ${parseFloat(summary.total_cost || 0).toFixed(3)}</div></div></div>
         <div class="stat-card"><div class="stat-content"><div class="stat-label">Entries</div><div class="stat-value">${summary.entries || 0}</div></div></div>
+        <div class="stat-card"><div class="stat-content"><div class="stat-label">Doctors</div><div class="stat-value">${doctorTotals.length}</div></div></div>
       </div>
+      ${doctorSummaryHtml}
       <div class="table-wrap"><table>
-        <thead><tr><th>#</th><th>Service</th><th>Product</th><th>SKU</th><th>Service Uses</th><th>Total Consumed</th><th>Unit</th><th>Unit Cost</th><th>Total Cost</th></tr></thead>
+        <thead><tr><th>#</th><th>Doctor</th><th>Service</th><th>Product</th><th>SKU</th><th>Service Uses</th><th>Total Consumed</th><th>Unit</th><th>Unit Cost</th><th>Total Cost</th></tr></thead>
         <tbody>${rows.map((r, i) => `<tr>
           <td>${((safePage - 1) * REPORT_PAGE_SIZE) + i + 1}</td>
+          <td>${escHtml(r.doctor_name || 'Unassigned')}</td>
           <td><strong>${escHtml(r.service_name || '')}</strong></td>
           <td>${escHtml(r.product_name || '')}</td>
           <td>${escHtml(r.product_sku || '-')}</td>
@@ -10191,6 +10484,92 @@ async function loadServiceConsumptionReport(page) {
         </div>
       </div>`;
   } catch (e) {
+    wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
+}
+
+async function loadTopServicesReport() {
+  const wrap = document.getElementById('topServicesBody');
+  if (!wrap) return;
+  wrap.innerHTML = skeletonTable(5);
+  try {
+    const params = new URLSearchParams();
+    const from  = document.getElementById('tsrFrom')?.value  || '';
+    const to    = document.getElementById('tsrTo')?.value    || '';
+    const limit = document.getElementById('tsrLimit')?.value || '20';
+    if (from)  params.set('date_from', from);
+    if (to)    params.set('date_to',   to);
+    params.set('limit', limit);
+    const data = await apiFetch(`/api/reports/top-services?${params}`);
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    if (!rows.length) { wrap.innerHTML = emptyState(IC.services, 'No Data', 'No billed services found for this period.'); return; }
+    const maxCount = rows[0].count || 1;
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Service Name</th><th>Category</th><th>Direct Sales</th><th>From Packages</th><th>Total</th><th>Revenue</th><th>Share</th></tr></thead>
+      <tbody>${rows.map(r => {
+        const pct = Math.round((r.count / maxCount) * 100);
+        return `<tr>
+          <td><span class="billing-index">${r.rank}</span></td>
+          <td><strong>${escHtml(r.name)}</strong></td>
+          <td><span class="badge" style="background:var(--bg-hover);color:var(--text)">${escHtml(r.category)}</span></td>
+          <td>${r.direct_count || 0}</td>
+          <td>${r.pkg_count || 0}</td>
+          <td><strong>${r.count}</strong></td>
+          <td><strong>${r.direct_count ? 'KD ' + parseFloat(r.total_revenue || 0).toFixed(3) : '<span class="text-muted">—</span>'}</strong></td>
+          <td style="min-width:120px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:8px;background:var(--bg-hover);border-radius:4px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:var(--c-primary);border-radius:4px"></div>
+              </div>
+              <span class="text-sm text-muted">${pct}%</span>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch(e) {
+    wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
+  }
+}
+
+async function loadTopPackagesReport() {
+  const wrap = document.getElementById('topPackagesBody');
+  if (!wrap) return;
+  wrap.innerHTML = skeletonTable(4);
+  try {
+    const params = new URLSearchParams();
+    const from  = document.getElementById('tprFrom')?.value  || '';
+    const to    = document.getElementById('tprTo')?.value    || '';
+    const limit = document.getElementById('tprLimit')?.value || '20';
+    if (from)  params.set('date_from', from);
+    if (to)    params.set('date_to',   to);
+    params.set('limit', limit);
+    const data = await apiFetch(`/api/reports/top-packages?${params}`);
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    if (!rows.length) { wrap.innerHTML = emptyState(IC.packages, 'No Data', 'No billed packages found for this period.'); return; }
+    const maxCount = rows[0].count || 1;
+    wrap.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>#</th><th>Package Name</th><th>Sessions</th><th>Times Billed</th><th>Revenue</th><th>Share</th></tr></thead>
+      <tbody>${rows.map(r => {
+        const pct = Math.round((r.count / maxCount) * 100);
+        return `<tr>
+          <td><span class="billing-index">${r.rank}</span></td>
+          <td><strong>${escHtml(r.name)}</strong></td>
+          <td>${r.sessions != null ? `<span class="badge badge-scheduled">${r.sessions} sessions</span>` : '<span class="text-muted text-sm">-</span>'}</td>
+          <td><strong>${r.count}</strong></td>
+          <td><strong>KD ${parseFloat(r.total_revenue || 0).toFixed(3)}</strong></td>
+          <td style="min-width:120px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div style="flex:1;height:8px;background:var(--bg-hover);border-radius:4px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:var(--c-success);border-radius:4px"></div>
+              </div>
+              <span class="text-sm text-muted">${pct}%</span>
+            </div>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+  } catch(e) {
     wrap.innerHTML = `<div class="alert alert-error">${escHtml(e.message)}</div>`;
   }
 }
@@ -10705,6 +11084,178 @@ function exportUserCollectionCSV() {
   downloadCSV(`user_collection_${new Date().toLocaleDateString('sv')}.csv`, header, csvRows);
 }
 
+function buildUserCollectionClassicPrintHTML(rows, opts) {
+  const esc = (v) => escHtml(String(v == null ? '' : v));
+  const from = opts && opts.from ? opts.from : 'All Time';
+  const to = opts && opts.to ? opts.to : 'Now';
+  const counterLabel = opts && opts.counterLabel ? opts.counterLabel : 'All Counters';
+
+  const methods = [...new Set(rows.map(r => String(r.payment_method || '').trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+
+  const byUser = new Map();
+  for (const r of rows) {
+    const uname = r.user_name || 'Unknown';
+    if (!byUser.has(uname)) byUser.set(uname, {});
+    const m = byUser.get(uname);
+    const pm = String(r.payment_method || '').trim() || '-';
+    m[pm] = (parseFloat(m[pm] || 0) + (parseFloat(r.amount || 0) || 0));
+  }
+  const summaryRows = [...byUser.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+
+  const totalByMethod = methods.map(pm => rows
+    .filter(r => String(r.payment_method || '').trim() === pm)
+    .reduce((s, r) => s + (parseFloat(r.amount || 0) || 0), 0));
+  const grandTotal = rows.reduce((s, r) => s + (parseFloat(r.amount || 0) || 0), 0);
+
+  const detailGroups = [];
+  const groupMap = new Map();
+  for (const r of rows) {
+    const key = `${r.user_name || 'Unknown'}|${r.payment_method || '-'}`;
+    if (!groupMap.has(key)) {
+      const g = { user_name: r.user_name || 'Unknown', payment_method: r.payment_method || '-', lines: [] };
+      groupMap.set(key, g);
+      detailGroups.push(g);
+    }
+    const g = groupMap.get(key);
+    for (const b of (Array.isArray(r.bills) ? r.bills : [])) {
+      const dt = b.created_at || '';
+      const receiptNo = b.bill_number || `BILL-${b.bill_id || ''}`;
+      const billNo = b.bill_number || `BN${String(b.bill_id || '').padStart(5, '0')}`;
+      const gross = parseFloat(b.split_amount || 0) || 0;
+      const refunded = parseFloat(b.refunded_amount || 0) || 0;
+      if (gross > 0) {
+        g.lines.push({ at: dt, receipt_no: receiptNo, type: 'Bill Receipt', bill_no: billNo, mr_no: b.mr_number || '-', patient_name: b.patient_name || '-', amount: gross });
+      }
+      if (refunded > 0) {
+        g.lines.push({ at: dt, receipt_no: `${receiptNo}-R`, type: 'Refund', bill_no: billNo, mr_no: b.mr_number || '-', patient_name: b.patient_name || '-', amount: -refunded });
+      }
+    }
+  }
+  detailGroups.sort((a, b) => {
+    const x = String(a.user_name).localeCompare(String(b.user_name));
+    if (x !== 0) return x;
+    return String(a.payment_method).localeCompare(String(b.payment_method));
+  });
+
+  return `
+    <style>
+      .ucr-classic-print { font-family: Arial, sans-serif; color: #111; font-size: 14px; }
+      .ucr-classic-header {
+        text-align: center; font-weight: 700; font-size: 22px; line-height: 1.4;
+        border-top: 2px solid #222; border-bottom: 2px solid #222; padding: 10px 6px; margin-bottom: 18px;
+      }
+      .ucr-classic-title { font-size: 20px; margin: 14px 0 8px; text-decoration: underline; }
+      .ucr-classic-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+      .ucr-classic-table th, .ucr-classic-table td { border: 1px solid #4f4f4f; padding: 7px 8px; vertical-align: middle; }
+      .ucr-classic-table thead th { background: #efefef; font-weight: 700; }
+      .ucr-classic-table .amt { text-align: right; white-space: nowrap; }
+      .ucr-classic-table .group-head td { background: #f6f6f6; font-weight: 700; }
+      .ucr-diagonal { position: relative; min-width: 190px; height: 74px; padding: 0; overflow: hidden; }
+      .ucr-diagonal::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(to top right, transparent 49.2%, #4f4f4f 49.6%, #4f4f4f 50.4%, transparent 50.8%);
+      }
+      .ucr-diagonal .top { position: absolute; top: 8px; right: 8px; font-weight: 700; }
+      .ucr-diagonal .bottom { position: absolute; left: 8px; bottom: 8px; font-weight: 700; }
+      .ucr-neg { color: #b71c1c; }
+    </style>
+
+    <div class="ucr-classic-print">
+      <div class="ucr-classic-header">Collection Report&nbsp;&nbsp; From ${esc(from)}:00:00&nbsp;&nbsp; To ${esc(to)}:23:59&nbsp;&nbsp; For&nbsp; ${esc(counterLabel)}</div>
+
+      <div class="ucr-classic-title">User Collection Summary</div>
+      <table class="ucr-classic-table">
+        <thead>
+          <tr>
+            <th class="ucr-diagonal" rowspan="2"><span class="top">Payment Mode</span><span class="bottom">User Name</span></th>
+            <th colspan="${Math.max(1, methods.length + 1)}">Bill Receipts / Refunds</th>
+            <th rowspan="2">Grand Total</th>
+          </tr>
+          <tr>
+            ${methods.length ? methods.map(pm => `<th>${esc(pm)}</th>`).join('') : '<th>Total</th>'}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${summaryRows.map(([uname, m]) => {
+            const uTotal = methods.reduce((s, pm) => s + (parseFloat(m[pm] || 0) || 0), 0);
+            return `<tr>
+              <td><strong>${esc(uname)}</strong></td>
+              ${methods.length ? methods.map(pm => `<td class="amt">${parseFloat(m[pm] || 0).toFixed(3)}</td>`).join('') : ''}
+              <td class="amt"><strong>${parseFloat(uTotal).toFixed(3)}</strong></td>
+              <td class="amt"><strong>${parseFloat(uTotal).toFixed(3)}</strong></td>
+            </tr>`;
+          }).join('')}
+          <tr>
+            <td><strong>Total username</strong></td>
+            ${methods.length ? totalByMethod.map(v => `<td class="amt"><strong>${parseFloat(v).toFixed(3)}</strong></td>`).join('') : ''}
+            <td class="amt"><strong>${parseFloat(grandTotal).toFixed(3)}</strong></td>
+            <td class="amt"><strong>${parseFloat(grandTotal).toFixed(3)}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="ucr-classic-title">User Collection Details</div>
+      <table class="ucr-classic-table">
+        <thead>
+          <tr>
+            <th>Payment Date/Time</th>
+            <th>Receipt No</th>
+            <th>Type</th>
+            <th>Bill No</th>
+            <th>MR NO</th>
+            <th>Patient Name</th>
+            <th class="amt">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${detailGroups.map(g => {
+            const lines = (g.lines || []).sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')));
+            return `
+              <tr class="group-head"><td colspan="7">User Name&nbsp; <strong>${esc(g.user_name)}</strong>&nbsp;&nbsp;&nbsp; Payment Mode&nbsp; <strong>${esc(g.payment_method)}</strong></td></tr>
+              ${lines.length ? lines.map(l => `<tr>
+                <td>${esc(formatDateTime(l.at || ''))}</td>
+                <td>${esc(l.receipt_no || '-')}</td>
+                <td>${esc(l.type || '-')}</td>
+                <td>${esc(l.bill_no || '-')}</td>
+                <td>${esc(l.mr_no || '-')}</td>
+                <td>${esc(l.patient_name || '-')}</td>
+                <td class="amt ${l.amount < 0 ? 'ucr-neg' : ''}">${l.amount < 0 ? '- ' : ''}${parseFloat(Math.abs(l.amount || 0)).toFixed(3)}</td>
+              </tr>`).join('') : '<tr><td colspan="7">No bill lines</td></tr>'}
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function exportUserCollectionPDF() {
+  const rows = Array.isArray(window._lastUserCollectionRows) ? window._lastUserCollectionRows : [];
+  if (!rows.length) { toast('No rows to export', 'error'); return; }
+
+  const fromEl = document.getElementById('ucrFrom');
+  const toEl = document.getElementById('ucrTo');
+  const userEl = document.getElementById('ucrUser');
+  const counterLabel = userEl && userEl.value
+    ? (userEl.options[userEl.selectedIndex] ? userEl.options[userEl.selectedIndex].text : 'Selected User')
+    : 'All Counters';
+
+  const body = buildUserCollectionClassicPrintHTML(rows, {
+    from: fromEl ? fromEl.value : '',
+    to: toEl ? toEl.value : '',
+    counterLabel
+  });
+
+  const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>User Collection Report</title></head><body style="margin:24px">${body}</body></html>`;
+
+  const tab = window.open('', '_blank');
+  if (!tab) { toast('Popup blocked — allow popups for this site', 'error'); return; }
+  tab.document.open();
+  tab.document.write(fullHtml);
+  tab.document.close();
+}
+
 function exportBilledServicesCSV() {
   const rows = Array.isArray(window._lastBilledServicesRows) ? window._lastBilledServicesRows : [];
   if (!rows.length) { toast('No rows to export', 'error'); return; }
@@ -10931,19 +11482,32 @@ async function openAddUserModal() {
 }
 async function openEditUserModal(id) {
   try {
-    const [list, departments, stores] = await Promise.all([
+    const [list, departments, stores, allRoles] = await Promise.all([
       apiFetch('/api/users'),
       apiFetch('/api/doctor-departments'),
-      apiFetch('/api/store/sub-stores')
+      apiFetch('/api/store/sub-stores'),
+      apiFetch('/api/roles').catch(() => [])
     ]);
     const u = list.find(x => x.id === id);
     if (!u) { toast('User not found', 'error'); return; }
-    const depOptions = (departments || []).filter(d => d.active !== false || d.id === u.department_id)
-      .map(d => `<option value="${d.id}" ${parseInt(u.department_id)===d.id?'selected':''}>${escHtml(d.name)}</option>`).join('');
+    const canEditRole = u.role !== 'doctor';
+    const roleOptions = (allRoles || [])
+      .map(r => `<option value="${r.name}" ${String(u.role) === String(r.name) ? 'selected' : ''}>${escHtml(r.label || r.name)}</option>`)
+      .join('');
+    const roleExists = (allRoles || []).some(r => String(r.name) === String(u.role));
     showModal(`Edit - ${escHtml(u.name)}`, `
       <form id="editUserForm">
         <div class="form-group"><label>Full Name</label><input name="name" value="${escHtml(u.name)}"/></div>
-        <div class="form-group"><label>Role</label><input value="${escHtml(u.role)}" disabled/></div>
+        <div class="form-group">
+          <label>Role</label>
+          ${canEditRole
+            ? `<select name="role" required>
+                ${!roleExists ? `<option value="${escHtml(u.role)}" selected>${escHtml(u.role)}</option>` : ''}
+                ${roleOptions}
+              </select>`
+            : `<input value="${escHtml(u.role)}" disabled/>`}
+          ${!canEditRole ? '<div class="text-sm text-muted" style="margin-top:6px">Doctor role is locked and cannot be changed.</div>' : ''}
+        </div>
         ${u.role !== 'admin' ? `
         <div class="form-group">
           <label>Department Access</label>
@@ -15285,7 +15849,7 @@ function renderStoreAdjustments(list) {
   }
   const isAdmin = currentUser && currentUser.role === 'admin';
   wrap.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>#</th><th>Adj No</th><th>Type</th><th>Store</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Stock (Before ? After)</th><th>Reason</th><th>Status</th><th>Date</th><th>By</th>${isAdmin ? '<th>Action</th>' : ''}</tr></thead>
+    <thead><tr><th>#</th><th>Adj No</th><th>Type</th><th>Store</th><th>Product</th><th>Qty</th><th>Unit Cost</th><th>Total</th><th>Stock (Before - After)</th><th>Reason</th><th>Status</th><th>Date</th><th>By</th>${isAdmin ? '<th>Action</th>' : ''}</tr></thead>
     <tbody>${list.map((r, i) => `<tr>
       <td>${i + 1}</td>
       <td><span class="code-id code-id-primary">${escHtml(r.adjustment_no || ('ADJ#' + r.id))}</span></td>
@@ -15295,7 +15859,7 @@ function renderStoreAdjustments(list) {
       <td>${parseFloat(r.qty || 0).toFixed(3)}</td>
       <td>KD ${parseFloat(r.unit_cost || 0).toFixed(3)}</td>
       <td><strong>KD ${parseFloat(r.total_cost || 0).toFixed(3)}</strong></td>
-      <td>${parseFloat(r.stock_before || 0).toFixed(3)} ? ${parseFloat(r.stock_after || 0).toFixed(3)}</td>
+      <td>${parseFloat(r.stock_before || 0).toFixed(3)} - ${parseFloat(r.stock_after || 0).toFixed(3)}</td>
       <td>${escHtml(r.reason || '-')}<br><span class="text-muted text-sm">${escHtml(r.remarks || '')}</span></td>
       <td>${r.reversal_of_id ? `<span class="badge badge-secondary">Reversal</span>${r.reversal_of_adjustment_no ? `<div class="text-muted text-sm">of ${escHtml(r.reversal_of_adjustment_no)}</div>` : ''}` : (r.reversed_by_adjustment_id ? `<span class="badge badge-cancelled">Reversed</span>${r.reversed_by_adjustment_no ? `<div class="text-muted text-sm">by ${escHtml(r.reversed_by_adjustment_no)}</div>` : ''}` : '<span class="badge badge-completed">Active</span>')}</td>
       <td class="text-muted text-sm">${escHtml(formatDateTime(r.date || r.created_at || ''))}</td>
@@ -16206,5 +16770,240 @@ if (typeof window !== 'undefined') {
   window.srToggleReturnType = srToggleReturnType;
   window.submitSR = submitSR;
 }
+
+// ===================== SALES RETURNS =====================
+let _salesReturns = [];
+
+async function storeSalesReturns() {
+  const ca = document.getElementById('contentArea');
+  const todayStr = new Date().toLocaleDateString('sv');
+  ca.innerHTML = `
+    <div class="action-bar store-action-bar">
+      <div class="search-box"><input id="salesRetSearch" type="text" placeholder="Search by bill, patient, MR..." oninput="filterSalesReturns()"/></div>
+      <div class="bill-filter-group">
+        <input id="salesRetDateFrom" type="date" value="${todayStr}" title="From date"/>
+        <input id="salesRetDateTo"   type="date" value="${todayStr}" title="To date"/>
+        <button class="btn report-apply-btn" onclick="filterSalesReturns()">${IC.search} Filter</button>
+        <button class="btn report-clear-btn" onclick="clearSalesRetFilters()">Clear</button>
+      </div>
+      <div class="store-action-spacer"></div>
+      ${can('billing.edit') ? `<button type="button" class="btn btn-primary" onclick="openNewSalesReturnModal()">${IC.plus} New Return</button>` : ''}
+    </div>
+    <div id="salesRetWrap">${skeletonTable(5)}</div>`;
+  try {
+    _salesReturns = await apiFetch('/api/sales-returns');
+    filterSalesReturns();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function clearSalesRetFilters() {
+  const t = new Date().toLocaleDateString('sv');
+  const f = document.getElementById('salesRetDateFrom'); if (f) f.value = t;
+  const to = document.getElementById('salesRetDateTo');  if (to) to.value = t;
+  const s = document.getElementById('salesRetSearch');   if (s) s.value = '';
+  filterSalesReturns();
+}
+
+function filterSalesReturns() {
+  const q    = (document.getElementById('salesRetSearch')?.value || '').toLowerCase().trim();
+  const from = document.getElementById('salesRetDateFrom')?.value || '';
+  const to   = document.getElementById('salesRetDateTo')?.value || '';
+  renderSalesReturns((_salesReturns || []).filter(r => {
+    const d = String(r.created_at || '').slice(0, 10);
+    const textMatch = !q || [r.return_no, r.bill_number, r.patient_name, r.mr_number, r.notes]
+      .map(v => String(v || '').toLowerCase()).some(v => v.includes(q));
+    return textMatch && (!from || d >= from) && (!to || d <= to);
+  }));
+}
+
+function renderSalesReturns(list) {
+  const wrap = document.getElementById('salesRetWrap'); if (!wrap) return;
+  if (!list.length) { wrap.innerHTML = emptyState(IC.salesreturn, 'No sales returns', 'Create a return for products sold to patients'); return; }
+  wrap.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Return No</th><th>Bill</th><th>Patient</th><th>MR</th><th>Items</th><th>Total</th><th>Refund Method</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${list.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td><strong>${escHtml(r.return_no || '-')}</strong></td>
+      <td class="text-muted text-sm">${escHtml(r.bill_number || '-')}</td>
+      <td>${escHtml(r.patient_name || '-')}</td>
+      <td class="text-muted text-sm">${escHtml(r.mr_number || '-')}</td>
+      <td>${(r.items || []).length} item(s)</td>
+      <td><strong>KD ${parseFloat(r.total_amount || 0).toFixed(3)}</strong></td>
+      <td>${escHtml(r.refund_method || '-')}</td>
+      <td class="text-muted text-sm">${String(r.created_at || '').slice(0, 10)}</td>
+      <td>${r.status === 'Voided' ? '<span class="badge badge-cancelled">Voided</span>' : '<span class="badge badge-paid">Active</span>'}</td>
+      <td class="td-actions"><div class="apt-actions">
+        <button class="btn btn-sm" onclick="viewSalesReturn(${r.id})">${IC.eye} View</button>
+        ${can('setup.view') && r.status !== 'Voided' ? `<button class="btn btn-sm btn-danger" onclick="voidSalesReturn(${r.id},'${escHtml(r.return_no || '')}')">${IC.trash} Void</button>` : ''}
+      </div></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+async function viewSalesReturn(id) {
+  try {
+    const r = await apiFetch(`/api/sales-returns/${id}`);
+    const rows = (r.items || []).map(it => `<tr>
+      <td>${escHtml(it.name || '')}</td>
+      <td>${parseFloat(it.qty || 0).toFixed(3)} ${escHtml(it.unit || '')}</td>
+      <td>KD ${parseFloat(it.unit_price || 0).toFixed(3)}</td>
+      <td><strong>KD ${parseFloat(it.line_total || 0).toFixed(3)}</strong></td>
+    </tr>`).join('');
+    openModal(`
+      <div class="modal-header"><h3>${IC.salesreturn} Return Details — ${escHtml(r.return_no || '')}</h3></div>
+      <div class="modal-body">
+        <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:14px;">
+          <div><span class="text-muted">Patient</span><div><strong>${escHtml(r.patient_name || '-')}</strong></div></div>
+          <div><span class="text-muted">MR#</span><div>${escHtml(r.mr_number || '-')}</div></div>
+          <div><span class="text-muted">Original Bill</span><div>${escHtml(r.bill_number || '-')}</div></div>
+          <div><span class="text-muted">Refund Method</span><div>${escHtml(r.refund_method || '-')}</div></div>
+          <div><span class="text-muted">Date</span><div>${String(r.created_at || '').slice(0,10)}</div></div>
+          <div><span class="text-muted">Status</span><div>${r.status === 'Voided' ? '<span class="badge badge-cancelled">Voided</span>' : '<span class="badge badge-paid">Active</span>'}</div></div>
+          ${r.notes ? `<div style="grid-column:1/-1"><span class="text-muted">Notes</span><div>${escHtml(r.notes)}</div></div>` : ''}
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Line Total</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr><td colspan="3" style="text-align:right"><strong>Total Refund</strong></td><td><strong>KD ${parseFloat(r.total_amount || 0).toFixed(3)}</strong></td></tr></tfoot>
+        </table></div>
+      </div>
+      <div class="modal-footer"><button class="btn" onclick="closeModal()">Close</button></div>`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function voidSalesReturn(id, returnNo) {
+  if (!confirm(`Void return ${returnNo}? Stock will be deducted again.`)) return;
+  try {
+    await apiFetch(`/api/sales-returns/${id}`, { method: 'DELETE' });
+    toast('Sales return voided — stock adjusted', 'success');
+    storeSalesReturns();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openNewSalesReturnModal() {
+  // Step 1: pick a bill number
+  const methods = window._billPayMethods || ['Cash', 'Card', 'UPI'];
+  openModal(`
+    <div class="modal-header"><h3>${IC.salesreturn} New Sales Return</h3></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Bill Number <span class="required">*</span></label>
+        <div style="display:flex;gap:8px">
+          <input id="srnBillNum" type="text" class="form-control" placeholder="e.g. BL-0042" style="flex:1"/>
+          <button class="btn btn-primary" onclick="srnLoadBill()">${IC.search} Load</button>
+        </div>
+      </div>
+      <div id="srnItemsSection" style="display:none">
+        <div class="form-group">
+          <label>Returnable Products</label>
+          <div id="srnItemsWrap"></div>
+        </div>
+        <div class="form-group">
+          <label>Refund Method</label>
+          <select id="srnRefundMethod" class="form-control">
+            ${methods.map(m => `<option>${escHtml(m)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input id="srnNotes" type="text" class="form-control" placeholder="Reason for return (optional)"/>
+        </div>
+        <div id="srnTotalRow" style="font-weight:600;text-align:right;padding:8px 0;display:none">Refund Total: <span id="srnTotal">KD 0.000</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="srnSubmitBtn" style="display:none" onclick="submitSalesReturn()">${IC.check} Submit Return</button>
+    </div>`);
+}
+
+let _srnBillId = null;
+let _srnReturnableItems = [];
+
+async function srnLoadBill() {
+  const num = (document.getElementById('srnBillNum')?.value || '').trim();
+  if (!num) { toast('Enter a bill number', 'error'); return; }
+  const wrap = document.getElementById('srnItemsSection');
+  const itemsWrap = document.getElementById('srnItemsWrap');
+  if (wrap) wrap.style.display = 'none';
+  if (itemsWrap) itemsWrap.innerHTML = skeletonTable(3);
+  try {
+    // Search bills list to get id from bill_number
+    const bills = await apiFetch(`/api/bills?search=${encodeURIComponent(num)}`);
+    const bill = Array.isArray(bills) ? bills.find(b => String(b.bill_number || '').toLowerCase() === num.toLowerCase()) : null;
+    if (!bill) { toast(`Bill "${num}" not found`, 'error'); return; }
+    _srnBillId = bill.id;
+    const data = await apiFetch(`/api/bills/${bill.id}/returnable-products`);
+    _srnReturnableItems = data.items || [];
+    if (!_srnReturnableItems.length) { toast('No returnable products on this bill', 'error'); return; }
+    if (wrap) wrap.style.display = '';
+    const submitBtn = document.getElementById('srnSubmitBtn');
+    if (submitBtn) submitBtn.style.display = '';
+    itemsWrap.innerHTML = _srnReturnableItems.map((it, i) => `
+      <div class="bill-line-item" style="align-items:center;gap:8px;flex-wrap:wrap">
+        <input type="checkbox" id="srnChk-${i}" data-idx="${i}" onchange="srnUpdateTotal()" style="width:16px;height:16px;cursor:pointer"/>
+        <span style="flex:1;font-weight:500">${escHtml(it.name)}</span>
+        <span class="text-muted text-sm">Max: ${it.returnable_qty.toFixed(3)} ${escHtml(it.unit || '')}</span>
+        <input type="number" id="srnQty-${i}" min="0.001" max="${it.returnable_qty}" step="0.001" value="${it.returnable_qty}" class="form-control" style="width:90px" oninput="srnUpdateTotal()"/>
+        <span class="text-muted text-sm">@ KD ${parseFloat(it.unit_price || 0).toFixed(3)}</span>
+      </div>`).join('');
+    srnUpdateTotal();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function srnUpdateTotal() {
+  let total = 0;
+  (_srnReturnableItems || []).forEach((it, i) => {
+    const chk = document.getElementById(`srnChk-${i}`);
+    const qtyEl = document.getElementById(`srnQty-${i}`);
+    if (chk && chk.checked) {
+      const qty = Math.min(parseFloat(qtyEl?.value || 0) || 0, it.returnable_qty);
+      total += qty * (it.unit_price || 0);
+    }
+  });
+  const el = document.getElementById('srnTotal');
+  if (el) el.textContent = `KD ${total.toFixed(3)}`;
+  const row = document.getElementById('srnTotalRow');
+  if (row) row.style.display = total > 0 ? '' : 'none';
+}
+
+async function submitSalesReturn() {
+  const btn = document.getElementById('srnSubmitBtn');
+  const items = [];
+  (_srnReturnableItems || []).forEach((it, i) => {
+    const chk = document.getElementById(`srnChk-${i}`);
+    const qtyEl = document.getElementById(`srnQty-${i}`);
+    if (chk && chk.checked) {
+      const qty = parseFloat(qtyEl?.value || 0) || 0;
+      if (qty > 0) items.push({ ref_id: it.ref_id, qty });
+    }
+  });
+  if (!items.length) { toast('Select at least one item to return', 'error'); return; }
+  const refundMethod = document.getElementById('srnRefundMethod')?.value || 'Cash';
+  const notes = document.getElementById('srnNotes')?.value || '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Processing...'; }
+  try {
+    const res = await apiFetch('/api/sales-returns', { method: 'POST', body: JSON.stringify({ bill_id: _srnBillId, items, refund_method: refundMethod, notes }) });
+    toast(`Return ${res.return_no} created — KD ${parseFloat(res.total_amount || 0).toFixed(3)} refunded`, 'success');
+    closeModal();
+    storeSalesReturns();
+  } catch (e) {
+    toast(e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = `${IC.check} Submit Return`; }
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.storeSalesReturns = storeSalesReturns;
+  window.filterSalesReturns = filterSalesReturns;
+  window.clearSalesRetFilters = clearSalesRetFilters;
+  window.viewSalesReturn = viewSalesReturn;
+  window.voidSalesReturn = voidSalesReturn;
+  window.openNewSalesReturnModal = openNewSalesReturnModal;
+  window.srnLoadBill = srnLoadBill;
+  window.srnUpdateTotal = srnUpdateTotal;
+  window.submitSalesReturn = submitSalesReturn;
+}
+
 
 
