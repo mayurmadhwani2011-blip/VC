@@ -83,8 +83,9 @@ if %RC% GEQ 8 (
 )
 echo File copy completed. Robocopy code: %RC%
 echo.
-echo Pulling latest app.js from GitHub to ensure correct API URL...
-powershell -NoProfile -Command "try { Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/mayurmadhwani2011-blip/VC/main/clinic/public/app.js' -OutFile '%INSTALL_DIR%\public\app.js' } catch { Write-Host 'Could not download latest app.js - using local copy' }"
+echo Syncing latest core files from GitHub (server + UI)...
+set "RAW_BASE=https://raw.githubusercontent.com/mayurmadhwani2011-blip/VC/main/clinic"
+powershell -NoProfile -Command "$files = @('server.js','public/app.js','public/index.html','public/style.css'); foreach ($f in $files) { $url = '%RAW_BASE%/' + $f; $out = Join-Path '%INSTALL_DIR%' $f; $dir = Split-Path $out -Parent; if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }; try { Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $out; Write-Host ('Synced ' + $f) } catch { Write-Host ('Could not download ' + $f + ' - using local copy') } }"
 echo.
 
 echo [5/8] Installing dependencies...
