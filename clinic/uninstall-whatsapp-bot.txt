@@ -1,1 +1,0 @@
-Deleted whatsapp-bot.js and recipients.txt as requested.

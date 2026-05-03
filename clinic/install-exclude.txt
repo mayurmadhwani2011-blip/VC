@@ -1,6 +1,0 @@
-install.bat
-uninstall.bat
-node_modules\
-.git\
-data\
-data\backups\
